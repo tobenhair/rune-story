@@ -934,7 +934,7 @@ function startGame(){
   buildMap();playZoneMusic(0);
 }
 function setupCV(){cv=document.getElementById('gc');const w=document.getElementById('cw');cv.width=w.clientWidth||480;cv.height=w.clientHeight||340;ctx2=cv.getContext('2d');ctx2.imageSmoothingEnabled=false;cv.addEventListener('click',onCC);}
-function loadZone(i){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];camX=0;PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;nearNPC=null;CZ.mons.forEach(m=>{const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:m.x,y:m.y,bx:m.x,vx:d.spd*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0});});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();}
+function loadZone(i){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];camX=0;PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;nearNPC=null;CZ.mons.forEach(m=>{const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:m.x,y:m.y,bx:m.x,vx:d.spd*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0});});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();}
 function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(!dlgOpen&&!mapOpen)update(dt);jp={};draw();raf=requestAnimationFrame(tick);}
 function update(dt){
   const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
@@ -1251,7 +1251,7 @@ function updateBossAbilities(m,dt,dx,adx){
   m.a1T=Math.max(0,m.a1T-dt);m.a2T=Math.max(0,m.a2T-dt);
   if(m.t==='slime_sov'){
     // Toxic Spit: slow arcing projectile that slows the player on hit
-    if(adx<380&&m.a1T<=0){m.a1T=3.5;const ddx=PL.x-m.x,ddy=PL.y-m.y,d=Math.sqrt(ddx*ddx+ddy*ddy)||1;projs.push({x:m.x,y:m.y-20,vx:(ddx/d)*160,vy:(ddy/d)*160-60,dmg:18,proj:'toxic',c:'#1d9e75',slow:false,life:2.8,pw:12,ph:12,hostile:true,src:'Slime Sovereign',playerSlow:true});sfxIce();}
+    if(adx<380&&m.a1T<=0){m.a1T=3.5;const dir=PL.x>m.x?1:-1;projs.push({x:m.x,y:m.y-20,vx:dir*200,vy:-30,dmg:18,proj:'toxic',c:'#1d9e75',slow:false,life:2.5,pw:12,ph:12,hostile:true,src:'Slime Sovereign',playerSlow:true});sfxIce();}
     // Slime Split: one-time at 50% HP — spawns two minions and briefly stuns itself
     if(!m.splitDone&&m.hp<m.mhp*0.5){m.splitDone=true;m.st=1.2;[-55,55].forEach(ox=>{const d=MDEF['slime'];mons.push({id:Math.random(),t:'slime',n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:m.x+ox,y:m.y,bx:m.x+ox,vx:d.spd*(ox>0?1:-1),vy:-150,at:0,st:0,frame:0,right:ox>0,hit:0});});log('Slime Sovereign SPLITS — minions emerge!','d');sfxFireball();}
   }else if(m.t==='goblin_chief'){
