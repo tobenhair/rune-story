@@ -1,7 +1,7 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-#gr{width:100%;background:#000;border-radius:var(--border-radius-lg);overflow:hidden;font-family:var(--font-sans);position:relative;min-height:580px}
+#gr{width:100%;background:#000;border-radius:var(--border-radius-lg);overflow:hidden;font-family:var(--font-sans);position:relative;min-height:580px;touch-action:manipulation}
 .screen{display:none;width:100%}.screen.active{display:flex}
 
 #cut{position:absolute;inset:0;background:#000;display:flex;flex-direction:column;z-index:500}
@@ -105,6 +105,16 @@ canvas#gc{display:block;image-rendering:pixelated}
 .dmgn{position:absolute;font-size:13px;font-weight:500;pointer-events:none;z-index:90;animation:fu 0.85s ease-out forwards}
 @keyframes fu{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
 .ch{position:absolute;top:6px;left:8px;font-size:9px;color:rgba(255,255,255,0.22);pointer-events:none;line-height:1.9}
+.bcont{background:#3da06a;margin-bottom:14px}
+.bcont:hover{background:#4dbd80}
+.cor{font-size:10px;color:#55556a;margin-bottom:12px;letter-spacing:1px}
+#tc{position:absolute;inset:0;pointer-events:none;z-index:60}
+.tbtn{position:absolute;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.28);color:#e8e8f0;font-size:20px;display:flex;align-items:center;justify-content:center;pointer-events:auto;user-select:none;-webkit-user-select:none;touch-action:none}
+.tbtn.on{background:rgba(106,163,255,0.4);border-color:#6aa3ff}
+#tb-left{left:12px;bottom:12px}
+#tb-right{left:78px;bottom:12px}
+#tb-jump{right:12px;bottom:12px;width:60px;height:60px;font-size:24px}
+#tb-talk{right:88px;bottom:18px;display:none;background:rgba(106,163,255,0.3);border-color:rgba(106,163,255,0.6)}
 </style>
 
 <div id="gr">
@@ -139,8 +149,10 @@ canvas#gc{display:block;image-rendering:pixelated}
     <div class="cdesc">Master of arcane arts. Cast devastating spells across the platforms of Aethoria.</div>
     <div style="font-size:10px;color:#6aa3ff;margin-top:10px">✦ INT / MAGIC DAMAGE ✦</div>
   </div>
+  <button class="bstart bcont" id="bcont" style="display:none" onclick="continueGame()">⟳ Continue: <span id="cont-info"></span></button>
+  <div class="cor" id="cor" style="display:none">— or start a new adventure —</div>
   <input class="ninput" id="cin" placeholder="Enter your character name..." maxlength="16"/>
-  <button class="bstart" onclick="startGame()">Enter World ➤</button>
+  <button class="bstart" id="bstart" onclick="startGame()">Enter World ➤</button>
 </div>
 
 <div id="sg" class="screen">
@@ -174,6 +186,12 @@ canvas#gc{display:block;image-rendering:pixelated}
       <canvas id="gc"></canvas>
       <div class="lvf"><div class="lvt" id="lvt">⬆ LEVEL UP ⬆</div></div>
       <div class="ch">← → move &nbsp;|&nbsp; ↑/Space jump &nbsp;|&nbsp; Q W E R spells &nbsp;|&nbsp; F talk &nbsp;|&nbsp; M map</div>
+      <div id="tc" style="display:none">
+        <div class="tbtn" id="tb-left">◀</div>
+        <div class="tbtn" id="tb-right">▶</div>
+        <div class="tbtn" id="tb-talk">💬</div>
+        <div class="tbtn" id="tb-jump">⬆</div>
+      </div>
     </div>
     <div class="sp">
       <div class="ptabs">
@@ -917,25 +935,82 @@ let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0};
 let cds=[0,0,0,0],keys={},jp={},dlgOpen=false,mapOpen=false,raf=null,lt=0,CZ=null,plats=[],nearNPC=null;
 let gTime=0;
 
+// ── Save system (localStorage) ──
+const SAVE_KEY='astralbound_save_v1';
+let saveT=0,overwriteArmed=false;
+function saveGame(){
+  if(!CZ)return;
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify({
+      v:1,name:G.name,level:G.level,xp:G.xp,xpNext:G.xpNext,
+      hp:G.hp,maxHp:G.maxHp,mp:Math.floor(G.mp),maxMp:G.maxMp,
+      gold:G.gold,skillPoints:G.skillPoints,zone:G.zone,
+      kills:G.kills,questStates:G.questStates,equipment:G.equipment,
+      inventory:G.inventory.filter(x=>x&&x.qty>0),spells:G.spells,
+      skills:[...USK],bossTimers,
+      mv:+document.getElementById('vol-music').value,
+      sv:+document.getElementById('vol-sfx').value
+    }));
+  }catch(e){}
+}
+function loadSave(){
+  try{
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY));
+    return(d&&d.v===1&&typeof d.name==='string'&&d.level>=1)?d:null;
+  }catch(e){return null;}
+}
+function applySave(d){
+  G.name=d.name;G.level=d.level;G.xp=d.xp;G.xpNext=d.xpNext;
+  G.hp=d.hp;G.maxHp=d.maxHp;G.mp=d.mp;G.maxMp=d.maxMp;
+  G.gold=d.gold;G.skillPoints=d.skillPoints;
+  G.zone=Math.min(Math.max(d.zone||0,0),ZD.length-1);
+  G.kills=d.kills||{};G.questStates=d.questStates||{};
+  G.equipment=d.equipment||{weapon:null,armor:null};
+  G.inventory=(d.inventory||[]).filter(x=>x&&ITEMS[x.id]);
+  G.spells=d.spells||[true,false,false,false];
+  G.shield=false;G.shieldT=0;
+  USK.clear();(d.skills||[]).forEach(s=>USK.add(s));
+  if(Array.isArray(d.bossTimers))bossTimers=d.bossTimers.slice(0,3);
+  if(typeof d.mv==='number')document.getElementById('vol-music').value=d.mv;
+  if(typeof d.sv==='number')document.getElementById('vol-sfx').value=d.sv;
+}
 function startGame(){
-  if(!AC)initAudio();
-  if(prevRAF)cancelAnimationFrame(prevRAF);
+  // In-page confirm: a native confirm() can be blocked in sandboxed embeds
+  if(loadSave()&&!overwriteArmed){
+    overwriteArmed=true;
+    document.getElementById('bstart').textContent='⚠ Overwrite save? Click again';
+    return;
+  }
   G.name=document.getElementById('cin').value.trim()||'Aethar';
+  enterWorld();
+  log('Welcome, '+G.name+'! Arrows to move, ↑/Space to jump.','q');
+  log('Q W E R to cast spells. Press F near an NPC to talk.','q');
+  saveGame();
+}
+function continueGame(){
+  const d=loadSave();if(!d)return;
+  applySave(d);
+  enterWorld();
+  log('Welcome back, '+G.name+'! Progress restored.','q');
+}
+function enterWorld(){
+  if(!AC)initAudio();
+  setMusicVol(document.getElementById('vol-music').value);
+  setSfxVol(document.getElementById('vol-sfx').value);
+  if(prevRAF)cancelAnimationFrame(prevRAF);
   document.getElementById('sc').classList.remove('active');
   document.getElementById('sg').classList.add('active');
   document.getElementById('hname').textContent=G.name;
+  document.getElementById('hlvl').textContent='Lv.'+G.level+' Mage';
   drawHudSprite();
-  setupCV();loadZone(0);renderAll();updateHUD();
+  setupCV();loadZone(G.zone);renderAll();updateHUD();
   document.addEventListener('keydown',onKD);
   document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
   raf=requestAnimationFrame(tick);
-  log('Welcome, '+G.name+'! Arrows to move, ↑/Space to jump.','q');
-  log('Q W E R to cast spells. Press F near an NPC to talk.','q');
-  buildMap();playZoneMusic(0);
 }
 function setupCV(){cv=document.getElementById('gc');const w=document.getElementById('cw');cv.width=w.clientWidth||480;cv.height=w.clientHeight||340;ctx2=cv.getContext('2d');ctx2.imageSmoothingEnabled=false;cv.addEventListener('click',onCC);}
 function loadZone(i){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];camX=0;PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;nearNPC=null;CZ.mons.forEach(m=>{const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:m.x,y:m.y,bx:m.x,vx:d.spd*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0});});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();}
-function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(!dlgOpen&&!mapOpen)update(dt);jp={};draw();raf=requestAnimationFrame(tick);}
+function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(!dlgOpen&&!mapOpen)update(dt);jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();}draw();raf=requestAnimationFrame(tick);}
 function update(dt){
   const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
   if(L){PL.vx=Math.max(PL.vx-1200*dt,-SPD);PL.right=false;}
@@ -958,6 +1033,7 @@ function update(dt){
   bossTimers[G.zone]+=dt;if(!mons.some(m=>m.boss)&&bossTimers[G.zone]>=300)spawnBoss(G.zone);if(bossAlertT>0)bossAlertT-=dt;
   nearNPC=null;npcs2.forEach(n=>{if(Math.abs(PL.x-n.x)<48&&Math.abs(PL.y-n.y)<60)nearNPC=n;n.frame+=0.03;});
   if((jp['f']||jp['e'])&&nearNPC)openDlg(nearNPC);
+  if(touchMode&&(!!nearNPC)!==talkVis){talkVis=!!nearNPC;document.getElementById('tb-talk').style.display=talkVis?'flex':'none';}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1242,7 +1318,7 @@ function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true
 function castSpell(i){if(!G.spells[i]){log('Learn this spell first!','d');return;}if(cds[i]>0)return;const sp=SPELLS[i];if(sp.shield){if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[i]=sp.cd;G.shield=true;G.shieldT=5;sp.sfx();log('Mana Shield active 5s!','h');updateHUD();return;}const tgt=closest(sp.r);if(!tgt){log('No enemy in range!','d');return;}fireAt(tgt,i);}
 function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[si]=sp.cd;PL.casting=0.4;PL.right=tgt.x>PL.x;const dx=tgt.x-PL.x,dy=tgt.y-PL.y,dist=Math.sqrt(dx*dx+dy*dy)||1,dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn));projs.push({x:PL.x,y:PL.y-SH*SCALE*0.4,vx:(dx/dist)*440,vy:(dy/dist)*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});sp.sfx();updateHUD();}
 function closest(r){let c=null,md=r;mons.forEach(m=>{const d=Math.sqrt((m.x-PL.x)**2+(m.y-PL.y)**2);if(d<md){md=d;c=m;}});return c;}
-function killM(m){mons=mons.filter(x=>x.id!==m.id);G.kills[m.t]=(G.kills[m.t]||0)+1;sfxDeath();if(m.boss){G.gold+=m.gold;sfxQuestComplete();log('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+m.gold+' gold!','x');gainXP(m.xp);updateHUD();renderQP();return;}log(m.n+' defeated! +'+m.xp+' XP','x');gainXP(m.xp);m.loot.forEach(([item,ch])=>{if(Math.random()<ch){addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}});renderQP();setTimeout(()=>{const md2=CZ.mons.find(x=>x.t===m.t);if(!md2)return;const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:md2.x,y:md2.y,bx:md2.x,vx:d.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0});},12000);}
+function killM(m){mons=mons.filter(x=>x.id!==m.id);G.kills[m.t]=(G.kills[m.t]||0)+1;sfxDeath();if(m.boss){G.gold+=m.gold;sfxQuestComplete();log('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+m.gold+' gold!','x');gainXP(m.xp);updateHUD();renderQP();saveGame();return;}log(m.n+' defeated! +'+m.xp+' XP','x');gainXP(m.xp);m.loot.forEach(([item,ch])=>{if(Math.random()<ch){addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}});renderQP();saveGame();setTimeout(()=>{const md2=CZ.mons.find(x=>x.t===m.t);if(!md2)return;const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:md2.x,y:md2.y,bx:md2.x,vx:d.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0});},12000);}
 function addItem(id){const s=G.inventory.findIndex(x=>x&&x.id===id);if(s>=0)G.inventory[s].qty++;else G.inventory.push({id,qty:1});const it=ITEMS[id];if(it.slot&&!G.equipment[it.slot])G.equipment[it.slot]=id;renderIP();}
 function gainXP(amt){G.xp+=amt;while(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.floor(G.xpNext*1.4);G.maxHp+=20;G.hp=G.maxHp;G.maxMp+=10;G.mp=G.maxMp;G.skillPoints++;document.getElementById('hlvl').textContent='Lv.'+G.level+' Mage';const t=document.getElementById('lvt');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);sfxLevelUp();log('LEVEL UP! Now level '+G.level+'!','x');log('Gained 1 Skill Point!','q');renderSP();}updateHUD();}
 function respawn(){G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;camX=0;log('Defeated! Respawned...','d');updateHUD();}
@@ -1272,24 +1348,59 @@ function openDlg(npc){if(npc.shop){openShop(npc);return;}dlgOpen=true;keys={};jp
 function closeDlg(){dlgOpen=false;keys={};jp={};document.getElementById('dlg-txt').style.whiteSpace='';document.getElementById('dlg-overlay').classList.remove('open');}
 function openShop(npc){dlgOpen=true;keys={};jp={};document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-overlay').classList.add('open');renderShop();}
 function renderShop(){const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';box.innerHTML='<div style="font-size:10px;color:#ef9f27;margin-bottom:8px">💰 Your gold: '+G.gold+'</div>'+SHOP.map(e=>{const it=ITEMS[e.id];const af=G.gold>=e.price;return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span style="font-size:18px">'+it.e+'</span><div style="flex:1"><div style="font-size:11px;color:#e8d5b7">'+it.n+'</div><div style="font-size:9px;color:#7878a0">'+it.desc+'</div></div><button class="db'+(af?' primary':'')+'" style="opacity:'+(af?1:0.4)+'" onclick="buyItem(\''+e.id+'\','+e.price+')">'+e.price+'g</button></div>';}).join('');const bc=document.getElementById('dlg-btns');bc.innerHTML='';const btn=document.createElement('button');btn.className='db';btn.textContent='Leave Shop';btn.addEventListener('click',closeDlg);bc.appendChild(btn);}
-function buyItem(id,price){if(G.gold<price){log('Not enough gold!','d');return;}G.gold-=price;addItem(id);sfxLoot();log('Purchased '+ITEMS[id].n+'!','x');updateHUD();renderShop();}
-function useItem(id){const it=ITEMS[id];if(!it||!it.consumable)return;const si=G.inventory.findIndex(x=>x&&x.id===id);if(si<0)return;if(id==='health_potion'){const h=Math.min(G.maxHp,G.hp+50)-G.hp;G.hp+=h;log('Health Potion: +'+h+' HP!','h');sfxLevelUp();}else if(id==='mana_potion'){const add=Math.min(G.maxMp,G.mp+40)-G.mp;G.mp+=add;log('Mana Potion: +'+Math.floor(add)+' MP!','h');sfxShield();}else if(id==='ward_scroll'){G.shield=true;G.shieldT=10;sfxShield();log('Scroll of Warding: Shield 10s!','h');}G.inventory[si].qty--;if(G.inventory[si].qty<=0)G.inventory[si]=null;updateHUD();renderIP();}
-function acceptQ(id){G.questStates[id]='active';sfxQuestAccept();log('Quest accepted: '+QUESTS.find(q=>q.id===id).title,'q');closeDlg();renderQP();}
-function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}closeDlg();renderQP();renderIP();}
+function buyItem(id,price){if(G.gold<price){log('Not enough gold!','d');return;}G.gold-=price;addItem(id);sfxLoot();log('Purchased '+ITEMS[id].n+'!','x');updateHUD();renderShop();saveGame();}
+function useItem(id){const it=ITEMS[id];if(!it||!it.consumable)return;const si=G.inventory.findIndex(x=>x&&x.id===id);if(si<0)return;if(id==='health_potion'){const h=Math.min(G.maxHp,G.hp+50)-G.hp;G.hp+=h;log('Health Potion: +'+h+' HP!','h');sfxLevelUp();}else if(id==='mana_potion'){const add=Math.min(G.maxMp,G.mp+40)-G.mp;G.mp+=add;log('Mana Potion: +'+Math.floor(add)+' MP!','h');sfxShield();}else if(id==='ward_scroll'){G.shield=true;G.shieldT=10;sfxShield();log('Scroll of Warding: Shield 10s!','h');}G.inventory[si].qty--;if(G.inventory[si].qty<=0)G.inventory[si]=null;updateHUD();renderIP();saveGame();}
+function acceptQ(id){G.questStates[id]='active';sfxQuestAccept();log('Quest accepted: '+QUESTS.find(q=>q.id===id).title,'q');closeDlg();renderQP();saveGame();}
+function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}closeDlg();renderQP();renderIP();saveGame();}
 function isQDone(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.every(t=>{if(t.type==='kill')return(G.kills[t.tgt]||0)>=t.n;const s=G.inventory.find(x=>x&&x.id===t.item);return s&&s.qty>=t.n;});}
 function qProg(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.map(t=>{if(t.type==='kill')return'• '+t.tgt+': '+Math.min(G.kills[t.tgt]||0,t.n)+'/'+t.n;const s=G.inventory.find(x=>x&&x.id===t.item);return'• '+ITEMS[t.item].n+': '+Math.min(s?s.qty:0,t.n)+'/'+t.n;}).join('\n');}
 function renderAll(){renderQP();renderIP();renderSP();}
 function renderQP(){const el=document.getElementById('ql');const av=QUESTS.filter(q=>!G.questStates[q.id]&&G.level>=q.rlvl),ac=QUESTS.filter(q=>G.questStates[q.id]==='active'),dn=QUESTS.filter(q=>G.questStates[q.id]==='done');let h='';if(!av.length&&!ac.length&&!dn.length)h='<div style="font-size:10px;color:#555;padding:6px">Find NPCs with ! to get quests!</div>';av.forEach(q=>{h+=`<div class="qi"><div class="qit">! ${q.title}</div><div style="font-size:10px;color:#7878a0">Talk to ${q.giver}</div></div>`;});ac.forEach(q=>{h+=`<div class="qi"><div class="qit">${q.title}</div><div class="qip">${qProg(q.id).replace(/\n/g,'<br>')}</div></div>`;});dn.forEach(q=>{h+=`<div class="qi done"><div class="qit">✓ ${q.title}</div></div>`;});el.innerHTML=h;}
 function renderIP(){let sl='';for(let i=0;i<16;i++){const it=G.inventory[i];if(it){const d=ITEMS[it.id];const oc=d.consumable?` onclick="useItem('${it.id}')" style="cursor:pointer" title="${d.n} — click to use"`:` title="${d.n}"`;sl+=`<div class="is"${oc}>${d.e}<span class="iq">${it.qty>1?it.qty:''}</span></div>`;}else sl+='<div class="is"></div>';}document.getElementById('ig').innerHTML=sl;const w=G.equipment.weapon,a=G.equipment.armor;document.getElementById('esl').innerHTML=`<div class="er"><div class="ei">${w?ITEMS[w].e:'🪄'}</div><div><div class="en">${w?ITEMS[w].n:'No weapon'}</div><div class="es2">${w?ITEMS[w].s:''}</div></div></div><div class="er"><div class="ei">${a?ITEMS[a].e:'👘'}</div><div><div class="en">${a?ITEMS[a].n:'No armor'}</div><div class="es2">${a?ITEMS[a].s:''}</div></div></div>`;}
 function renderSP(){document.getElementById('spr').textContent='Skill Points: '+G.skillPoints;document.getElementById('str').innerHTML=SKN.map(n=>{const ul=USK.has(n.id),can=!ul&&G.skillPoints>=n.cost&&(!n.req||USK.has(n.req));return`<div class="sn ${ul?'ul':can?'':'lk'}" onclick="learnSk('${n.id}')"><div class="si2">${n.e}</div><div style="flex:1"><div class="snm">${n.n}</div><div class="snd">${n.d}</div></div><div class="snc">${ul?'✓':n.cost+' SP'}</div></div>`;}).join('');}
-function learnSk(id){const n=SKN.find(x=>x.id===id);if(!n||USK.has(id))return;if(G.skillPoints<n.cost){log('Not enough Skill Points!','d');return;}if(n.req&&!USK.has(n.req)){log('Requires: '+SKN.find(x=>x.id===n.req).n,'d');return;}G.skillPoints-=n.cost;USK.add(id);if(id==='fb'){G.spells[1]=true;log('Fireball unlocked! Press W.','q');}if(id==='is'){G.spells[2]=true;log('Ice Shard unlocked! Press E.','q');}if(id==='mf'){G.maxMp+=30;G.mp+=30;updateHUD();}sfxQuestAccept();log('Learned: '+n.n,'x');renderSP();}
+function learnSk(id){const n=SKN.find(x=>x.id===id);if(!n||USK.has(id))return;if(G.skillPoints<n.cost){log('Not enough Skill Points!','d');return;}if(n.req&&!USK.has(n.req)){log('Requires: '+SKN.find(x=>x.id===n.req).n,'d');return;}G.skillPoints-=n.cost;USK.add(id);if(id==='fb'){G.spells[1]=true;log('Fireball unlocked! Press W.','q');}if(id==='is'){G.spells[2]=true;log('Ice Shard unlocked! Press E.','q');}if(id==='mf'){G.maxMp+=30;G.mp+=30;updateHUD();}sfxQuestAccept();log('Learned: '+n.n,'x');renderSP();saveGame();}
 function swP(k,el){document.querySelectorAll('.pt').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.ps').forEach(s=>s.classList.remove('active'));el.classList.add('active');document.getElementById('ps-'+k).classList.add('active');if(k==='i')renderIP();if(k==='s')renderSP();if(k==='q')renderQP();}
 function log(msg,type=''){const cl=document.getElementById('clog');const d=document.createElement('div');d.className='cl '+type;d.textContent=msg;cl.appendChild(d);cl.scrollTop=cl.scrollHeight;if(cl.children.length>40)cl.removeChild(cl.firstChild);}
 function buildMap(){const bgs=['#0d1830','#0a1a0e','#0e0a1e'],icons=['🏡','🌿','💎'];document.getElementById('zthumbs').innerHTML=ZD.map((z,i)=>`<div class="zth ${G.zone===i?'cur':''}" style="background:${bgs[i]}" onclick="travelTo(${i})"><div style="font-size:28px">${icons[i]}</div><div><div class="ztn">${z.name}</div><div class="zts">Lv.${z.req}+</div>${i===2?'<div class="ztl">Requires Lv.10</div>':''}</div></div>`).join('');}
 function toggleMap(){mapOpen=!mapOpen;keys={};jp={};document.getElementById('mov').classList.toggle('open',mapOpen);}
-function travelTo(i){if(i===2&&G.level<10){log('Crystal Caverns requires Level 10!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');}
+function travelTo(i){if(i===2&&G.level<10){log('Crystal Caverns requires Level 10!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');saveGame();}
+
+// ── Touch controls ──
+let touchMode=false,talkVis=false;
+function enableTouch(){if(touchMode)return;touchMode=true;document.getElementById('tc').style.display='';const ch=document.querySelector('.ch');if(ch)ch.style.display='none';}
+function bindHold(id,down,up){
+  const el=document.getElementById(id);
+  el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId);}catch(err){}el.classList.add('on');down();});
+  const end=()=>{el.classList.remove('on');up();};
+  el.addEventListener('pointerup',end);
+  el.addEventListener('pointercancel',end);
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+}
+function initTouch(){
+  bindHold('tb-left',()=>{keys['arrowleft']=true;},()=>{keys['arrowleft']=false;});
+  bindHold('tb-right',()=>{keys['arrowright']=true;},()=>{keys['arrowright']=false;});
+  bindHold('tb-jump',()=>{jp['arrowup']=true;},()=>{});
+  bindHold('tb-talk',()=>{if(nearNPC&&!dlgOpen&&!mapOpen)openDlg(nearNPC);},()=>{});
+  if(window.matchMedia&&matchMedia('(pointer:coarse)').matches)enableTouch();
+  window.addEventListener('touchstart',enableTouch,{passive:true,once:true});
+}
 
 // Boot
 buildSheets();
-setTimeout(()=>{resizeSCV();showBeat(0);cutAnim();},200);
+initTouch();
+window.addEventListener('beforeunload',saveGame);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveGame();});
+const bootSave=loadSave();
+if(bootSave){
+  // Returning player: skip the intro cutscene and offer Continue
+  document.getElementById('bcont').style.display='';
+  document.getElementById('cor').style.display='';
+  document.getElementById('cont-info').textContent=bootSave.name+' · Lv.'+bootSave.level+' · '+ZD[Math.min(Math.max(bootSave.zone||0,0),ZD.length-1)].name;
+  document.getElementById('cut').style.display='none';
+  document.getElementById('screens').style.position='relative';
+  document.getElementById('sc').classList.add('active');
+  previewAnim();
+}else{
+  setTimeout(()=>{resizeSCV();showBeat(0);cutAnim();},200);
+}
 </script>
