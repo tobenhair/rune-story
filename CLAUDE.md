@@ -36,11 +36,19 @@ The file is one HTML document with all CSS, JavaScript, game data, rendering, an
 
 ### Global State
 
-All mutable game state lives in a single `G` object defined in the Game Engine section. Player stats, inventory, active quest progress, zone index, and runtime flags are all properties of `G`. There is no persistence — the game resets on page reload.
+All mutable game state lives in a single `G` object defined in the Game Engine section. Player stats, inventory, active quest progress, zone index, and runtime flags are all properties of `G`.
+
+### Persistence
+
+Progress is saved to `localStorage` under the key `astralbound_save_v1` (`saveGame()` / `loadSave()` / `applySave()` in the Game Engine section). Saves happen automatically every 10 seconds during play, on major events (kills, quest accept/turn-in, purchases, skill unlocks, item use, zone travel), and when the tab is hidden or closed. The save snapshots `G` (minus transient combat flags like the active shield), the `USK` skill set, `bossTimers`, and volume slider values. On boot, an existing save skips the intro cutscene and shows a "Continue" button on the character screen; starting a new game over an existing save requires a second confirming click (no native `confirm()`, which can be blocked in sandboxed embeds). New persistent fields must be added to all three of `saveGame()`, `applySave()`, and the `G` initializer.
+
+### Input
+
+Keyboard input drives the `keys` (held) and `jp` (just-pressed, cleared every frame) maps. Touch controls reuse the same maps: on-screen left/right/jump buttons (plus a contextual Talk button near NPCs) are overlaid on the canvas and enabled automatically on coarse-pointer devices or on first `touchstart`. Tapping the canvas casts at the nearest monster / talks to NPCs via the existing click handler.
 
 ### Zone Data
 
-Static zone definitions live in `ZD` (an array of 3 objects). Each zone contains platform geometry, monster spawn data, and NPC placement. Zones are accessed by index; zone transitions happen via the map modal.
+Static zone definitions live in `ZD` (an array of 4 objects). Each zone contains platform geometry, monster spawn data, NPC placement, and optional edge portals (`portals`). Zones are accessed by index; zone transitions happen via the map modal or by walking into a portal.
 
 ### Game Loop
 
@@ -70,8 +78,8 @@ XP to next level scales as `xpNext *= 1.4` per level. Each level grants +20 HP, 
 
 ## Content Reference
 
-- **Zones**: Starter Village (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+)
-- **Monsters**: Slime, Goblin, Bat, Golem
+- **Zones**: Starter Village (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+), Ancient Ruins (Lv.15+)
+- **Monsters**: Slime, Goblin, Bat, Golem, Skeleton Archer, Shadow Wraith
 - **Spells**: Arcane Bolt, Fireball, Ice Shard, Mana Shield
 - **Skills**: Arcane Mastery → Fireball, Mana Flow → Ice Shard, Arcane Surge
 - **NPCs**: Elder Mira, Guard Tomlin, Ranger Sylva, Sage Oriax
