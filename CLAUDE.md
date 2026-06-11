@@ -48,7 +48,7 @@ Keyboard input drives the `keys` (held) and `jp` (just-pressed, cleared every fr
 
 ### Zone Data
 
-Static zone definitions live in `ZD` (an array of 3 objects). Each zone contains platform geometry, monster spawn data, and NPC placement. Zones are accessed by index; zone transitions happen via the map modal.
+Static zone definitions live in `ZD` (an array of 4 objects). Each zone contains platform geometry, monster spawn data, NPC placement, and optional edge portals (`portals`). Zones are accessed by index; zone transitions happen via the map modal or by walking into a portal.
 
 ### Game Loop
 
@@ -78,8 +78,8 @@ XP to next level scales as `xpNext *= 1.4` per level. Each level grants +20 HP, 
 
 ## Content Reference
 
-- **Zones**: Starter Village (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+)
-- **Monsters**: Slime, Goblin, Bat, Golem
+- **Zones**: Starter Village (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+), Ancient Ruins (Lv.15+)
+- **Monsters**: Slime, Goblin, Bat, Golem, Skeleton Archer, Shadow Wraith
 - **Spells**: Arcane Bolt, Fireball, Ice Shard, Mana Shield
 - **Skills**: Arcane Mastery → Fireball, Mana Flow → Ice Shard, Arcane Surge
 - **NPCs**: Elder Mira, Guard Tomlin, Ranger Sylva, Sage Oriax

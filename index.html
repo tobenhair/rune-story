@@ -981,7 +981,7 @@ function applySave(d){
   G.spells=d.spells||[true,false,false,false];
   G.shield=false;G.shieldT=0;
   USK.clear();(d.skills||[]).forEach(s=>USK.add(s));
-  if(Array.isArray(d.bossTimers))bossTimers=d.bossTimers.slice(0,3);
+  if(Array.isArray(d.bossTimers))d.bossTimers.slice(0,bossTimers.length).forEach((t,i)=>{if(typeof t==='number')bossTimers[i]=t;});
   if(typeof d.mv==='number')document.getElementById('vol-music').value=d.mv;
   if(typeof d.sv==='number')document.getElementById('vol-sfx').value=d.sv;
 }
@@ -1020,7 +1020,7 @@ function enterWorld(){
   raf=requestAnimationFrame(tick);
 }
 function setupCV(){cv=document.getElementById('gc');const w=document.getElementById('cw');cv.width=w.clientWidth||480;cv.height=w.clientHeight||340;ctx2=cv.getContext('2d');ctx2.imageSmoothingEnabled=false;cv.addEventListener('click',onCC);}
-function loadZone(i){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];camX=0;PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;nearNPC=null;CZ.mons.forEach(m=>{const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:m.x,y:m.y,bx:m.x,vx:d.spd*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0});});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();}
+function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;nearNPC=null;nearPortal=null;CZ.mons.forEach(m=>{const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,gold:d.gold||0,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:m.x,y:m.y,bx:m.x,vx:d.spd*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0});});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();}
 function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(!dlgOpen&&!mapOpen)update(dt);jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();}draw();raf=requestAnimationFrame(tick);}
 function update(dt){
   const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
@@ -1046,8 +1046,9 @@ function update(dt){
   nearNPC=null;npcs2.forEach(n=>{if(Math.abs(PL.x-n.x)<48&&Math.abs(PL.y-n.y)<60)nearNPC=n;n.frame+=0.03;});
   nearPortal=null;portals2.forEach(p=>{if(Math.abs(PL.x-p.x)<38&&Math.abs(PL.y-p.y)<55)nearPortal=p;});
   if((jp['f']||jp['e'])&&nearNPC)openDlg(nearNPC);
-  if(touchMode&&(!!nearNPC)!==talkVis){talkVis=!!nearNPC;document.getElementById('tb-talk').style.display=talkVis?'flex':'none';}
   else if((jp['f']||jp['e'])&&nearPortal)enterPortal(nearPortal);
+  const tv=!!(nearNPC||nearPortal);
+  if(touchMode&&tv!==talkVis){talkVis=tv;document.getElementById('tb-talk').style.display=tv?'flex':'none';}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1363,7 +1364,7 @@ function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true
 function castSpell(i){if(!G.spells[i]){log('Learn this spell first!','d');return;}if(cds[i]>0)return;const sp=SPELLS[i];if(sp.shield){if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[i]=sp.cd;G.shield=true;G.shieldT=5;sp.sfx();log('Mana Shield active 5s!','h');updateHUD();return;}const tgt=closest(sp.r);if(!tgt){log('No enemy in range!','d');return;}fireAt(tgt,i);}
 function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[si]=sp.cd;PL.casting=0.4;PL.right=tgt.x>PL.x;const dx=tgt.x-PL.x,dy=tgt.y-PL.y,dist=Math.sqrt(dx*dx+dy*dy)||1,dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn));projs.push({x:PL.x,y:PL.y-SH*SCALE*0.4,vx:(dx/dist)*440,vy:(dy/dist)*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});sp.sfx();updateHUD();}
 function closest(r){let c=null,md=r;mons.forEach(m=>{const d=Math.sqrt((m.x-PL.x)**2+(m.y-PL.y)**2);if(d<md){md=d;c=m;}});return c;}
-function killM(m){mons=mons.filter(x=>x.id!==m.id);G.kills[m.t]=(G.kills[m.t]||0)+1;sfxDeath();if(m.boss){G.gold+=m.gold;sfxQuestComplete();log('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+m.gold+' gold!','x');gainXP(m.xp);updateHUD();renderQP();saveGame();return;}log(m.n+' defeated! +'+m.xp+' XP','x');gainXP(m.xp);m.loot.forEach(([item,ch])=>{if(Math.random()<ch){addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}});renderQP();saveGame();setTimeout(()=>{const md2=CZ.mons.find(x=>x.t===m.t);if(!md2)return;const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:md2.x,y:md2.y,bx:md2.x,vx:d.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0});},12000);}
+function killM(m){mons=mons.filter(x=>x.id!==m.id);G.kills[m.t]=(G.kills[m.t]||0)+1;sfxDeath();if(m.boss){G.gold+=m.gold;sfxQuestComplete();log('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+m.gold+' gold!','x');gainXP(m.xp);updateHUD();renderQP();saveGame();return;}log(m.n+' defeated! +'+m.xp+' XP','x');gainXP(m.xp);if((m.gold||0)>0){const gd=m.gold+Math.floor(Math.random()*m.gold);G.gold+=gd;log('+'+gd+' gold','x');updateHUD();}m.loot.forEach(([item,ch])=>{if(Math.random()<ch){addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}});renderQP();saveGame();setTimeout(()=>{const md2=CZ.mons.find(x=>x.t===m.t);if(!md2)return;const d=MDEF[m.t];mons.push({id:Math.random(),t:m.t,n:d.n,sheet:d.sheet,frames:d.frames,hp:d.hp,mhp:d.hp,mn:d.mn,mx:d.mx,xp:d.xp,gold:d.gold||0,loot:d.loot,spd:d.spd,pat:d.pat,fly:d.fly,x:md2.x,y:md2.y,bx:md2.x,vx:d.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0});},12000);}
 function addItem(id){const s=G.inventory.findIndex(x=>x&&x.id===id);if(s>=0)G.inventory[s].qty++;else G.inventory.push({id,qty:1});const it=ITEMS[id];if(it.slot&&!G.equipment[it.slot])G.equipment[it.slot]=id;renderIP();}
 function gainXP(amt){G.xp+=amt;while(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.floor(G.xpNext*1.4);G.maxHp+=20;G.hp=G.maxHp;G.maxMp+=10;G.mp=G.maxMp;G.skillPoints++;document.getElementById('hlvl').textContent='Lv.'+G.level+' Mage';const t=document.getElementById('lvt');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);sfxLevelUp();log('LEVEL UP! Now level '+G.level+'!','x');log('Gained 1 Skill Point!','q');renderSP();}updateHUD();}
 function respawn(){G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;camX=0;log('Defeated! Respawned...','d');updateHUD();}
@@ -1432,11 +1433,12 @@ function initTouch(){
   bindHold('tb-left',()=>{keys['arrowleft']=true;},()=>{keys['arrowleft']=false;});
   bindHold('tb-right',()=>{keys['arrowright']=true;},()=>{keys['arrowright']=false;});
   bindHold('tb-jump',()=>{jp['arrowup']=true;},()=>{});
-  bindHold('tb-talk',()=>{if(nearNPC&&!dlgOpen&&!mapOpen)openDlg(nearNPC);},()=>{});
+  bindHold('tb-talk',()=>{if(dlgOpen||mapOpen)return;if(nearNPC)openDlg(nearNPC);else if(nearPortal)enterPortal(nearPortal);},()=>{});
   if(window.matchMedia&&matchMedia('(pointer:coarse)').matches)enableTouch();
   window.addEventListener('touchstart',enableTouch,{passive:true,once:true});
-function travelTo(i){if(i===2&&G.level<10){log('Crystal Caverns requires Level 10!','d');toggleMap();return;}if(i===3&&G.level<15){log('Ancient Ruins requires Level 15!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');}
-function enterPortal(p){if(p.toZone===2&&G.level<10){log('Crystal Caverns requires Level 10!','d');return;}if(p.toZone===3&&G.level<15){log('Ancient Ruins requires Level 15!','d');return;}const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');}
+}
+function travelTo(i){if(i===2&&G.level<10){log('Crystal Caverns requires Level 10!','d');toggleMap();return;}if(i===3&&G.level<15){log('Ancient Ruins requires Level 15!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');saveGame();}
+function enterPortal(p){if(p.toZone===2&&G.level<10){log('Crystal Caverns requires Level 10!','d');return;}if(p.toZone===3&&G.level<15){log('Ancient Ruins requires Level 15!','d');return;}const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
 function drawPortals(){
   portals2.forEach(p=>{
     const sx=p.x-camX;if(sx<-100||sx>cv.width+100)return;
