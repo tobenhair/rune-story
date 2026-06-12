@@ -40,7 +40,7 @@ All mutable game state lives in a single `G` object defined in the Game Engine s
 
 ### Persistence
 
-Progress is saved to `localStorage` under the key `astralbound_save_v1` (`saveGame()` / `loadSave()` / `applySave()` in the Game Engine section). Saves happen automatically every 10 seconds during play, on major events (kills, quest accept/turn-in, purchases, skill unlocks, item use, zone travel), and when the tab is hidden or closed. The save snapshots `G` (minus transient combat flags like the active shield), the `USK` skill set, `bossTimers`, and volume slider values. On boot, an existing save skips the intro cutscene and shows a "Continue" button on the character screen; starting a new game over an existing save requires a second confirming click (no native `confirm()`, which can be blocked in sandboxed embeds). New persistent fields must be added to all three of `saveGame()`, `applySave()`, and the `G` initializer.
+Progress is saved to `localStorage` under the key `astralbound_save_v1` (`saveGame()` / `loadSave()` / `applySave()` in the Game Engine section). Saves happen automatically every 10 seconds during play, on major events (kills, quest accept/turn-in, purchases, skill unlocks, item use, zone travel), and when the tab is hidden or closed. The save snapshots `G` (minus transient combat flags like the active shield), the `USK` skill set, `bossTimers`, and volume slider values. The payload carries a `v` field: v1 saves (pre-city-hub) are migrated on load — zone indices and boss timers shift by 1 and legacy gear id strings convert to gear objects. On boot, an existing save skips the intro cutscene and shows a "Continue" button on the character screen; starting a new game over an existing save requires a second confirming click (no native `confirm()`, which can be blocked in sandboxed embeds). New persistent fields must be added to all three of `saveGame()`, `applySave()`, and the `G` initializer.
 
 ### Input
 
@@ -48,7 +48,7 @@ Keyboard input drives the `keys` (held) and `jp` (just-pressed, cleared every fr
 
 ### Zone Data
 
-Static zone definitions live in `ZD` (an array of 4 objects). Each zone contains platform geometry, monster spawn data, NPC placement, and optional edge portals (`portals`). Zones are accessed by index; zone transitions happen via the map modal or by walking into a portal.
+Static zone definitions live in `ZD` (an array of 5 objects). Zone 0 is **Aethon City**, a safe hub with no monsters where every NPC (quest givers and shops) lives; zones 1–4 are combat zones with no NPCs. Each zone contains platform geometry, monster spawn data, NPC placement, and edge portals (`portals`). Zones are accessed by index; transitions happen via the map modal or by walking into a portal and pressing F (or the touch Talk button). Zone level locks come from each zone's `req` field — no hardcoded index checks.
 
 ### Game Loop
 
@@ -78,10 +78,11 @@ XP to next level scales as `xpNext *= 1.4` per level. Each level grants +20 HP, 
 
 ## Content Reference
 
-- **Zones**: Starter Village (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+), Ancient Ruins (Lv.15+)
+- **Zones**: Aethon City (hub, safe), Village Outskirts (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+), Ancient Ruins (Lv.15+)
 - **Monsters**: Slime, Goblin, Bat, Golem, Skeleton Archer, Shadow Wraith
-- **Spells**: Arcane Bolt, Fireball, Ice Shard, Mana Shield
-- **Skills**: Arcane Mastery → Fireball, Mana Flow → Ice Shard, Arcane Surge
+- **Spells**: Arcane Bolt, Mana Shield (base); Fireball, Ice Shard (skill unlocks)
+- **Skills**: Arcane Mastery → Fireball → Arcane Surge / Pyromancy; Mana Flow → Ice Shard → Deep Frost; Mana Flow → Greater Ward; Vitality and Gold Sense (passives)
+- **Equipment**: procedural gear drops (`rollGear`) with 5 rarity tiers (`RARS`); weapons add flat magic damage (`eqMag`), armor adds defense (`eqDef`) and max HP. 8% drop chance per kill, guaranteed rare+ from bosses. Quest-reward gear ids convert to gear objects via `GEAR_FIXED`. Click bag items to equip, equipped slots to unequip.
 - **NPCs**: Elder Mira, Guard Tomlin, Ranger Sylva, Sage Oriax
 - **Quests**: 4 quests gated by level, each requiring kills + item drops
 
