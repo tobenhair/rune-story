@@ -79,7 +79,7 @@ XP to next level scales as `xpNext *= 1.4` per level. Each level grants +20 HP, 
 ## Content Reference
 
 - **Zones**: Aethon City (hub, safe), Village Outskirts (Lv.1+), Verdant Forest (Lv.5+), Crystal Caverns (Lv.10+), Ancient Ruins (Lv.15+)
-- **Monsters**: Slime, Goblin, Bat, Golem, Skeleton Archer, Shadow Wraith
+- **Monsters**: Slime, Goblin, Bat, Golem, Skeleton Archer, Shadow Wraith. Spawns roll a 10% Elite chance (`mkMon`): ★-prefixed, 3× HP, 1.5× damage, 2.5× XP, 3× gold, golden glow, drawn larger, guaranteed rare+ gear drop. Dying drops 10% of carried gold. Boss respawn countdown is drawn top-right of the canvas in boss zones.
 - **Spells**: Arcane Bolt, Mana Shield (base); Fireball, Ice Shard (skill unlocks)
 - **Skills**: Arcane Mastery → Fireball → Arcane Surge / Pyromancy; Mana Flow → Ice Shard → Deep Frost; Mana Flow → Greater Ward; Vitality and Gold Sense (passives)
 - **Equipment**: procedural gear drops (`rollGear`) with 5 rarity tiers (`RARS`); weapons add flat magic damage (`eqMag`), armor adds defense (`eqDef`) and max HP. 8% drop chance per kill, guaranteed rare+ from bosses. Quest-reward gear ids convert to gear objects via `GEAR_FIXED`. Click bag items to equip, equipped slots to unequip.
