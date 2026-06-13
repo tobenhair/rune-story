@@ -46,6 +46,8 @@ Progress is saved to `localStorage` under the key `astralbound_save_v1` (`saveGa
 
 Keyboard input drives the `keys` (held) and `jp` (just-pressed, cleared every frame) maps. Touch controls reuse the same maps: on-screen left/right/jump buttons (plus a contextual Talk button near NPCs) are overlaid on the canvas and enabled automatically on coarse-pointer devices or on first `touchstart`. Tapping the canvas casts at the nearest monster / talks to NPCs via the existing click handler.
 
+Spells are bound to **Q W E R**. Consumables use a two-slot **potion hotbar** bound to **T** and **Y** (`G.hotbar` holds the assigned item ids): click a slot's icon (or press its key) to use the assigned potion, click the slot's label to open the assign/clear picker (`openHotbarAssign`/`assignHotbar`). `renderHotbar()` keeps the icons and quantity badges in sync and is called from `renderIP`/`renderAll`. The hotbar persists in saves like other `G` fields.
+
 ### Zone Data
 
 Static zone definitions live in `ZD` (an array of 5 objects). Zone 0 is **Aethon City**, a safe hub with no monsters where every NPC (quest givers and shops) lives; zones 1–4 are combat zones with no NPCs. Each zone contains platform geometry, monster spawn data, NPC placement, and edge portals (`portals`). Zones are accessed by index; transitions happen via the map modal or by walking into a portal and pressing F (or the touch Talk button). Zone level locks come from each zone's `req` field — no hardcoded index checks.
