@@ -83,9 +83,9 @@ canvas#gc{display:block;image-rendering:pixelated}
 .cl.d{color:#f09595}.cl.h{color:#5dcaa5}.cl.x{color:#ef9f27}.cl.q{color:#6aa3ff}
 #dlg-overlay{display:none;position:absolute;inset:0;z-index:9999;align-items:flex-end;justify-content:center;padding-bottom:70px;background:rgba(0,0,0,0.45)}
 #dlg-overlay.open{display:flex}
-#dlg-box{background:#0c0e1f;border:2px solid #6aa3ff;border-radius:12px;padding:16px 18px;width:94%;max-width:440px;pointer-events:all}
+#dlg-box{background:#0c0e1f;border:2px solid #6aa3ff;border-radius:12px;padding:16px 18px;width:94%;max-width:440px;pointer-events:all;display:flex;flex-direction:column;max-height:calc(100% - 16px)}
 #dlg-npc{font-size:13px;font-weight:500;color:#6aa3ff;margin-bottom:8px}
-#dlg-txt{font-size:12px;color:#c8c8e0;line-height:1.65;margin-bottom:12px;white-space:pre-wrap}
+#dlg-txt{font-size:12px;color:#c8c8e0;line-height:1.65;margin-bottom:12px;white-space:pre-wrap;overflow-y:auto;min-height:0;flex:1 1 auto}
 #dlg-btns{display:flex;gap:8px;flex-wrap:wrap}
 .db{padding:8px 16px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid rgba(106,163,255,0.4);background:rgba(106,163,255,0.12);color:#82b4ff}
 .db:hover{background:rgba(106,163,255,0.25)}
