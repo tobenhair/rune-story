@@ -1164,10 +1164,100 @@ function update(dt){
 // ═══════════════════════════════════════════════════════
 function drawZoneBG(){
   const z=G.zone;
-  if(z<=1)drawVillageBG();
+  if(z===0)drawCityBG();
+  else if(z===1)drawVillageBG();
   else if(z===2)drawForestBG();
   else if(z===3)drawCavernBG();
   else drawRuinsBG();
+}
+
+function drawCityBG(){
+  // Sky gradient — deep arcane night over Aethon City
+  const sky=ctx2.createLinearGradient(0,0,0,cv.height);
+  sky.addColorStop(0,'#0a081a');
+  sky.addColorStop(0.5,'#141228');
+  sky.addColorStop(0.85,'#241a3a');
+  sky.addColorStop(1,'#1a142e');
+  ctx2.fillStyle=sky;ctx2.fillRect(0,0,cv.width,cv.height);
+
+  // Stars
+  for(let i=0;i<70;i++){
+    const x=((Math.sin(i*137.5)*0.5+0.5)*cv.width);
+    const y=((Math.cos(i*97.3)*0.5+0.5)*cv.height*0.5);
+    const tw=Math.sin(gTime*2+i)*0.4+0.6;
+    ctx2.beginPath();ctx2.arc(x,y,0.8,0,Math.PI*2);
+    ctx2.fillStyle=`rgba(210,200,255,${0.6*tw})`;ctx2.fill();
+  }
+
+  // Arcane moon
+  const mx=cv.width*0.82, my=64;
+  const mg=ctx2.createRadialGradient(mx,my,4,mx,my,54);
+  mg.addColorStop(0,'rgba(190,160,255,0.45)');
+  mg.addColorStop(1,'rgba(190,160,255,0)');
+  ctx2.fillStyle=mg;ctx2.fillRect(mx-54,my-54,108,108);
+  ctx2.fillStyle='#e6dcff';ctx2.beginPath();ctx2.arc(mx,my,17,0,Math.PI*2);ctx2.fill();
+  ctx2.fillStyle='#c4b4e8';ctx2.beginPath();ctx2.arc(mx-4,my-2,3,0,Math.PI*2);ctx2.fill();
+
+  // Distant spires (parallax 0.2) — tall and thin, rising high
+  for(let i=0;i<7;i++){
+    const wx=i*210+camX*0.2;
+    const x=((wx%(cv.width+420))-210);
+    const w=30+(i%3)*10;
+    const h=cv.height*0.5+(i%4)*38;
+    ctx2.fillStyle='#1a1530';
+    ctx2.fillRect(x,cv.height-h,w,h);
+    // Pointed spire roof
+    ctx2.beginPath();ctx2.moveTo(x-3,cv.height-h);ctx2.lineTo(x+w/2,cv.height-h-28);ctx2.lineTo(x+w+3,cv.height-h);ctx2.fill();
+    // Faint windows
+    ctx2.fillStyle='rgba(150,110,230,0.4)';
+    for(let wy=cv.height-h+20;wy<cv.height-14;wy+=24)for(let ww=x+6;ww<x+w-6;ww+=14)ctx2.fillRect(ww,wy,5,7);
+  }
+
+  // Mid towers (parallax 0.45) — denser, warmly lit windows
+  for(let i=0;i<6;i++){
+    const wx=i*200+camX*0.45;
+    const x=((wx%(cv.width+400))-200);
+    const w=46+(i%2)*22;
+    const h=cv.height*0.58+(i%3)*44;
+    ctx2.fillStyle='#221a3a';
+    ctx2.fillRect(x,cv.height-h,w,h);
+    // Crenellated top
+    for(let c=0;c<w;c+=14)ctx2.fillRect(x+c,cv.height-h-7,8,7);
+    // Twinkling windows
+    for(let wy=cv.height-h+14;wy<cv.height-12;wy+=20)for(let ww=x+8;ww<x+w-8;ww+=16){
+      const lit=Math.sin(ww*0.7+wy*0.3+gTime*0.5)>-0.2;
+      ctx2.fillStyle=lit?'rgba(239,159,39,0.85)':'rgba(60,45,90,0.6)';
+      ctx2.fillRect(ww,wy,6,8);
+    }
+  }
+
+  // Foreground gate towers (parallax 0.8) — dark and massive
+  for(let i=0;i<5;i++){
+    const wx=i*260+camX*0.8;
+    const x=((wx%(cv.width+520))-260);
+    const w=66+(i%2)*30;
+    const h=cv.height*0.46+(i%3)*28;
+    ctx2.fillStyle='#0e0a1c';
+    ctx2.fillRect(x,cv.height-h,w,h);
+    for(let c=0;c<w;c+=18)ctx2.fillRect(x+c,cv.height-h-9,10,9);
+    // A couple of warm windows
+    ctx2.fillStyle='rgba(239,159,39,0.7)';
+    ctx2.fillRect(x+w/2-4,cv.height-h+22,8,11);
+    ctx2.fillRect(x+12,cv.height-42,7,10);
+  }
+
+  // Floating arcane lanterns drifting upward
+  for(let i=0;i<10;i++){
+    const seed=i*53.7;
+    const x=((seed*100+gTime*10)%(cv.width+60))-30;
+    const y=cv.height*0.72-((gTime*18+seed*40)%(cv.height*0.72));
+    const pulse=0.5+Math.sin(gTime*3+seed)*0.3;
+    const rg=ctx2.createRadialGradient(x,y,0.5,x,y,6);
+    rg.addColorStop(0,`rgba(190,150,255,${pulse})`);
+    rg.addColorStop(1,'rgba(190,150,255,0)');
+    ctx2.fillStyle=rg;ctx2.fillRect(x-6,y-6,12,12);
+    ctx2.fillStyle=`rgba(230,215,255,${pulse})`;ctx2.beginPath();ctx2.arc(x,y,1.4,0,Math.PI*2);ctx2.fill();
+  }
 }
 
 function drawVillageBG(){
