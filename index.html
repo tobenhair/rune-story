@@ -83,9 +83,9 @@ canvas#gc{display:block;image-rendering:pixelated}
 .cl.d{color:#f09595}.cl.h{color:#5dcaa5}.cl.x{color:#ef9f27}.cl.q{color:#6aa3ff}
 #dlg-overlay{display:none;position:absolute;inset:0;z-index:9999;align-items:flex-end;justify-content:center;padding-bottom:70px;background:rgba(0,0,0,0.45)}
 #dlg-overlay.open{display:flex}
-#dlg-box{background:#0c0e1f;border:2px solid #6aa3ff;border-radius:12px;padding:16px 18px;width:94%;max-width:440px;pointer-events:all}
+#dlg-box{background:#0c0e1f;border:2px solid #6aa3ff;border-radius:12px;padding:16px 18px;width:94%;max-width:440px;pointer-events:all;display:flex;flex-direction:column;max-height:calc(100% - 16px)}
 #dlg-npc{font-size:13px;font-weight:500;color:#6aa3ff;margin-bottom:8px}
-#dlg-txt{font-size:12px;color:#c8c8e0;line-height:1.65;margin-bottom:12px;white-space:pre-wrap}
+#dlg-txt{font-size:12px;color:#c8c8e0;line-height:1.65;margin-bottom:12px;white-space:pre-wrap;overflow-y:auto;min-height:0;flex:1 1 auto}
 #dlg-btns{display:flex;gap:8px;flex-wrap:wrap}
 .db{padding:8px 16px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid rgba(106,163,255,0.4);background:rgba(106,163,255,0.12);color:#82b4ff}
 .db:hover{background:rgba(106,163,255,0.25)}
@@ -931,16 +931,16 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 // GAME ENGINE
 // ═══════════════════════════════════════════════════════
 const GRAV=900,JUMP=-390,SPD=175;
-const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null};
+const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null};
 const ZD=[
   {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'guard',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'guard',forge:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'guard',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'sage',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'elder',q:'q5'},{name:'Seer Vesper',x:560,y:92,sheet:'sage',q:'q6'}],portals:[{toZone:1,x:1100,y:388,dir:'right'}]},
-  {name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,plats:[{x:0,y:310,w:280,h:14,c:'#1e4a7a'},{x:320,y:278,w:200,h:14,c:'#1e4a7a'},{x:560,y:244,w:160,h:14,c:'#1e4a7a'},{x:760,y:278,w:180,h:14,c:'#1e4a7a'},{x:980,y:244,w:220,h:14,c:'#1e4a7a'},{x:140,y:218,w:140,h:14,c:'#2a5a8a'},{x:420,y:174,w:120,h:14,c:'#2a5a8a'},{x:660,y:154,w:130,h:14,c:'#2a5a8a'},{x:870,y:170,w:110,h:14,c:'#2a5a8a'},{x:0,y:388,w:1400,h:18,c:'#163052'}],mons:[{t:'slime',x:180,y:290},{t:'slime',x:460,y:258},{t:'goblin',x:630,y:224},{t:'goblin',x:850,y:258},{t:'slime',x:230,y:198},{t:'goblin',x:710,y:134}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:2,x:1250,y:388,dir:'right'}]},
-  {name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,plats:[{x:0,y:310,w:240,h:14,c:'#2a5a30'},{x:280,y:274,w:180,h:14,c:'#2a5a30'},{x:510,y:238,w:200,h:14,c:'#2a5a30'},{x:760,y:278,w:180,h:14,c:'#2a5a30'},{x:990,y:244,w:220,h:14,c:'#2a5a30'},{x:110,y:208,w:130,h:14,c:'#3a7040'},{x:400,y:164,w:110,h:14,c:'#3a7040'},{x:620,y:144,w:130,h:14,c:'#3a7040'},{x:850,y:154,w:110,h:14,c:'#3a7040'},{x:0,y:388,w:1500,h:18,c:'#1a4020'}],mons:[{t:'goblin',x:340,y:254},{t:'goblin',x:600,y:218},{t:'bat',x:830,y:254},{t:'bat',x:1070,y:218},{t:'goblin',x:460,y:144},{t:'bat',x:700,y:124}],npcs:[],portals:[{toZone:1,x:40,y:388,dir:'left'},{toZone:3,x:1360,y:388,dir:'right'}]},
-  {name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,plats:[{x:0,y:310,w:200,h:14,c:'#3a2060'},{x:250,y:274,w:160,h:14,c:'#3a2060'},{x:460,y:238,w:180,h:14,c:'#3a2060'},{x:700,y:276,w:160,h:14,c:'#3a2060'},{x:920,y:238,w:200,h:14,c:'#3a2060'},{x:120,y:204,w:110,h:14,c:'#5a3090'},{x:370,y:158,w:120,h:14,c:'#5a3090'},{x:600,y:138,w:130,h:14,c:'#5a3090'},{x:820,y:154,w:110,h:14,c:'#5a3090'},{x:0,y:388,w:1300,h:18,c:'#1e0a3a'}],mons:[{t:'bat',x:300,y:254},{t:'golem',x:540,y:218},{t:'bat',x:780,y:254},{t:'golem',x:1010,y:218},{t:'bat',x:430,y:138},{t:'golem',x:660,y:118}],npcs:[],portals:[{toZone:2,x:40,y:388,dir:'left'},{toZone:4,x:1250,y:388,dir:'right'}]},
-  {name:'Ancient Ruins',sky:'#0a0812',bound:1350,req:15,plats:[{x:0,y:310,w:210,h:14,c:'#2a2040'},{x:260,y:276,w:170,h:14,c:'#2a2040'},{x:480,y:244,w:180,h:14,c:'#2a2040'},{x:720,y:280,w:160,h:14,c:'#2a2040'},{x:940,y:244,w:210,h:14,c:'#2a2040'},{x:130,y:208,w:110,h:14,c:'#3a3060'},{x:380,y:162,w:120,h:14,c:'#3a3060'},{x:600,y:140,w:130,h:14,c:'#3a3060'},{x:820,y:158,w:110,h:14,c:'#3a3060'},{x:0,y:388,w:1400,h:18,c:'#1a1030'}],mons:[{t:'skeleton',x:310,y:256},{t:'skeleton',x:560,y:224},{t:'wraith',x:800,y:256},{t:'wraith',x:1020,y:220},{t:'skeleton',x:440,y:142},{t:'wraith',x:670,y:120}],npcs:[],portals:[{toZone:3,x:40,y:388,dir:'left'}]}
+  {name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,plats:[{x:0,y:310,w:280,h:14,c:'#1e4a7a'},{x:320,y:278,w:200,h:14,c:'#1e4a7a'},{x:560,y:244,w:160,h:14,c:'#1e4a7a'},{x:760,y:278,w:180,h:14,c:'#1e4a7a'},{x:980,y:244,w:220,h:14,c:'#1e4a7a'},{x:140,y:218,w:140,h:14,c:'#2a5a8a'},{x:420,y:174,w:120,h:14,c:'#2a5a8a'},{x:660,y:154,w:130,h:14,c:'#2a5a8a'},{x:870,y:170,w:110,h:14,c:'#2a5a8a'},{x:480,y:104,w:140,h:14,c:'#3a6a9a'},{x:700,y:90,w:150,h:14,c:'#3a6a9a'},{x:0,y:388,w:1400,h:18,c:'#163052'}],mons:[{t:'slime',x:140,y:310},{t:'goblin',x:420,y:278},{t:'slime',x:850,y:278},{t:'goblin',x:1080,y:244},{t:'slime',x:210,y:218},{t:'goblin',x:480,y:174},{t:'goblin',x:720,y:154},{t:'slime',x:550,y:104},{t:'goblin',x:770,y:90}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:2,x:1250,y:388,dir:'right'}]},
+  {name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,plats:[{x:0,y:310,w:240,h:14,c:'#2a5a30'},{x:280,y:274,w:180,h:14,c:'#2a5a30'},{x:510,y:238,w:200,h:14,c:'#2a5a30'},{x:760,y:278,w:180,h:14,c:'#2a5a30'},{x:990,y:244,w:220,h:14,c:'#2a5a30'},{x:110,y:208,w:130,h:14,c:'#3a7040'},{x:400,y:164,w:110,h:14,c:'#3a7040'},{x:620,y:144,w:130,h:14,c:'#3a7040'},{x:850,y:154,w:110,h:14,c:'#3a7040'},{x:440,y:94,w:130,h:14,c:'#4a8050'},{x:640,y:84,w:150,h:14,c:'#4a8050'},{x:0,y:388,w:1500,h:18,c:'#1a4020'}],mons:[{t:'goblin',x:120,y:310},{t:'goblin',x:360,y:274},{t:'bat',x:850,y:278},{t:'bat',x:1100,y:244},{t:'goblin',x:170,y:208},{t:'goblin',x:455,y:164},{t:'bat',x:685,y:144},{t:'goblin',x:505,y:94},{t:'bat',x:715,y:84}],npcs:[],portals:[{toZone:1,x:40,y:388,dir:'left'},{toZone:3,x:1360,y:388,dir:'right'}]},
+  {name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,plats:[{x:0,y:310,w:200,h:14,c:'#3a2060'},{x:250,y:274,w:160,h:14,c:'#3a2060'},{x:460,y:238,w:180,h:14,c:'#3a2060'},{x:700,y:276,w:160,h:14,c:'#3a2060'},{x:920,y:238,w:200,h:14,c:'#3a2060'},{x:120,y:204,w:110,h:14,c:'#5a3090'},{x:370,y:158,w:120,h:14,c:'#5a3090'},{x:600,y:138,w:130,h:14,c:'#5a3090'},{x:820,y:154,w:110,h:14,c:'#5a3090'},{x:410,y:88,w:130,h:14,c:'#6a40a0'},{x:620,y:78,w:140,h:14,c:'#6a40a0'},{x:0,y:388,w:1300,h:18,c:'#1e0a3a'}],mons:[{t:'bat',x:100,y:310},{t:'golem',x:330,y:274},{t:'bat',x:780,y:276},{t:'golem',x:1010,y:238},{t:'bat',x:175,y:204},{t:'golem',x:430,y:158},{t:'bat',x:665,y:138},{t:'golem',x:475,y:88},{t:'bat',x:690,y:78}],npcs:[],portals:[{toZone:2,x:40,y:388,dir:'left'},{toZone:4,x:1250,y:388,dir:'right'}]},
+  {name:'Ancient Ruins',sky:'#0a0812',bound:1350,req:15,plats:[{x:0,y:310,w:210,h:14,c:'#2a2040'},{x:260,y:276,w:170,h:14,c:'#2a2040'},{x:480,y:244,w:180,h:14,c:'#2a2040'},{x:720,y:280,w:160,h:14,c:'#2a2040'},{x:940,y:244,w:210,h:14,c:'#2a2040'},{x:130,y:208,w:110,h:14,c:'#3a3060'},{x:380,y:162,w:120,h:14,c:'#3a3060'},{x:600,y:140,w:130,h:14,c:'#3a3060'},{x:820,y:158,w:110,h:14,c:'#3a3060'},{x:420,y:92,w:130,h:14,c:'#4a4070'},{x:620,y:82,w:140,h:14,c:'#4a4070'},{x:0,y:388,w:1400,h:18,c:'#1a1030'}],mons:[{t:'skeleton',x:105,y:310},{t:'skeleton',x:345,y:276},{t:'wraith',x:800,y:280},{t:'wraith',x:1040,y:244},{t:'skeleton',x:185,y:208},{t:'skeleton',x:440,y:162},{t:'wraith',x:665,y:140},{t:'skeleton',x:485,y:92},{t:'wraith',x:690,y:82}],npcs:[],portals:[{toZone:3,x:40,y:388,dir:'left'}]}
 ];
 const SPELLS=[{n:'Arcane Bolt',e:'🔵',mn:12,mx:20,mp:5,cd:0.7,c:'#82b4ff',r:320,proj:'bolt',pw:8,ph:8,sfx:()=>sfxBolt()},{n:'Fireball',e:'🔥',mn:25,mx:42,mp:18,cd:2.5,c:'#f09575',r:360,proj:'fireball',pw:10,ph:10,sfx:()=>sfxFireball()},{n:'Ice Shard',e:'❄️',mn:18,mx:28,mp:12,cd:1.5,c:'#85b7eb',r:340,slow:true,proj:'ice',pw:10,ph:10,sfx:()=>sfxIce()},{n:'Mana Shield',e:'🛡',mn:0,mx:0,mp:20,cd:8,c:'#af99ec',shield:true,sfx:()=>sfxShield()}];
-const ITEMS={slime_goo:{n:'Slime Goo',e:'🟢'},goblin_ear:{n:'Goblin Ear',e:'👂'},bat_wing:{n:'Bat Wing',e:'🦇'},crystal_shard:{n:'Crystal Shard',e:'💎'},bone_shard:{n:'Bone Shard',e:'🦴'},shadow_essence:{n:'Shadow Essence',e:'🌑'},apprentice_robe:{n:'Apprentice Robe',e:'👘',slot:'armor',s:'+5 INT'},wand_of_sparks:{n:'Wand of Sparks',e:'🪄',slot:'weapon',s:'+8 Magic'},forest_staff:{n:'Forest Staff',e:'🌿',slot:'weapon',s:'+15 Magic'},crystal_staff:{n:'Crystal Staff',e:'🔮',slot:'weapon',s:'+22 Magic'},runic_robe:{n:'Runic Robe',e:'✨',slot:'armor',s:'+12 INT'},health_potion:{n:'Health Potion',e:'🧪',consumable:true,desc:'Restores 50 HP'},mana_potion:{n:'Mana Potion',e:'💧',consumable:true,desc:'Restores 40 MP'},ward_scroll:{n:'Scroll of Warding',e:'📜',consumable:true,desc:'Grants 10s Mana Shield'}};
+const ITEMS={slime_goo:{n:'Slime Goo',e:'🟢',val:2},goblin_ear:{n:'Goblin Ear',e:'👂',val:3},bat_wing:{n:'Bat Wing',e:'🦇',val:4},crystal_shard:{n:'Crystal Shard',e:'💎',val:8},bone_shard:{n:'Bone Shard',e:'🦴',val:5},shadow_essence:{n:'Shadow Essence',e:'🌑',val:9},apprentice_robe:{n:'Apprentice Robe',e:'👘',slot:'armor',s:'+5 INT'},wand_of_sparks:{n:'Wand of Sparks',e:'🪄',slot:'weapon',s:'+8 Magic'},forest_staff:{n:'Forest Staff',e:'🌿',slot:'weapon',s:'+15 Magic'},crystal_staff:{n:'Crystal Staff',e:'🔮',slot:'weapon',s:'+22 Magic'},runic_robe:{n:'Runic Robe',e:'✨',slot:'armor',s:'+12 INT'},health_potion:{n:'Health Potion',e:'🧪',consumable:true,desc:'Restores 50 HP'},mana_potion:{n:'Mana Potion',e:'💧',consumable:true,desc:'Restores 40 MP'},ward_scroll:{n:'Scroll of Warding',e:'📜',consumable:true,desc:'Grants 10s Mana Shield'}};
 const MDEF={slime:{n:'Slime',sheet:'slime',frames:30,hp:30,mn:3,mx:7,xp:12,gold:2,loot:[['slime_goo',0.75]],spd:28,pat:60,fly:false},goblin:{n:'Goblin',sheet:'goblin',frames:20,hp:50,mn:6,mx:12,xp:20,gold:4,loot:[['goblin_ear',0.55]],spd:42,pat:80,fly:false},bat:{n:'Cave Bat',sheet:'bat',frames:16,hp:40,mn:8,mx:15,xp:28,gold:3,loot:[['bat_wing',0.65]],spd:55,pat:100,fly:true},golem:{n:'Crystal Golem',sheet:'golem',frames:40,hp:120,mn:18,mx:30,xp:65,gold:10,loot:[['crystal_shard',0.8]],spd:18,pat:50,fly:false},skeleton:{n:'Skeleton Archer',sheet:'skeleton',frames:20,hp:65,mn:10,mx:18,xp:35,gold:5,loot:[['bone_shard',0.70]],spd:35,pat:70,fly:false},wraith:{n:'Shadow Wraith',sheet:'wraith',frames:30,hp:80,mn:14,mx:22,xp:45,gold:7,loot:[['shadow_essence',0.65]],spd:50,pat:90,fly:true}};
 // Quest chain tells the story of the Hollow Rift: each giver adds a piece (txt = offer, done = turn-in reveal, after = post-quest line, lock = shown until prev quest is done)
 const QUESTS=[
@@ -1056,7 +1056,7 @@ function saveGame(){
       gold:G.gold,skillPoints:G.skillPoints,zone:G.zone,
       kills:G.kills,questStates:G.questStates,equipment:G.equipment,
       inventory:G.inventory.filter(x=>x&&x.qty>0),spells:G.spells,
-      bounty:G.bounty,skills:[...USK],bossTimers,
+      bounty:G.bounty,lastSold:G.lastSold,skills:[...USK],bossTimers,
       mv:+document.getElementById('vol-music').value,
       sv:+document.getElementById('vol-sfx').value
     }));
@@ -1082,6 +1082,7 @@ function applySave(d){
   G.spells=d.spells||[true,false,false,true];
   G.spells[3]=true; // Mana Shield is a base spell; older saves stored it locked
   G.bounty=(d.bounty&&MDEF[d.bounty.t])?d.bounty:null;
+  G.lastSold=(d.lastSold&&d.lastSold.entry)?d.lastSold:null;
   G.shield=false;G.shieldT=0;
   USK.clear();(d.skills||[]).forEach(s=>USK.add(s));
   if(Array.isArray(d.bossTimers))d.bossTimers.forEach((t,i)=>{const j=i+mig;if(j<bossTimers.length&&typeof t==='number')bossTimers[j]=t;});
@@ -1164,10 +1165,100 @@ function update(dt){
 // ═══════════════════════════════════════════════════════
 function drawZoneBG(){
   const z=G.zone;
-  if(z<=1)drawVillageBG();
+  if(z===0)drawCityBG();
+  else if(z===1)drawVillageBG();
   else if(z===2)drawForestBG();
   else if(z===3)drawCavernBG();
   else drawRuinsBG();
+}
+
+function drawCityBG(){
+  // Sky gradient — deep arcane night over Aethon City
+  const sky=ctx2.createLinearGradient(0,0,0,cv.height);
+  sky.addColorStop(0,'#0a081a');
+  sky.addColorStop(0.5,'#141228');
+  sky.addColorStop(0.85,'#241a3a');
+  sky.addColorStop(1,'#1a142e');
+  ctx2.fillStyle=sky;ctx2.fillRect(0,0,cv.width,cv.height);
+
+  // Stars
+  for(let i=0;i<70;i++){
+    const x=((Math.sin(i*137.5)*0.5+0.5)*cv.width);
+    const y=((Math.cos(i*97.3)*0.5+0.5)*cv.height*0.5);
+    const tw=Math.sin(gTime*2+i)*0.4+0.6;
+    ctx2.beginPath();ctx2.arc(x,y,0.8,0,Math.PI*2);
+    ctx2.fillStyle=`rgba(210,200,255,${0.6*tw})`;ctx2.fill();
+  }
+
+  // Arcane moon
+  const mx=cv.width*0.82, my=64;
+  const mg=ctx2.createRadialGradient(mx,my,4,mx,my,54);
+  mg.addColorStop(0,'rgba(190,160,255,0.45)');
+  mg.addColorStop(1,'rgba(190,160,255,0)');
+  ctx2.fillStyle=mg;ctx2.fillRect(mx-54,my-54,108,108);
+  ctx2.fillStyle='#e6dcff';ctx2.beginPath();ctx2.arc(mx,my,17,0,Math.PI*2);ctx2.fill();
+  ctx2.fillStyle='#c4b4e8';ctx2.beginPath();ctx2.arc(mx-4,my-2,3,0,Math.PI*2);ctx2.fill();
+
+  // Distant spires (parallax 0.2) — tall and thin, rising high
+  for(let i=0;i<7;i++){
+    const wx=i*210+camX*0.2;
+    const x=((wx%(cv.width+420))-210);
+    const w=30+(i%3)*10;
+    const h=cv.height*0.6+(i%4)*44;
+    ctx2.fillStyle='#1a1530';
+    ctx2.fillRect(x,cv.height-h,w,h);
+    // Pointed spire roof
+    ctx2.beginPath();ctx2.moveTo(x-3,cv.height-h);ctx2.lineTo(x+w/2,cv.height-h-28);ctx2.lineTo(x+w+3,cv.height-h);ctx2.fill();
+    // Faint windows
+    ctx2.fillStyle='rgba(150,110,230,0.4)';
+    for(let wy=cv.height-h+20;wy<cv.height-14;wy+=24)for(let ww=x+6;ww<x+w-6;ww+=14)ctx2.fillRect(ww,wy,5,7);
+  }
+
+  // Mid towers (parallax 0.45) — denser, warmly lit windows
+  for(let i=0;i<6;i++){
+    const wx=i*200+camX*0.45;
+    const x=((wx%(cv.width+400))-200);
+    const w=46+(i%2)*22;
+    const h=cv.height*0.66+(i%3)*48;
+    ctx2.fillStyle='#221a3a';
+    ctx2.fillRect(x,cv.height-h,w,h);
+    // Crenellated top
+    for(let c=0;c<w;c+=14)ctx2.fillRect(x+c,cv.height-h-7,8,7);
+    // Twinkling windows
+    for(let wy=cv.height-h+14;wy<cv.height-12;wy+=20)for(let ww=x+8;ww<x+w-8;ww+=16){
+      const lit=Math.sin(ww*0.7+wy*0.3+gTime*0.5)>-0.2;
+      ctx2.fillStyle=lit?'rgba(239,159,39,0.85)':'rgba(60,45,90,0.6)';
+      ctx2.fillRect(ww,wy,6,8);
+    }
+  }
+
+  // Foreground gate towers (parallax 0.8) — dark and massive
+  for(let i=0;i<5;i++){
+    const wx=i*260+camX*0.8;
+    const x=((wx%(cv.width+520))-260);
+    const w=66+(i%2)*30;
+    const h=cv.height*0.52+(i%3)*32;
+    ctx2.fillStyle='#0e0a1c';
+    ctx2.fillRect(x,cv.height-h,w,h);
+    for(let c=0;c<w;c+=18)ctx2.fillRect(x+c,cv.height-h-9,10,9);
+    // A couple of warm windows
+    ctx2.fillStyle='rgba(239,159,39,0.7)';
+    ctx2.fillRect(x+w/2-4,cv.height-h+22,8,11);
+    ctx2.fillRect(x+12,cv.height-42,7,10);
+  }
+
+  // Floating arcane lanterns drifting upward
+  for(let i=0;i<10;i++){
+    const seed=i*53.7;
+    const x=((seed*100+gTime*10)%(cv.width+60))-30;
+    const y=cv.height*0.72-((gTime*18+seed*40)%(cv.height*0.72));
+    const pulse=0.5+Math.sin(gTime*3+seed)*0.3;
+    const rg=ctx2.createRadialGradient(x,y,0.5,x,y,6);
+    rg.addColorStop(0,`rgba(190,150,255,${pulse})`);
+    rg.addColorStop(1,'rgba(190,150,255,0)');
+    ctx2.fillStyle=rg;ctx2.fillRect(x-6,y-6,12,12);
+    ctx2.fillStyle=`rgba(230,215,255,${pulse})`;ctx2.beginPath();ctx2.arc(x,y,1.4,0,Math.PI*2);ctx2.fill();
+  }
 }
 
 function drawVillageBG(){
@@ -1199,19 +1290,19 @@ function drawVillageBG(){
 
   // Distant mountains (parallax 0.2)
   ctx2.fillStyle='#1a2244';
-  ctx2.beginPath();ctx2.moveTo(0,cv.height-90);
+  ctx2.beginPath();ctx2.moveTo(0,cv.height-140);
   for(let x=0;x<=cv.width+50;x+=20){
     const wx=x+camX*0.2;
-    ctx2.lineTo(x,cv.height-90-Math.abs(Math.sin(wx*0.008))*40-Math.abs(Math.sin(wx*0.003))*25);
+    ctx2.lineTo(x,cv.height-140-Math.abs(Math.sin(wx*0.008))*58-Math.abs(Math.sin(wx*0.003))*34);
   }
   ctx2.lineTo(cv.width,cv.height);ctx2.lineTo(0,cv.height);ctx2.fill();
 
   // Mid hills (parallax 0.4)
   ctx2.fillStyle='#121a36';
-  ctx2.beginPath();ctx2.moveTo(0,cv.height-60);
+  ctx2.beginPath();ctx2.moveTo(0,cv.height-95);
   for(let x=0;x<=cv.width+50;x+=15){
     const wx=x+camX*0.4;
-    ctx2.lineTo(x,cv.height-60-Math.abs(Math.sin(wx*0.015))*25-Math.abs(Math.sin(wx*0.006+1))*18);
+    ctx2.lineTo(x,cv.height-95-Math.abs(Math.sin(wx*0.015))*38-Math.abs(Math.sin(wx*0.006+1))*26);
   }
   ctx2.lineTo(cv.width,cv.height);ctx2.lineTo(0,cv.height);ctx2.fill();
 
@@ -1220,16 +1311,16 @@ function drawVillageBG(){
   for(let i=0;i<10;i++){
     const wx=i*150+camX*0.55;
     const x=((wx%(cv.width+300))-150);
-    const h=22+(i%3)*8;
-    ctx2.fillRect(x,cv.height-50,40,h);
+    const h=55+(i%3)*16;
+    ctx2.fillRect(x,cv.height-90,46,h);
     // Roof triangle
     ctx2.beginPath();
-    ctx2.moveTo(x-4,cv.height-50);
-    ctx2.lineTo(x+20,cv.height-66);
-    ctx2.lineTo(x+44,cv.height-50);
+    ctx2.moveTo(x-5,cv.height-90);
+    ctx2.lineTo(x+23,cv.height-114);
+    ctx2.lineTo(x+51,cv.height-90);
     ctx2.fill();
     // Tiny lit window
-    ctx2.fillStyle='#ef9f27';ctx2.fillRect(x+15,cv.height-35,4,5);
+    ctx2.fillStyle='#ef9f27';ctx2.fillRect(x+18,cv.height-66,5,6);
     ctx2.fillStyle='#0e1428';
   }
 
@@ -1239,12 +1330,12 @@ function drawVillageBG(){
     const wx=i*200+camX*0.85;
     const x=((wx%(cv.width+400))-200);
     // Trunk
-    ctx2.fillRect(x-3,cv.height-60,5,60);
+    ctx2.fillRect(x-4,cv.height-95,7,95);
     // Foliage triangles
-    ctx2.beginPath();ctx2.moveTo(x,cv.height-90);
-    ctx2.lineTo(x-22,cv.height-50);ctx2.lineTo(x+22,cv.height-50);ctx2.fill();
-    ctx2.beginPath();ctx2.moveTo(x,cv.height-105);
-    ctx2.lineTo(x-18,cv.height-72);ctx2.lineTo(x+18,cv.height-72);ctx2.fill();
+    ctx2.beginPath();ctx2.moveTo(x,cv.height-142);
+    ctx2.lineTo(x-32,cv.height-78);ctx2.lineTo(x+32,cv.height-78);ctx2.fill();
+    ctx2.beginPath();ctx2.moveTo(x,cv.height-166);
+    ctx2.lineTo(x-26,cv.height-112);ctx2.lineTo(x+26,cv.height-112);ctx2.fill();
   }
 
   // Drifting fireflies
@@ -1271,11 +1362,11 @@ function drawForestBG(){
   for(let i=0;i<12;i++){
     const wx=i*120+camX*0.2;
     const x=((wx%(cv.width+200))-100);
-    const h=80+(i%3)*15;
-    ctx2.fillRect(x-2,cv.height-h,4,h);
-    ctx2.beginPath();ctx2.arc(x,cv.height-h-10,22,0,Math.PI*2);ctx2.fill();
-    ctx2.beginPath();ctx2.arc(x-12,cv.height-h+5,18,0,Math.PI*2);ctx2.fill();
-    ctx2.beginPath();ctx2.arc(x+12,cv.height-h+8,16,0,Math.PI*2);ctx2.fill();
+    const h=130+(i%3)*22;
+    ctx2.fillRect(x-3,cv.height-h,5,h);
+    ctx2.beginPath();ctx2.arc(x,cv.height-h-14,30,0,Math.PI*2);ctx2.fill();
+    ctx2.beginPath();ctx2.arc(x-16,cv.height-h+7,24,0,Math.PI*2);ctx2.fill();
+    ctx2.beginPath();ctx2.arc(x+16,cv.height-h+11,22,0,Math.PI*2);ctx2.fill();
   }
 
   // Light rays through canopy
@@ -1294,12 +1385,12 @@ function drawForestBG(){
   for(let i=0;i<10;i++){
     const wx=i*155+camX*0.5;
     const x=((wx%(cv.width+200))-100);
-    const h=120+(i%4)*20;
-    ctx2.fillRect(x-4,cv.height-h,8,h);
-    ctx2.beginPath();ctx2.arc(x,cv.height-h-8,30,0,Math.PI*2);ctx2.fill();
-    ctx2.beginPath();ctx2.arc(x-16,cv.height-h+8,24,0,Math.PI*2);ctx2.fill();
-    ctx2.beginPath();ctx2.arc(x+16,cv.height-h+12,22,0,Math.PI*2);ctx2.fill();
-    ctx2.beginPath();ctx2.arc(x,cv.height-h+22,26,0,Math.PI*2);ctx2.fill();
+    const h=185+(i%4)*28;
+    ctx2.fillRect(x-5,cv.height-h,11,h);
+    ctx2.beginPath();ctx2.arc(x,cv.height-h-10,42,0,Math.PI*2);ctx2.fill();
+    ctx2.beginPath();ctx2.arc(x-22,cv.height-h+11,34,0,Math.PI*2);ctx2.fill();
+    ctx2.beginPath();ctx2.arc(x+22,cv.height-h+16,32,0,Math.PI*2);ctx2.fill();
+    ctx2.beginPath();ctx2.arc(x,cv.height-h+30,36,0,Math.PI*2);ctx2.fill();
   }
 
   // Ground bushes (parallax 0.85)
@@ -1345,9 +1436,9 @@ function drawCavernBG(){
   for(let i=0;i<10;i++){
     const wx=i*145+camX*0.35;
     const x=((wx%(cv.width+200))-100);
-    const h=40+(i%3)*20;
+    const h=70+(i%3)*30;
     ctx2.beginPath();
-    ctx2.moveTo(x-12,0);ctx2.lineTo(x,h);ctx2.lineTo(x+12,0);ctx2.closePath();ctx2.fill();
+    ctx2.moveTo(x-16,0);ctx2.lineTo(x,h);ctx2.lineTo(x+16,0);ctx2.closePath();ctx2.fill();
   }
 
   // Mid cave stalagmites (parallax 0.55)
@@ -1355,9 +1446,9 @@ function drawCavernBG(){
   for(let i=0;i<8;i++){
     const wx=i*180+camX*0.55;
     const x=((wx%(cv.width+200))-100);
-    const h=60+(i%3)*15;
+    const h=100+(i%3)*26;
     ctx2.beginPath();
-    ctx2.moveTo(x-14,cv.height);ctx2.lineTo(x,cv.height-h);ctx2.lineTo(x+14,cv.height);ctx2.closePath();ctx2.fill();
+    ctx2.moveTo(x-18,cv.height);ctx2.lineTo(x,cv.height-h);ctx2.lineTo(x+18,cv.height);ctx2.closePath();ctx2.fill();
   }
 
   // Glowing crystal clusters embedded in walls (parallax 0.7)
@@ -1404,15 +1495,15 @@ function drawRuinsBG(){
   if(Math.floor(gTime*1.4)%22===0){ctx2.fillStyle='rgba(190,190,255,0.035)';ctx2.fillRect(0,0,cv.width,cv.height);}
   // Far ruins pillars (parallax 0.15)
   ctx2.fillStyle='rgba(45,35,65,0.55)';
-  for(let i=0;i<8;i++){const wx=i*180+camX*0.15,x=((wx%(cv.width+300))-150),h=90+(i%4)*22;ctx2.fillRect(x-6,cv.height-h,12,h);ctx2.fillRect(x-10,cv.height-h,20,7);if(i%2===0)ctx2.fillRect(x-3,cv.height-h-14,6,14);else ctx2.fillRect(x-7,cv.height-h-18,14,18);}
+  for(let i=0;i<8;i++){const wx=i*180+camX*0.15,x=((wx%(cv.width+300))-150),h=140+(i%4)*30;ctx2.fillRect(x-8,cv.height-h,16,h);ctx2.fillRect(x-12,cv.height-h,24,9);if(i%2===0)ctx2.fillRect(x-4,cv.height-h-18,8,18);else ctx2.fillRect(x-9,cv.height-h-24,18,24);}
   // Crumbling arches (parallax 0.3)
   ctx2.fillStyle='#160e28';
-  for(let i=0;i<5;i++){const wx=i*260+camX*0.3,x=((wx%(cv.width+400))-200),ah=75+(i%3)*20;ctx2.fillRect(x-40,cv.height-ah,16,ah);ctx2.fillRect(x+24,cv.height-ah,16,ah);if(i%2===0){ctx2.beginPath();ctx2.arc(x,cv.height-ah,28,Math.PI,Math.PI*2);ctx2.fill();}}
+  for(let i=0;i<5;i++){const wx=i*260+camX*0.3,x=((wx%(cv.width+400))-200),ah=120+(i%3)*28;ctx2.fillRect(x-48,cv.height-ah,18,ah);ctx2.fillRect(x+30,cv.height-ah,18,ah);if(i%2===0){ctx2.beginPath();ctx2.arc(x,cv.height-ah,36,Math.PI,Math.PI*2);ctx2.fill();}}
   // Glowing runes on stones (parallax 0.45)
   for(let i=0;i<10;i++){const wx=i*130+camX*0.45,x=((wx%(cv.width+200))-100),y=cv.height*0.38+((i*41)%100),pulse=Math.sin(gTime*1.6+i*0.8)*0.3+0.7;ctx2.fillStyle='#120e1c';ctx2.fillRect(x-10,y-7,20,14);ctx2.fillStyle=`rgba(140,90,230,${pulse*0.45})`;ctx2.fillRect(x-6,y-3,12,6);ctx2.fillStyle=`rgba(190,150,255,${pulse*0.65})`;ctx2.fillRect(x-2,y-1,4,2);}
   // Mid ruins walls (parallax 0.6)
   ctx2.fillStyle='#0e0a18';
-  for(let i=0;i<6;i++){const wx=i*220+camX*0.6,x=((wx%(cv.width+400))-200),h=140+(i%3)*28,w=48+(i%2)*28;ctx2.fillRect(x,cv.height-h,w,h);for(let c=0;c<3;c++)ctx2.fillRect(x+c*17,cv.height-h-11,11,11);ctx2.fillStyle='#080610';ctx2.fillRect(x+7,cv.height-h+18,13,18);ctx2.fillStyle='#0e0a18';}
+  for(let i=0;i<6;i++){const wx=i*220+camX*0.6,x=((wx%(cv.width+400))-200),h=200+(i%3)*36,w=56+(i%2)*30;ctx2.fillRect(x,cv.height-h,w,h);for(let c=0;c<3;c++)ctx2.fillRect(x+c*20,cv.height-h-13,13,13);ctx2.fillStyle='#080610';ctx2.fillRect(x+9,cv.height-h+22,16,22);ctx2.fillStyle='#0e0a18';}
   // Floating rune circles (parallax 0.75)
   for(let i=0;i<6;i++){const wx=i*170+camX*0.75,x=((wx%(cv.width+200))-100),y=cv.height*0.32+Math.sin(gTime*0.5+i)*18,pulse=Math.sin(gTime*2.1+i*1.4)*0.2+0.38;const rg=ctx2.createRadialGradient(x,y,1,x,y,16);rg.addColorStop(0,`rgba(170,110,255,${pulse})`);rg.addColorStop(0.5,`rgba(90,50,170,${pulse*0.35})`);rg.addColorStop(1,'rgba(90,50,170,0)');ctx2.fillStyle=rg;ctx2.fillRect(x-16,y-16,32,32);ctx2.strokeStyle=`rgba(190,150,255,${pulse*0.55})`;ctx2.lineWidth=1;ctx2.beginPath();ctx2.arc(x,y,7,0,Math.PI*2);ctx2.stroke();ctx2.beginPath();ctx2.moveTo(x-9,y);ctx2.lineTo(x+9,y);ctx2.stroke();ctx2.beginPath();ctx2.moveTo(x,y-9);ctx2.lineTo(x,y+9);ctx2.stroke();}
   // Ash particles drifting down
@@ -1553,8 +1644,21 @@ function openDlg(npc){if(npc.shop){openShop(npc);return;}if(npc.board){openBount
 function closeDlg(){dlgOpen=false;keys={};jp={};document.getElementById('dlg-txt').style.whiteSpace='';document.getElementById('dlg-overlay').classList.remove('open');}
 let shopNPC=null;
 function openShop(npc){dlgOpen=true;keys={};jp={};shopNPC=npc;document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-overlay').classList.add('open');renderShop();}
-function renderShop(){const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';box.innerHTML=(shopNPC&&shopNPC.lore?'<div style="font-size:10px;color:#a89cc8;font-style:italic;margin-bottom:8px">“'+shopNPC.lore+'”</div>':'')+'<div style="font-size:10px;color:#ef9f27;margin-bottom:8px">💰 Your gold: '+G.gold+'</div>'+SHOP.map(e=>{const it=ITEMS[e.id];const af=G.gold>=e.price;return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span style="font-size:18px">'+it.e+'</span><div style="flex:1"><div style="font-size:11px;color:#e8d5b7">'+it.n+'</div><div style="font-size:9px;color:#7878a0">'+it.desc+'</div></div><button class="db'+(af?' primary':'')+'" style="opacity:'+(af?1:0.4)+'" onclick="buyItem(\''+e.id+'\','+e.price+')">'+e.price+'g</button></div>';}).join('');const bc=document.getElementById('dlg-btns');bc.innerHTML='';const btn=document.createElement('button');btn.className='db';btn.textContent='Leave Shop';btn.addEventListener('click',closeDlg);bc.appendChild(btn);}
+function renderShop(){const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';
+  const row=(em,nm,col,sub,btn)=>'<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span style="font-size:18px">'+em+'</span><div style="flex:1"><div style="font-size:11px;color:'+col+'">'+nm+'</div><div style="font-size:9px;color:#7878a0">'+sub+'</div></div>'+btn+'</div>';
+  const buyRows=SHOP.map(e=>{const it=ITEMS[e.id],af=G.gold>=e.price;return row(it.e,it.n,'#e8d5b7',it.desc,'<button class="db'+(af?' primary':'')+'" style="opacity:'+(af?1:0.4)+'" onclick="buyItem(\''+e.id+'\','+e.price+')">'+e.price+'g</button>');}).join('');
+  const sellRows=G.inventory.map((it,i)=>{if(!it)return '';const isG=!!it.g,nm=isG?it.g.n:ITEMS[it.id].n,em=isG?it.g.e:ITEMS[it.id].e,col=isG?RARS[it.g.rar].c:'#e8d5b7',sub=isG?gearStats(it.g):(ITEMS[it.id].desc||'Material'),v=sellValue(it),qty=(!isG&&it.qty>1)?' ×'+it.qty:'';return row(em,nm+qty,col,sub,'<button class="db" onclick="sellItem('+i+')">Sell '+v+'g</button>');}).filter(s=>s).join('');
+  const bb=G.lastSold?'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;margin-top:4px;border-top:1px solid rgba(255,255,255,0.12)"><div style="flex:1;font-size:10px;color:#a89cc8">↩ Buy back: <span style="color:#e8d5b7">'+G.lastSold.name+'</span></div><button class="db'+(G.gold>=G.lastSold.price?' primary':'')+'" style="opacity:'+(G.gold>=G.lastSold.price?1:0.4)+'" onclick="buyBack()">'+G.lastSold.price+'g</button></div>':'';
+  box.innerHTML=(shopNPC&&shopNPC.lore?'<div style="font-size:10px;color:#a89cc8;font-style:italic;margin-bottom:8px">“'+shopNPC.lore+'”</div>':'')
+    +'<div style="font-size:10px;color:#ef9f27;margin-bottom:8px">💰 Your gold: '+G.gold+'</div>'
+    +'<div style="font-size:10px;color:#6aa3ff;margin-bottom:4px;font-weight:600">Buy</div>'+buyRows
+    +'<div style="font-size:10px;color:#5dcaa5;margin:10px 0 4px;font-weight:600">Sell</div>'+(sellRows||'<div style="font-size:9px;color:#666;padding:4px 0">Your bag is empty.</div>')
+    +bb;
+  dlgButtons([{l:'Leave Shop',fn:closeDlg}]);}
 function buyItem(id,price){if(G.gold<price){log('Not enough gold!','d');return;}G.gold-=price;addItem(id);sfxLoot();log('Purchased '+ITEMS[id].n+'!','x');updateHUD();renderShop();saveGame();}
+function sellValue(entry){if(!entry)return 0;if(entry.g){const g=entry.g,base=g.slot==='weapon'?g.mag*3:g.def*3+Math.round((g.hp||0)*0.6);return Math.max(2,Math.round(base*(0.45+g.rar*0.18)));}const sh=SHOP.find(e=>e.id===entry.id);if(sh)return Math.max(1,Math.floor(sh.price/2));return (ITEMS[entry.id]&&ITEMS[entry.id].val)||2;}
+function sellItem(i){const it=G.inventory[i];if(!it)return;const val=sellValue(it),nm=it.g?it.g.n:ITEMS[it.id].n,sold=it.g?{g:{...it.g},qty:1}:{id:it.id,qty:1};G.gold+=val;if(it.g||!(it.qty>1))G.inventory[i]=null;else it.qty--;G.lastSold={entry:sold,price:val,name:nm};sfxLoot();log('Sold '+nm+' for '+val+'g','x');updateHUD();renderShop();renderIP();saveGame();}
+function buyBack(){const ls=G.lastSold;if(!ls)return;if(G.gold<ls.price){log('Not enough gold to buy back!','d');return;}const e=ls.entry;if(e.g){let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){log('Bag is full!','d');return;}G.inventory[i]={g:{...e.g},qty:1};}else{const s=G.inventory.findIndex(x=>x&&x.id===e.id);if(s>=0)G.inventory[s].qty++;else{let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){log('Bag is full!','d');return;}G.inventory[i]={id:e.id,qty:1};}}G.gold-=ls.price;sfxLoot();log('Bought back '+ls.name+' for '+ls.price+'g','x');G.lastSold=null;updateHUD();renderShop();renderIP();saveGame();}
 function useItem(id){const it=ITEMS[id];if(!it||!it.consumable)return;const si=G.inventory.findIndex(x=>x&&x.id===id);if(si<0)return;if(id==='health_potion'){const h=Math.min(G.maxHp,G.hp+50)-G.hp;G.hp+=h;log('Health Potion: +'+h+' HP!','h');sfxLevelUp();}else if(id==='mana_potion'){const add=Math.min(G.maxMp,G.mp+40)-G.mp;G.mp+=add;log('Mana Potion: +'+Math.floor(add)+' MP!','h');sfxShield();}else if(id==='ward_scroll'){G.shield=true;G.shieldT=10;sfxShield();log('Scroll of Warding: Shield 10s!','h');}G.inventory[si].qty--;if(G.inventory[si].qty<=0)G.inventory[si]=null;updateHUD();renderIP();saveGame();}
 function acceptQ(id){G.questStates[id]='active';sfxQuestAccept();log('Quest accepted: '+QUESTS.find(q=>q.id===id).title,'q');closeDlg();renderQP();saveGame();}
 function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}closeDlg();renderQP();renderIP();saveGame();}
