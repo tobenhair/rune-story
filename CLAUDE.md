@@ -46,7 +46,7 @@ Progress is saved to `localStorage` under the key `astralbound_save_v1` (`saveGa
 
 Keyboard input drives the `keys` (held) and `jp` (just-pressed, cleared every frame) maps. Touch controls reuse the same maps: on-screen left/right/jump buttons (plus a contextual Talk button near NPCs) are overlaid on the canvas and enabled automatically on coarse-pointer devices or on first `touchstart`. Tapping the canvas casts at the nearest monster / talks to NPCs via the existing click handler.
 
-Spells are bound to **Q W E R**. Consumables use a two-slot **potion hotbar** bound to **T** and **Y** (`G.hotbar` holds the assigned item ids): click a slot's icon (or press its key) to use the assigned potion, click the slot's label to open the assign/clear picker (`openHotbarAssign`/`assignHotbar`). `renderHotbar()` keeps the icons and quantity badges in sync and is called from `renderIP`/`renderAll`. The hotbar persists in saves like other `G` fields.
+Spells are bound to **Q W E R**. Consumables use a two-slot **potion hotbar** bound to **T** and **Y** (`G.hotbar` holds the assigned item ids): click a slot's icon (or press its key) to use the assigned potion, click the slot's label to open the assign/clear picker (`openHotbarAssign`/`assignHotbar`). Newly acquired consumables auto-bind to the first empty slot via `autofillHotbar()` (called from `addItem` and storage withdrawal). `renderHotbar()` keeps the icons and quantity badges in sync and is called from `renderIP`/`renderAll`. The hotbar persists in saves like other `G` fields.
 
 ### Zone Data
 
