@@ -146,4 +146,21 @@ test.describe('Quests', () => {
     expect(r.boss).toBe('Slime Sovereign');
     expect(r.prog).toContain('Slime Sovereign');
   });
+
+  test('rare-relic collection quests name the monster that drops the item', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      const src = { wither_heart: 'Cave Bat', resonant_core: 'Crystal Golem', rift_sigil: 'Skeleton Archer', rift_seed: 'Slime' };
+      const probe = {};
+      // q7/q9/q11/q13 are the per-zone relic hunts (single col task)
+      ['q7', 'q9', 'q11', 'q13'].forEach(id => { G.questStates[id] = 'active'; probe[id] = qProg(id); });
+      return { probe, source: itemSource('wither_heart'), sourceCommon: itemSource('crystal_shard'), sourceNone: itemSource('nope') };
+    });
+    expect(r.source).toBe('Cave Bat');
+    expect(r.sourceCommon).toBe('Crystal Golem'); // works for common materials too
+    expect(r.sourceNone).toBeNull();
+    expect(r.probe.q7).toContain('drops from Slime');
+    expect(r.probe.q9).toContain('drops from Cave Bat');
+    expect(r.probe.q11).toContain('drops from Crystal Golem');
+    expect(r.probe.q13).toContain('drops from Skeleton Archer');
+  });
 });
