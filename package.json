@@ -1,0 +1,12 @@
+{
+  "name": "astralbound",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AstralBound — single-file browser RPG. Playwright suite verifying game content & systems.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}

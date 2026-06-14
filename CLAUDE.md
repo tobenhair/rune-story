@@ -21,7 +21,17 @@ xdg-open index.html
 python3 -m http.server 8080
 ```
 
-There are no automated tests, no linting tools, and no CI pipeline. Verification is manual — open the game in a browser and play through the relevant systems.
+## Testing & CI
+
+The game logic is covered by a **Playwright** suite in `tests/` that loads `index.html` in headless Chromium and drives the real game functions/state via `page.evaluate` (the RAF loop is cancelled so time is stepped deterministically). A shared fixture (`tests/fixtures.js`) boots the game and exposes in-page helpers (`window.T`: `withRandom`, `clear`, `resetPlayer`, `mon`). Specs are organized by domain: `boot`, `zones`, `monsters` (+ affixes), `combat`, `skills`, `gear` (+ forge), `quests`, `economy`, `bosses` (+ enrage), `movement` (dash/i-frames).
+
+```bash
+npm install                                  # installs @playwright/test
+npx playwright install --with-deps chromium  # one-time browser download
+npm test                                     # runs the suite (playwright test)
+```
+
+CI runs the suite on every pull request and on pushes to `main` via `.github/workflows/tests.yml`. **When adding or changing game content/systems, add or update the matching spec** so the suite stays a complete content inventory. Linting is still not used; the game itself remains a single inline `index.html`. Beyond the automated suite, final feel-checks (animation, audio, difficulty) are still worth doing by opening the game in a browser.
 
 ## Architecture
 
