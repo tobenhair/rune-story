@@ -87,9 +87,11 @@ test.describe('Monsters, loot & elite affixes', () => {
 
   test('explosive elite detonates on death, damaging a nearby player', async ({ game }) => {
     const r = await game.evaluate(() => {
-      T.clear(); T.resetPlayer(); G.hp = 500; G.maxHp = 500; PL.inv = 0;
-      const m = T.mon('goblin', PL.x + 10, PL.y, 'explosive'); mons.push(m);
-      const before = G.hp; killM(m);
+      T.clear(); T.resetPlayer(); G.zone = 1; CZ = ZD[1]; G.hp = 500; G.maxHp = 500; G.shield = false;
+      G.equipment = { weapon: null, armor: null };
+      const m = T.mon('goblin', PL.x, PL.y, 'explosive'); m.x = PL.x; m.y = PL.y; mons.push(m); // exact overlap
+      PL.inv = 0; const before = G.hp;
+      const o = Math.random; Math.random = () => 0; try { killM(m); } finally { Math.random = o; }
       return { dropped: before - G.hp, gone: !mons.includes(m) };
     });
     expect(r.dropped).toBeGreaterThan(0);
