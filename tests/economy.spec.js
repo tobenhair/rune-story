@@ -1,20 +1,33 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Economy: shop, storage, hotbar, potions', () => {
+  test('potion prices are doubled', async ({ game }) => {
+    const p = await game.evaluate(() => ({
+      health: SHOP.find(e => e.id === 'health_potion').price,
+      mana: SHOP.find(e => e.id === 'mana_potion').price,
+    }));
+    expect(p.health).toBe(40);
+    expect(p.mana).toBe(30);
+  });
+
   test('buy, sell, and buy-back move gold correctly', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.gold = 100; G.inventory = []; G.lastSold = null;
-      buyItem('health_potion', 20);              // -20, gain a potion
+      const price = SHOP.find(e => e.id === 'health_potion').price;
+      buyItem('health_potion', price);           // -price, gain a potion
       const afterBuy = G.gold;
       const idx = G.inventory.findIndex(x => x && x.id === 'health_potion');
-      sellItem(idx);                             // +sellValue, sets lastSold
+      const resell = sellValue({ id: 'health_potion' });
+      sellItem(idx);                             // +resell, sets lastSold
       const afterSell = G.gold;
       buyBack();                                 // -lastSold.price, item returns
-      return { afterBuy, afterSell, afterBuyBack: G.gold, hasPotion: G.inventory.some(x => x && x.id === 'health_potion') };
+      return { price, resell, afterBuy, afterSell, afterBuyBack: G.gold, hasPotion: G.inventory.some(x => x && x.id === 'health_potion') };
     });
-    expect(r.afterBuy).toBe(80);
-    expect(r.afterSell).toBe(85);  // health_potion resells for 5
-    expect(r.afterBuyBack).toBe(80);
+    expect(r.price).toBe(40);                     // doubled
+    expect(r.resell).toBe(10);                    // floor(40 / 4)
+    expect(r.afterBuy).toBe(100 - r.price);
+    expect(r.afterSell).toBe(100 - r.price + r.resell);
+    expect(r.afterBuyBack).toBe(100 - r.price);
     expect(r.hasPotion).toBe(true);
   });
 
