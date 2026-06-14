@@ -79,7 +79,7 @@ test.describe('Gear, loot & forge', () => {
     }));
     expect(r.gear).toBe(7);          // round(10*3 * 0.45 * 0.5)
     expect(r.material).toBe(1);      // floor(2 / 2)
-    expect(r.shopResell).toBe(5);    // floor(20 / 4)
+    expect(r.shopResell).toBe(10);   // floor(40 / 4) — potion price doubled
   });
 
   test('forge upgrades a common item one rarity tier', async ({ game }) => {

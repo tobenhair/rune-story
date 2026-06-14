@@ -1,35 +1,98 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Economy: shop, storage, hotbar, potions', () => {
+  test('potion prices are doubled', async ({ game }) => {
+    const p = await game.evaluate(() => ({
+      health: SHOP.find(e => e.id === 'health_potion').price,
+      mana: SHOP.find(e => e.id === 'mana_potion').price,
+    }));
+    expect(p.health).toBe(40);
+    expect(p.mana).toBe(30);
+  });
+
   test('buy, sell, and buy-back move gold correctly', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.gold = 100; G.inventory = []; G.lastSold = null;
-      buyItem('health_potion', 20);              // -20, gain a potion
+      const price = SHOP.find(e => e.id === 'health_potion').price;
+      buyItem('health_potion', price);           // -price, gain a potion
       const afterBuy = G.gold;
       const idx = G.inventory.findIndex(x => x && x.id === 'health_potion');
-      sellItem(idx);                             // +sellValue, sets lastSold
+      const resell = sellValue({ id: 'health_potion' });
+      sellItem(idx);                             // +resell, sets lastSold
       const afterSell = G.gold;
       buyBack();                                 // -lastSold.price, item returns
-      return { afterBuy, afterSell, afterBuyBack: G.gold, hasPotion: G.inventory.some(x => x && x.id === 'health_potion') };
+      return { price, resell, afterBuy, afterSell, afterBuyBack: G.gold, hasPotion: G.inventory.some(x => x && x.id === 'health_potion') };
     });
-    expect(r.afterBuy).toBe(80);
-    expect(r.afterSell).toBe(85);  // health_potion resells for 5
-    expect(r.afterBuyBack).toBe(80);
+    expect(r.price).toBe(40);                     // doubled
+    expect(r.resell).toBe(10);                    // floor(40 / 4)
+    expect(r.afterBuy).toBe(100 - r.price);
+    expect(r.afterSell).toBe(100 - r.price + r.resell);
+    expect(r.afterBuyBack).toBe(100 - r.price);
     expect(r.hasPotion).toBe(true);
   });
 
-  test("'Sell all' skips consumables and active-quest relics but sells plain materials", async ({ game }) => {
+  test("'Sell all' always skips rare relics and consumables, and never sells active-quest materials", async ({ game }) => {
     const r = await game.evaluate(() => {
-      G.gold = 0; G.questStates = { q7: 'active' }; // q7 collects rift_seed
-      G.inventory = [{ id: 'rift_seed', qty: 1 }, { id: 'slime_goo', qty: 3 }, { id: 'health_potion', qty: 2 }];
+      // No active quest at all — rare relics must still be protected.
+      G.gold = 0; G.questStates = {};
+      G.inventory = [{ id: 'rift_seed', qty: 1 }, { id: 'rift_sigil', qty: 2 }, { id: 'slime_goo', qty: 3 }, { id: 'health_potion', qty: 2 }];
       sellAll();
       const has = id => G.inventory.some(x => x && x.id === id);
-      return { relic: has('rift_seed'), potion: has('health_potion'), material: has('slime_goo'), gold: G.gold };
+      const noQuest = { relic1: has('rift_seed'), relic2: has('rift_sigil'), potion: has('health_potion'), material: has('slime_goo'), gold: G.gold };
+      // A common material needed by an active quest is also protected.
+      G.questStates = { q1: 'active' }; // q1 collects slime_goo
+      G.inventory = [{ id: 'slime_goo', qty: 2 }, { id: 'goblin_ear', qty: 4 }];
+      sellAll();
+      return { noQuest, questMat: has('slime_goo'), otherMat: has('goblin_ear') };
     });
-    expect(r.relic).toBe(true);
-    expect(r.potion).toBe(true);
-    expect(r.material).toBe(false);
-    expect(r.gold).toBeGreaterThan(0);
+    expect(r.noQuest.relic1).toBe(true);   // rift_seed kept (relic, no quest active)
+    expect(r.noQuest.relic2).toBe(true);   // rift_sigil kept
+    expect(r.noQuest.potion).toBe(true);
+    expect(r.noQuest.material).toBe(false); // slime_goo sold
+    expect(r.noQuest.gold).toBeGreaterThan(0);
+    expect(r.questMat).toBe(true);          // slime_goo kept while q1 active
+    expect(r.otherMat).toBe(false);         // goblin_ear sold
+  });
+
+  test('collected items fill a visible bag slot (≤16), never an invisible overflow slot', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      // Bag mostly full of gear, with two empty holes.
+      G.inventory = Array.from({ length: 16 }, (_, i) => ({ g: { slot: 'weapon', rar: 0, n: 'W' + i, e: '🪄', mag: 1 }, qty: 1 }));
+      G.inventory[5] = null; G.inventory[9] = null;
+      addItem('wither_heart'); // relic drop
+      addItem('resonant_core');
+      const idx1 = G.inventory.findIndex(x => x && x.id === 'wither_heart');
+      const idx2 = G.inventory.findIndex(x => x && x.id === 'resonant_core');
+      return { idx1, idx2, len: G.inventory.length };
+    });
+    expect(r.idx1).toBeGreaterThanOrEqual(0);
+    expect(r.idx1).toBeLessThan(16);  // visible slot, not an overflow index ≥16
+    expect(r.idx2).toBeGreaterThanOrEqual(0);
+    expect(r.idx2).toBeLessThan(16);
+    expect(r.len).toBe(16);           // bag did not grow past 16
+  });
+
+  test('a looted item auto-routes to Storage when the bag is full', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.inventory = Array.from({ length: 16 }, (_, i) => ({ g: { slot: 'weapon', rar: 0, n: 'W' + i, e: '🪄', mag: 1 }, qty: 1 })); // bag full, no holes
+      G.storage = []; G.storageMax = 10;
+      addItem('rift_sigil');
+      return { inBag: G.inventory.some(x => x && x.id === 'rift_sigil'), inStore: G.storage.some(x => x && x.id === 'rift_sigil') };
+    });
+    expect(r.inBag).toBe(false);
+    expect(r.inStore).toBe(true);
+  });
+
+  test('a looted item is only lost when bag AND storage are both full', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.inventory = Array.from({ length: 16 }, (_, i) => ({ g: { slot: 'weapon', rar: 0, n: 'W' + i, e: '🪄', mag: 1 }, qty: 1 }));
+      G.storage = Array.from({ length: 10 }, (_, i) => ({ g: { slot: 'armor', rar: 0, n: 'A' + i, e: '👘', def: 1 }, qty: 1 })); // storage full too
+      G.storageMax = 10;
+      addItem('rift_sigil');
+      return { inBag: G.inventory.some(x => x && x.id === 'rift_sigil'), inStore: G.storage.some(x => x && x.id === 'rift_sigil') };
+    });
+    expect(r.inBag).toBe(false);
+    expect(r.inStore).toBe(false);
   });
 
   test('storage deposits, withdraws, and expands at a doubling cost', async ({ game }) => {
@@ -63,6 +126,18 @@ test.describe('Economy: shop, storage, hotbar, potions', () => {
     });
     expect(r.bound).toBe('mana_potion');
     expect(r.mp).toBe(140); // 35% of 400
+  });
+
+  test('bounties demand 5× the monsters and pay 2× XP', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.level = 20; // all bounty zones unlocked
+      const o = Math.random; Math.random = () => 0; // baseN = 8 → n = 40
+      let b; try { b = genBounty(); } finally { Math.random = o; }
+      const d = MDEF[b.t];
+      return { n: b.n, xp: b.xp, expectXp: Math.round(d.xp * 8 * 0.6 * 2) };
+    });
+    expect(r.n).toBe(40);          // (8) × 5
+    expect(r.xp).toBe(r.expectXp); // original per-kill XP formula × 2
   });
 
   test('health potion scales to 35% of max HP (min 50)', async ({ game }) => {
