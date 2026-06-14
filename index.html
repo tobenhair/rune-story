@@ -1851,7 +1851,9 @@ function acceptQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='active
 function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}closeDlg();renderQP();renderIP();saveGame();}
 function isQDone(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.every(t=>{if(t.type==='kill')return(G.kills[t.tgt]||0)>=t.n;const s=G.inventory.find(x=>x&&x.id===t.item);return s&&s.qty>=t.n;});}
 function monName(t){return (MDEF[t]&&MDEF[t].n)||(BOSS_DEFS.find(b=>b.t===t)||{}).n||t;}
-function qProg(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.map(t=>{if(t.type==='kill')return'• '+monName(t.tgt)+': '+Math.min(G.kills[t.tgt]||0,t.n)+'/'+t.n;const s=G.inventory.find(x=>x&&x.id===t.item);return'• '+ITEMS[t.item].n+': '+Math.min(s?s.qty:0,t.n)+'/'+t.n;}).join('\n');}
+// Which monster drops a collectible item (first MDEF entry whose loot table lists it).
+function itemSource(itemId){for(const t in MDEF){if(MDEF[t].loot&&MDEF[t].loot.some(l=>l[0]===itemId))return MDEF[t].n;}return null;}
+function qProg(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.map(t=>{if(t.type==='kill')return'• '+monName(t.tgt)+': '+Math.min(G.kills[t.tgt]||0,t.n)+'/'+t.n;const s=G.inventory.find(x=>x&&x.id===t.item),src=itemSource(t.item);return'• '+ITEMS[t.item].n+(src?' (drops from '+src+')':'')+': '+Math.min(s?s.qty:0,t.n)+'/'+t.n;}).join('\n');}
 function renderAll(){renderQP();renderIP();renderSP();renderHotbar();}
 // ── Potion hotbar: two consumable slots bound to T / Y ──
 let hbAssign=0;
