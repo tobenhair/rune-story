@@ -72,6 +72,29 @@ test.describe('Economy: shop, storage, hotbar, potions', () => {
     expect(r.len).toBe(16);           // bag did not grow past 16
   });
 
+  test('a looted item auto-routes to Storage when the bag is full', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.inventory = Array.from({ length: 16 }, (_, i) => ({ g: { slot: 'weapon', rar: 0, n: 'W' + i, e: '🪄', mag: 1 }, qty: 1 })); // bag full, no holes
+      G.storage = []; G.storageMax = 10;
+      addItem('rift_sigil');
+      return { inBag: G.inventory.some(x => x && x.id === 'rift_sigil'), inStore: G.storage.some(x => x && x.id === 'rift_sigil') };
+    });
+    expect(r.inBag).toBe(false);
+    expect(r.inStore).toBe(true);
+  });
+
+  test('a looted item is only lost when bag AND storage are both full', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.inventory = Array.from({ length: 16 }, (_, i) => ({ g: { slot: 'weapon', rar: 0, n: 'W' + i, e: '🪄', mag: 1 }, qty: 1 }));
+      G.storage = Array.from({ length: 10 }, (_, i) => ({ g: { slot: 'armor', rar: 0, n: 'A' + i, e: '👘', def: 1 }, qty: 1 })); // storage full too
+      G.storageMax = 10;
+      addItem('rift_sigil');
+      return { inBag: G.inventory.some(x => x && x.id === 'rift_sigil'), inStore: G.storage.some(x => x && x.id === 'rift_sigil') };
+    });
+    expect(r.inBag).toBe(false);
+    expect(r.inStore).toBe(false);
+  });
+
   test('storage deposits, withdraws, and expands at a doubling cost', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.storage = []; G.storageMax = 10; G.inventory = [{ id: 'bone_shard', qty: 2 }];
