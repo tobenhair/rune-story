@@ -31,18 +31,27 @@ test.describe('Economy: shop, storage, hotbar, potions', () => {
     expect(r.hasPotion).toBe(true);
   });
 
-  test("'Sell all' skips consumables and active-quest relics but sells plain materials", async ({ game }) => {
+  test("'Sell all' always skips rare relics and consumables, and never sells active-quest materials", async ({ game }) => {
     const r = await game.evaluate(() => {
-      G.gold = 0; G.questStates = { q7: 'active' }; // q7 collects rift_seed
-      G.inventory = [{ id: 'rift_seed', qty: 1 }, { id: 'slime_goo', qty: 3 }, { id: 'health_potion', qty: 2 }];
+      // No active quest at all — rare relics must still be protected.
+      G.gold = 0; G.questStates = {};
+      G.inventory = [{ id: 'rift_seed', qty: 1 }, { id: 'rift_sigil', qty: 2 }, { id: 'slime_goo', qty: 3 }, { id: 'health_potion', qty: 2 }];
       sellAll();
       const has = id => G.inventory.some(x => x && x.id === id);
-      return { relic: has('rift_seed'), potion: has('health_potion'), material: has('slime_goo'), gold: G.gold };
+      const noQuest = { relic1: has('rift_seed'), relic2: has('rift_sigil'), potion: has('health_potion'), material: has('slime_goo'), gold: G.gold };
+      // A common material needed by an active quest is also protected.
+      G.questStates = { q1: 'active' }; // q1 collects slime_goo
+      G.inventory = [{ id: 'slime_goo', qty: 2 }, { id: 'goblin_ear', qty: 4 }];
+      sellAll();
+      return { noQuest, questMat: has('slime_goo'), otherMat: has('goblin_ear') };
     });
-    expect(r.relic).toBe(true);
-    expect(r.potion).toBe(true);
-    expect(r.material).toBe(false);
-    expect(r.gold).toBeGreaterThan(0);
+    expect(r.noQuest.relic1).toBe(true);   // rift_seed kept (relic, no quest active)
+    expect(r.noQuest.relic2).toBe(true);   // rift_sigil kept
+    expect(r.noQuest.potion).toBe(true);
+    expect(r.noQuest.material).toBe(false); // slime_goo sold
+    expect(r.noQuest.gold).toBeGreaterThan(0);
+    expect(r.questMat).toBe(true);          // slime_goo kept while q1 active
+    expect(r.otherMat).toBe(false);         // goblin_ear sold
   });
 
   test('storage deposits, withdraws, and expands at a doubling cost', async ({ game }) => {
