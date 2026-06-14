@@ -54,6 +54,24 @@ test.describe('Economy: shop, storage, hotbar, potions', () => {
     expect(r.otherMat).toBe(false);         // goblin_ear sold
   });
 
+  test('collected items fill a visible bag slot (≤16), never an invisible overflow slot', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      // Bag mostly full of gear, with two empty holes.
+      G.inventory = Array.from({ length: 16 }, (_, i) => ({ g: { slot: 'weapon', rar: 0, n: 'W' + i, e: '🪄', mag: 1 }, qty: 1 }));
+      G.inventory[5] = null; G.inventory[9] = null;
+      addItem('wither_heart'); // relic drop
+      addItem('resonant_core');
+      const idx1 = G.inventory.findIndex(x => x && x.id === 'wither_heart');
+      const idx2 = G.inventory.findIndex(x => x && x.id === 'resonant_core');
+      return { idx1, idx2, len: G.inventory.length };
+    });
+    expect(r.idx1).toBeGreaterThanOrEqual(0);
+    expect(r.idx1).toBeLessThan(16);  // visible slot, not an overflow index ≥16
+    expect(r.idx2).toBeGreaterThanOrEqual(0);
+    expect(r.idx2).toBeLessThan(16);
+    expect(r.len).toBe(16);           // bag did not grow past 16
+  });
+
   test('storage deposits, withdraws, and expands at a doubling cost', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.storage = []; G.storageMax = 10; G.inventory = [{ id: 'bone_shard', qty: 2 }];
