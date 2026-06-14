@@ -1,23 +1,46 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Quests', () => {
-  test('all 15 quests are well-formed and sequentially chained', async ({ game }) => {
+  test('all 15 quests are well-formed and form a single prev-chain', async ({ game }) => {
     const r = await game.evaluate(() => {
       const givers = new Set(['Elder Mira', 'Guard Tomlin', 'Ranger Sylva', 'Sage Oriax', 'Scholar Aldric', 'Seer Vesper']);
+      const byId = Object.fromEntries(QUESTS.map(q => [q.id, q]));
       const problems = [];
-      QUESTS.forEach((q, i) => {
-        if (q.id !== 'q' + (i + 1)) problems.push('id ' + q.id);
-        if (!givers.has(q.giver)) problems.push('giver ' + q.giver);
+      QUESTS.forEach(q => {
+        if (!/^q\d+$/.test(q.id)) problems.push('id ' + q.id);
+        if (!givers.has(q.giver)) problems.push('giver ' + q.id);
         if (typeof q.rlvl !== 'number') problems.push('rlvl ' + q.id);
         if (!Array.isArray(q.tasks) || !q.tasks.length) problems.push('tasks ' + q.id);
         if (!q.rew) problems.push('rew ' + q.id);
-        const wantPrev = i === 0 ? null : 'q' + i;
-        if (q.prev !== wantPrev) problems.push('prev ' + q.id);
+        if (q.prev !== null && !byId[q.prev]) problems.push('prev ' + q.id);
       });
-      return { count: QUESTS.length, problems };
+      // Exactly one root, and following the chain reaches every quest exactly once.
+      const roots = QUESTS.filter(q => q.prev === null);
+      let len = 0, cur = roots[0], seen = new Set();
+      while (cur && !seen.has(cur.id)) { seen.add(cur.id); len++; cur = QUESTS.find(q => q.prev === cur.id); }
+      return { count: QUESTS.length, problems, roots: roots.length, chainLen: len };
     });
     expect(r.count).toBe(15);
     expect(r.problems).toEqual([]);
+    expect(r.roots).toBe(1);
+    expect(r.chainLen).toBe(15);
+  });
+
+  test('the chain is ordered by ascending zone (low-level zones first)', async ({ game }) => {
+    const zonesInOrder = await game.evaluate(() => {
+      // Map each quest to the zone of its kill/relic target, then read them in chain order.
+      const monZone = { slime: 1, goblin: 1, slime_sov: 1, bat: 2, goblin_chief: 2, golem: 3, crystal_lich: 3, skeleton: 4, wraith: 4, fallen_oracle: 4, hollow_oracle: 5 };
+      const relicZone = { rift_seed: 1, wither_heart: 2, resonant_core: 3, rift_sigil: 4 };
+      const zoneOf = q => { const t = q.tasks[0]; return t.type === 'kill' ? monZone[t.tgt] : relicZone[t.item]; };
+      const order = [];
+      let cur = QUESTS.find(q => q.prev === null);
+      while (cur) { order.push(zoneOf(cur)); cur = QUESTS.find(q => q.prev === cur.id); }
+      return order;
+    });
+    // Zones must never decrease as the chain advances.
+    for (let i = 1; i < zonesInOrder.length; i++) expect(zonesInOrder[i]).toBeGreaterThanOrEqual(zonesInOrder[i - 1]);
+    expect(zonesInOrder[0]).toBe(1);
+    expect(zonesInOrder[zonesInOrder.length - 1]).toBe(5);
   });
 
   test('every combat zone has a 1% rare-hunt and a boss-kill quest', async ({ game }) => {
@@ -58,7 +81,7 @@ test.describe('Quests', () => {
       G.questStates = {}; G.kills = {}; G.inventory = []; G.gold = 0; G.equipment = { weapon: null, armor: null };
       acceptQ('q1');
       const accepted = G.questStates.q1 === 'active';
-      G.kills.slime = 3; G.inventory = [{ id: 'slime_goo', qty: 2 }];
+      G.kills.slime = 15; G.inventory = [{ id: 'slime_goo', qty: 2 }]; // q1 now needs 15 kills (5×)
       const ready = isQDone('q1');
       turnInQ('q1');
       return { accepted, ready, done: G.questStates.q1 === 'done', gold: G.gold, armor: G.equipment.armor && G.equipment.armor.n };
@@ -68,6 +91,20 @@ test.describe('Quests', () => {
     expect(r.done).toBe(true);
     expect(r.gold).toBe(15);
     expect(r.armor).toBe('Apprentice Robe'); // q1 reward item
+  });
+
+  test('regular-monster kill quests demand 5× kills for 2× XP', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      const expectKills = { q1: 15, q2: 20, q3: 25, q4: 15, q5: 25, q6: 20 };
+      const expectXp = { q1: 120, q2: 180, q3: 300, q4: 600, q5: 900, q6: 1100 };
+      const out = {};
+      for (const id in expectKills) { const q = QUESTS.find(x => x.id === id), k = q.tasks.find(t => t.type === 'kill'); out[id] = { n: k.n, xp: q.rew.xp }; }
+      return { out, expectKills, expectXp };
+    });
+    for (const id in r.expectKills) {
+      expect(r.out[id].n, id + ' kill count').toBe(r.expectKills[id]);
+      expect(r.out[id].xp, id + ' xp reward').toBe(r.expectXp[id]);
+    }
   });
 
   test('q14 turn-in hands out the guaranteed Legendary staff', async ({ game }) => {

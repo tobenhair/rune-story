@@ -66,6 +66,25 @@ test.describe('Monsters, loot & elite affixes', () => {
     expect(dealt).toBe(60); // ceil(100 * 0.6), no skill modifiers
   });
 
+  test('gear drops at 1% for both normal and elite kills (elites no longer guaranteed)', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      const hasGear = () => !!(G.equipment.weapon || G.equipment.armor || G.inventory.some(x => x && x.g));
+      const run = (elite, rnd) => {
+        T.clear(); T.resetPlayer(); G.zone = 1; CZ = ZD[1]; G.hp = 999; G.maxHp = 999;
+        G.equipment = { weapon: null, armor: null }; G.inventory = [];
+        const m = elite ? T.mon('goblin', PL.x + 400, 260, 'frenzied') : mkMon('goblin', PL.x + 400, 260);
+        const o = Math.random; Math.random = () => rnd;
+        try { killM(m); } finally { Math.random = o; }
+        return hasGear();
+      };
+      return { eliteNo: run(true, 0.5), normalNo: run(false, 0.5), eliteYes: run(true, 0), normalYes: run(false, 0) };
+    });
+    expect(r.eliteNo).toBe(false);   // 0.5 ≥ 0.01 → no gear, even from an elite
+    expect(r.normalNo).toBe(false);
+    expect(r.eliteYes).toBe(true);   // 0 < 0.01 → gear drops
+    expect(r.normalYes).toBe(true);
+  });
+
   test('explosive elite detonates on death, damaging a nearby player', async ({ game }) => {
     const r = await game.evaluate(() => {
       T.clear(); T.resetPlayer(); G.hp = 500; G.maxHp = 500; PL.inv = 0;

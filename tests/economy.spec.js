@@ -65,6 +65,18 @@ test.describe('Economy: shop, storage, hotbar, potions', () => {
     expect(r.mp).toBe(140); // 35% of 400
   });
 
+  test('bounties demand 5× the monsters and pay 2× XP', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.level = 20; // all bounty zones unlocked
+      const o = Math.random; Math.random = () => 0; // baseN = 8 → n = 40
+      let b; try { b = genBounty(); } finally { Math.random = o; }
+      const d = MDEF[b.t];
+      return { n: b.n, xp: b.xp, expectXp: Math.round(d.xp * 8 * 0.6 * 2) };
+    });
+    expect(r.n).toBe(40);          // (8) × 5
+    expect(r.xp).toBe(r.expectXp); // original per-kill XP formula × 2
+  });
+
   test('health potion scales to 35% of max HP (min 50)', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.maxHp = 600; G.hp = 100; G.inventory = [{ id: 'health_potion', qty: 1 }];
