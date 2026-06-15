@@ -357,7 +357,7 @@ function playCavern(){if(!AC)return;stopMusic();const bpm=96,b=60/bpm,sc=[130,14
 function playRuins(){if(!AC)return;stopMusic();const bpm=76,b=60/bpm,sc=[138,155,165,185,207,220,247,277],mel=[0,1,2,0,3,1,0,2,1,3,4,2,1,0,2,3],bas=[0,2,3,1,0,3,2,0];const loop=()=>{const t=AC.currentTime,bars=8,bL=b*4,tot=bars*bL;mel.forEach((n,i)=>{const ft=t+i*b*0.5;osc(sc[n]*2,'sawtooth',ft,b*0.3,0.036,0.001,musicGain);osc(sc[n]*2*1.009,'sawtooth',ft,b*0.28,0.016,0.001,musicGain);});bas.forEach((n,i)=>{osc(sc[n],'square',t+i*bL/2,bL*0.44,0.1,0.001,musicGain);});[0.6,2.3,4.4,6.1,7.5].forEach(off=>{const bt=t+off*b*2;osc(1760,'sine',bt,2.5,0.022,0.001,musicGain);osc(2093,'sine',bt+0.03,1.8,0.013,0.001,musicGain);});for(let i=0;i<bars*4;i+=2){if(i%6===0||i%6===3){noise(t+i*b,0.07,0.17,0.001,280,musicGain);osc(80,'sine',t+i*b,0.09,0.21,0.001,musicGain);}}osc(73,'sawtooth',t,tot*0.6,0.052,0.001,musicGain);noise(t,tot,0.014,0.001,170,musicGain);const id=setTimeout(loop,(tot-0.1)*1000);musicNodes.push({stop:()=>clearTimeout(id)});};loop();}
 // ── City theme — calm, warm, safe. Slow sine melody over soft bass, no percussion. ──
 function playCity(){if(!AC)return;stopMusic();const bpm=72,b=60/bpm,sc=[261,293,329,392,440,523,587,659],mel=[4,2,0,2,4,5,7,5,4,2,0,2,3,2,1,0],bas=[0,3,4,0];const loop=()=>{const t=AC.currentTime,bars=4,bL=b*4,tot=bars*bL;mel.forEach((n,i)=>{osc(sc[n]*2,'sine',t+i*b,b*0.85,0.05,0.001,musicGain);osc(sc[n]*4,'sine',t+i*b,b*0.4,0.012,0.001,musicGain);});bas.forEach((n,i)=>{osc(sc[n],'triangle',t+i*bL,bL*0.9,0.07,0.001,musicGain);osc(sc[n]*1.5,'sine',t+i*bL+bL*0.5,bL*0.4,0.03,0.001,musicGain);});mel.forEach((n,i)=>{if(i%4===2)osc(sc[n]*3,'sine',t+i*b+b*0.5,b*0.3,0.01,0.001,musicGain);});noise(t,tot,0.008,0.001,500,musicGain);const id=setTimeout(loop,(tot-0.1)*1000);musicNodes.push({stop:()=>clearTimeout(id)});};loop();}
-const ZONE_MUSIC=[playCity,playVillage,playForest,playCavern,playRuins,playRuins];
+const ZONE_MUSIC=[playCity,playVillage,playForest,playCavern,playRuins,playRuins,playRuins];
 function playZoneMusic(i){if(i===curZoneMusic)return;curZoneMusic=i;if(AC)ZONE_MUSIC[i]();}
 
 // ═══════════════════════════════════════════════════════
@@ -958,14 +958,16 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 // GAME ENGINE
 // ═══════════════════════════════════════════════════════
 const GRAV=900,JUMP=-390,SPD=175;
-const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null]};
+const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null],riftBest:0,riftShards:0};
 const ZD=[
-  {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'guard',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'guard',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'guard',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'sage',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'elder',q:'q5'},{name:'Seer Vesper',x:560,y:92,sheet:'sage',q:'q6'}],portals:[{toZone:1,x:1100,y:388,dir:'right'}]},
+  {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'guard',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'guard',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'guard',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'sage',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'elder',q:'q5'},{name:'Seer Vesper',x:560,y:92,sheet:'sage',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'sage',rift:true}],portals:[{toZone:1,x:1100,y:388,dir:'right'}]},
   {name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,plats:[{x:0,y:310,w:280,h:14,c:'#1e4a7a'},{x:320,y:278,w:200,h:14,c:'#1e4a7a'},{x:560,y:244,w:160,h:14,c:'#1e4a7a'},{x:760,y:278,w:180,h:14,c:'#1e4a7a'},{x:980,y:244,w:220,h:14,c:'#1e4a7a'},{x:140,y:218,w:140,h:14,c:'#2a5a8a'},{x:420,y:174,w:120,h:14,c:'#2a5a8a'},{x:660,y:154,w:130,h:14,c:'#2a5a8a'},{x:870,y:170,w:110,h:14,c:'#2a5a8a'},{x:480,y:104,w:140,h:14,c:'#3a6a9a'},{x:700,y:90,w:150,h:14,c:'#3a6a9a'},{x:0,y:388,w:1400,h:18,c:'#163052'}],mons:[{t:'slime',x:140,y:310},{t:'goblin',x:420,y:278},{t:'slime',x:850,y:278},{t:'goblin',x:1080,y:244},{t:'slime',x:210,y:218},{t:'goblin',x:480,y:174},{t:'goblin',x:720,y:154},{t:'slime',x:550,y:104},{t:'goblin',x:770,y:90}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:2,x:1250,y:388,dir:'right'}]},
   {name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,plats:[{x:0,y:310,w:240,h:14,c:'#2a5a30'},{x:280,y:274,w:180,h:14,c:'#2a5a30'},{x:510,y:238,w:200,h:14,c:'#2a5a30'},{x:760,y:278,w:180,h:14,c:'#2a5a30'},{x:990,y:244,w:220,h:14,c:'#2a5a30'},{x:110,y:208,w:130,h:14,c:'#3a7040'},{x:400,y:164,w:110,h:14,c:'#3a7040'},{x:620,y:144,w:130,h:14,c:'#3a7040'},{x:850,y:154,w:110,h:14,c:'#3a7040'},{x:440,y:94,w:130,h:14,c:'#4a8050'},{x:640,y:84,w:150,h:14,c:'#4a8050'},{x:0,y:388,w:1500,h:18,c:'#1a4020'}],mons:[{t:'goblin',x:120,y:310},{t:'goblin',x:360,y:274},{t:'bat',x:850,y:278},{t:'bat',x:1100,y:244},{t:'goblin',x:170,y:208},{t:'goblin',x:455,y:164},{t:'bat',x:685,y:144},{t:'goblin',x:505,y:94},{t:'bat',x:715,y:84}],npcs:[],portals:[{toZone:1,x:40,y:388,dir:'left'},{toZone:3,x:1360,y:388,dir:'right'}]},
   {name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,plats:[{x:0,y:310,w:200,h:14,c:'#3a2060'},{x:250,y:274,w:160,h:14,c:'#3a2060'},{x:460,y:238,w:180,h:14,c:'#3a2060'},{x:700,y:276,w:160,h:14,c:'#3a2060'},{x:920,y:238,w:200,h:14,c:'#3a2060'},{x:120,y:204,w:110,h:14,c:'#5a3090'},{x:370,y:158,w:120,h:14,c:'#5a3090'},{x:600,y:138,w:130,h:14,c:'#5a3090'},{x:820,y:154,w:110,h:14,c:'#5a3090'},{x:410,y:88,w:130,h:14,c:'#6a40a0'},{x:620,y:78,w:140,h:14,c:'#6a40a0'},{x:0,y:388,w:1300,h:18,c:'#1e0a3a'}],mons:[{t:'bat',x:100,y:310},{t:'golem',x:330,y:274},{t:'bat',x:780,y:276},{t:'golem',x:1010,y:238},{t:'bat',x:175,y:204},{t:'golem',x:430,y:158},{t:'bat',x:665,y:138},{t:'golem',x:475,y:88},{t:'bat',x:690,y:78}],npcs:[],portals:[{toZone:2,x:40,y:388,dir:'left'},{toZone:4,x:1250,y:388,dir:'right'}]},
   {name:'Ancient Ruins',sky:'#0a0812',bound:1350,req:15,plats:[{x:0,y:310,w:210,h:14,c:'#2a2040'},{x:260,y:276,w:170,h:14,c:'#2a2040'},{x:480,y:244,w:180,h:14,c:'#2a2040'},{x:720,y:280,w:160,h:14,c:'#2a2040'},{x:940,y:244,w:210,h:14,c:'#2a2040'},{x:130,y:208,w:110,h:14,c:'#3a3060'},{x:380,y:162,w:120,h:14,c:'#3a3060'},{x:600,y:140,w:130,h:14,c:'#3a3060'},{x:820,y:158,w:110,h:14,c:'#3a3060'},{x:420,y:92,w:130,h:14,c:'#4a4070'},{x:620,y:82,w:140,h:14,c:'#4a4070'},{x:0,y:388,w:1400,h:18,c:'#1a1030'}],mons:[{t:'skeleton',x:105,y:310},{t:'skeleton',x:345,y:276},{t:'wraith',x:800,y:280},{t:'wraith',x:1040,y:244},{t:'skeleton',x:185,y:208},{t:'skeleton',x:440,y:162},{t:'wraith',x:665,y:140},{t:'skeleton',x:485,y:92},{t:'wraith',x:690,y:82}],npcs:[],portals:[{toZone:3,x:40,y:388,dir:'left'}]},
-  {name:'The Hollow Rift',sky:'#13060f',bound:1200,req:25,plats:[{x:0,y:388,w:1250,h:18,c:'#2a0a1e'},{x:120,y:300,w:200,h:14,c:'#4a1030'},{x:520,y:288,w:200,h:14,c:'#4a1030'},{x:900,y:300,w:200,h:14,c:'#4a1030'},{x:300,y:212,w:160,h:14,c:'#6a1840'},{x:660,y:200,w:160,h:14,c:'#6a1840'},{x:470,y:120,w:200,h:14,c:'#8a2050'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]}
+  {name:'The Hollow Rift',sky:'#13060f',bound:1200,req:25,plats:[{x:0,y:388,w:1250,h:18,c:'#2a0a1e'},{x:120,y:300,w:200,h:14,c:'#4a1030'},{x:520,y:288,w:200,h:14,c:'#4a1030'},{x:900,y:300,w:200,h:14,c:'#4a1030'},{x:300,y:212,w:160,h:14,c:'#6a1840'},{x:660,y:200,w:160,h:14,c:'#6a1840'},{x:470,y:120,w:200,h:14,c:'#8a2050'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]},
+  // The Endless Rift — endgame wave-survival arena (zone index 6). Never on the map; entered only via Riftwarden Kael's gate, left via the edge portal (extract).
+  {name:'The Endless Rift',sky:'#10040c',bound:1400,req:1,plats:[{x:0,y:388,w:1400,h:18,c:'#2a0a1e'},{x:120,y:312,w:220,h:14,c:'#4a1030'},{x:430,y:300,w:200,h:14,c:'#4a1030'},{x:740,y:312,w:220,h:14,c:'#4a1030'},{x:1040,y:300,w:220,h:14,c:'#4a1030'},{x:280,y:226,w:180,h:14,c:'#6a1840'},{x:620,y:214,w:200,h:14,c:'#6a1840'},{x:960,y:226,w:180,h:14,c:'#6a1840'},{x:470,y:140,w:240,h:14,c:'#8a2050'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]}
 ];
 const SPELLS=[{n:'Arcane Bolt',e:'🔵',mn:12,mx:20,mp:7,cd:0.7,c:'#82b4ff',r:320,proj:'bolt',pw:8,ph:8,sfx:()=>sfxBolt()},{n:'Fireball',e:'🔥',mn:25,mx:42,mp:24,cd:2.5,c:'#f09575',r:360,proj:'fireball',pw:10,ph:10,sfx:()=>sfxFireball()},{n:'Ice Shard',e:'❄️',mn:18,mx:28,mp:16,cd:1.5,c:'#85b7eb',r:340,slow:true,proj:'ice',pw:10,ph:10,sfx:()=>sfxIce()},{n:'Mana Shield',e:'🛡',mn:0,mx:0,mp:27,cd:8,c:'#af99ec',shield:true,sfx:()=>sfxShield()}];
 const ITEMS={slime_goo:{n:'Slime Goo',e:'🟢',val:2},goblin_ear:{n:'Goblin Ear',e:'👂',val:3},bat_wing:{n:'Bat Wing',e:'🦇',val:4},crystal_shard:{n:'Crystal Shard',e:'💎',val:8},bone_shard:{n:'Bone Shard',e:'🦴',val:5},shadow_essence:{n:'Shadow Essence',e:'🌑',val:9},apprentice_robe:{n:'Apprentice Robe',e:'👘',slot:'armor',s:'+5 INT'},wand_of_sparks:{n:'Wand of Sparks',e:'🪄',slot:'weapon',s:'+8 Magic'},forest_staff:{n:'Forest Staff',e:'🌿',slot:'weapon',s:'+15 Magic'},crystal_staff:{n:'Crystal Staff',e:'🔮',slot:'weapon',s:'+22 Magic'},runic_robe:{n:'Runic Robe',e:'✨',slot:'armor',s:'+12 INT'},health_potion:{n:'Health Potion',e:'🧪',consumable:true,desc:'Restores 35% max HP (min 50)'},mana_potion:{n:'Mana Potion',e:'💧',consumable:true,desc:'Restores 35% max MP (min 40)'},ward_scroll:{n:'Scroll of Warding',e:'📜',consumable:true,desc:'Grants 10s Mana Shield'},rift_seed:{n:'Pulsing Rift Seed',e:'🌱',val:30,relic:true,desc:'Rare — 1% drop from Slimes'},wither_heart:{n:'Withered Heart',e:'🫀',val:40,relic:true,desc:'Rare — 1% drop from Cave Bats'},resonant_core:{n:'Resonant Core',e:'🔷',val:55,relic:true,desc:'Rare — 1% drop from Crystal Golems'},rift_sigil:{n:'Rift Sigil',e:'🜨',val:70,relic:true,desc:'Rare — 1% drop from Skeleton Archers'},oracle_staff:{n:'Staff of the Sealed Door',e:'🗝️',slot:'weapon',s:'+30 Magic'}};
@@ -1124,6 +1126,117 @@ function renderForge(){const box=document.getElementById('dlg-txt');box.style.wh
   box.innerHTML='<div style="font-size:10px;color:#a89cc8;font-style:italic;margin-bottom:6px">“Gold and monster parts — that’s the recipe. Bring both and I’ll make your gear sing.”</div><div style="font-size:10px;color:#ef9f27;margin-bottom:6px">💰 '+G.gold+'g</div>'+(rows||'<div style="font-size:10px;color:#666">No gear to upgrade. Hunt for drops first!</div>');
   dlgButtons([{l:'Leave Forge',fn:closeDlg}]);}
 function unequipGear(slot){const g=G.equipment[slot];if(!g)return;let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){log('Bag is full!','d');return;}G.inventory[i]={g,qty:1};G.equipment[slot]=null;G.maxHp-=g.hp||0;G.hp=Math.min(G.hp,G.maxHp);log('Unequipped: '+g.n,'q');updateHUD();renderIP();saveGame();}
+// ═══════════════════════════════════════════════════════
+// THE ENDLESS RIFT — infinite scaling wave-survival endgame
+// Entered from the hub (Riftwarden Kael) after the story is done. Each "descent" is a
+// run of escalating depths; clearing a depth banks Rift Shards and offers a curse draft
+// (more danger, more reward) before going deeper. Death ends the run but keeps banked shards.
+// ═══════════════════════════════════════════════════════
+const RIFT_ZONE=6;
+const RIFT_POOL=['slime','goblin','bat','golem','skeleton','wraith'];
+// Descent modifiers — drafted one-of-three between depths; all ramp danger for a shard multiplier.
+const RIFT_MODS=[
+  {id:'savage',n:'Savagery',e:'⚔',d:'Enemies deal +35% damage',dmg:1.35,shard:1.4,c:'#ff6a4a'},
+  {id:'vigor',n:'Vigor',e:'❤',d:'Enemies have +60% HP',hp:1.6,shard:1.35,c:'#e24b6a'},
+  {id:'swift',n:'Swiftness',e:'💨',d:'Enemies move +40% faster',spd:1.4,shard:1.3,c:'#7ad0ff'},
+  {id:'horde',n:'Horde',e:'👥',d:'+3 enemies every wave',horde:3,shard:1.5,c:'#ffb030'},
+  {id:'legion',n:'Elite Legion',e:'★',d:'Every enemy is an elite',elite:true,shard:1.75,c:'#ffd24a'},
+  {id:'brutal',n:'Brutality',e:'🩸',d:'Enemies +25% HP and +25% damage',hp:1.25,dmg:1.25,shard:1.6,c:'#ff2d5d'}
+];
+// Rift Shard sink — caches bought from Riftwarden Kael with shards earned in the Rift.
+const RIFT_SHOP=[
+  {id:'cache',n:'Lesser Rift Cache',e:'🎁',cost:15,d:'A guaranteed Rare-or-better gear drop',fn:()=>addGear(rollGear(RIFT_ZONE,true))},
+  {id:'gcache',n:'Greater Rift Cache',e:'🎀',cost:40,d:'Two high-rarity gear drops',fn:()=>{addGear(rollGear(RIFT_ZONE,true));addGear(rollGear(RIFT_ZONE,true));}},
+  {id:'artifact',n:'Sealed Artifact',e:'✦',cost:140,d:'A random Artifact of unique power',fn:()=>addGear(rollArtifact())},
+  {id:'gold',n:'Coffer of Gold',e:'💰',cost:10,d:'Exchange shards for 600 gold',fn:()=>{G.gold+=600;}}
+];
+let RIFT={active:false,ending:false,depth:0,wave:0,waves:0,boss:false,spawned:false,intermission:0,mods:[],shardMul:1,banked:0};
+let riftMsgT=0,riftMsg='',riftMsgC='#ff4d6d';
+function riftUnlocked(){return G.questStates['q15']==='done'||(G.kills['hollow_oracle']||0)>0;}
+function riftMod(id){return RIFT_MODS.find(m=>m.id===id);}
+function modProd(key){let v=1;RIFT.mods.forEach(id=>{const m=riftMod(id);if(m&&m[key])v*=m[key];});return v;}
+function modHas(key){return RIFT.mods.some(id=>{const m=riftMod(id);return!!(m&&m[key]);});}
+function modSumN(key){let v=0;RIFT.mods.forEach(id=>{const m=riftMod(id);if(m&&typeof m[key]==='number')v+=m[key];});return v;}
+function riftBanner(msg,c){riftMsg=msg;riftMsgT=2.6;riftMsgC=c||'#ff4d6d';}
+function riftTypes(d){return RIFT_POOL.slice(0,Math.max(2,Math.min(RIFT_POOL.length,2+Math.floor(d/2))));}
+function riftWaveCount(d){return d%5===0?1:Math.min(8,3+Math.floor(d/2));}
+// A depth-scaled monster: base stats × depth ramp × any active draft modifiers.
+function mkRiftMon(t,x,y){
+  const m=mkMon(t,x,y,modHas('elite')),d=RIFT.depth,hpMul=(1+d*0.18)*modProd('hp'),dmgMul=(1+d*0.12)*modProd('dmg');
+  m.hp=m.mhp=Math.max(1,Math.round(m.hp*hpMul));
+  m.mn=Math.max(1,Math.round(m.mn*dmgMul));m.mx=Math.max(m.mn+1,Math.round(m.mx*dmgMul));
+  m.spd*=modProd('spd');m.vx=m.spd*(m.vx<0?-1:1);
+  m.xp=Math.round(m.xp*(1+d*0.08));m.gold=Math.round((m.gold||0)*(1+d*0.06));
+  m.rift=true;return m;
+}
+// A spawn slot on a non-floor platform, preferring one away from the player.
+function riftSpawnPoint(){const ps=plats.filter(p=>p.w<900);let best=null;for(let i=0;i<6;i++){const p=ps[Math.floor(Math.random()*ps.length)]||plats[0];const x=p.x+20+Math.random()*Math.max(1,p.w-40);best={x,y:p.y-2};if(Math.abs(x-PL.x)>200)return best;}return best||{x:PL.x>700?200:1200,y:300};}
+function spawnRiftWave(){
+  RIFT.wave++;RIFT.spawned=true;
+  if(RIFT.boss){spawnRiftBoss(RIFT.depth);riftBanner('⚠ RIFT BOSS — DEPTH '+RIFT.depth,'#ff2d5d');return;}
+  const types=riftTypes(RIFT.depth),count=Math.min(12,3+Math.floor(RIFT.depth/3)+RIFT.wave+modSumN('horde'));
+  for(let i=0;i<count;i++){const t=types[Math.floor(Math.random()*types.length)],sp=riftSpawnPoint();mons.push(mkRiftMon(t,sp.x,sp.y));}
+  riftBanner('DEPTH '+RIFT.depth+' · WAVE '+RIFT.wave+'/'+RIFT.waves,'#ff7aa0');
+}
+// A boss "Echo" reappears every 5th depth — a depth-scaled reuse of an existing boss.
+function spawnRiftBoss(d){
+  const bd=BOSS_DEFS[Math.max(0,Math.min(4,Math.floor(d/5)-1))],rf=(1+d*0.12)*modProd('hp'),df=(1+d*0.1)*modProd('dmg'),hp=Math.round(bd.hp*rf);
+  mons.push({id:Math.random(),boss:true,rift:true,t:bd.t,n:'Echo of '+bd.n,sheet:bd.sheet,frames:bd.frames,hp,mhp:hp,mn:Math.round(bd.mn*df),mx:Math.round(bd.mx*df),xp:Math.round(bd.xp*(1+d*0.05)),gold:Math.round(bd.gold*(1+d*0.05)),loot:[],spd:bd.spd,pat:bd.pat,fly:bd.fly,x:Math.min(bd.sx,CZ.bound-120),y:bd.sy,bx:bd.sx,vx:bd.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0,bossColor:bd.bossColor,bscale:Math.min(bd.scale||4,4.2),a1T:0,a2T:0,splitDone:false,fightT:0,enraged:false});
+  bossAlertT=3;bossAlertName='Echo of '+bd.n;shake(0.4,7);sfxDeath();
+}
+function startDepth(d){RIFT.depth=d;RIFT.boss=(d%5===0);RIFT.waves=riftWaveCount(d);RIFT.wave=0;RIFT.spawned=false;RIFT.intermission=1.6;riftBanner('▼ DESCENDING — DEPTH '+d,'#ff4d6d');}
+function startRift(d){RIFT.active=true;RIFT.ending=false;RIFT.mods=[];RIFT.shardMul=1;RIFT.banked=0;closeDlg();loadZone(RIFT_ZONE,130);renderAll();updateHUD();startDepth(d);log('You step through the Riftwarden\'s gate into the Endless Rift — Depth '+d+'!','q');}
+function updateRift(dt){
+  if(riftMsgT>0)riftMsgT-=dt;
+  if(RIFT.intermission>0){RIFT.intermission-=dt;if(RIFT.intermission<=0)spawnRiftWave();return;}
+  if(RIFT.spawned&&!mons.some(m=>m.rift)){
+    RIFT.spawned=false;
+    if(RIFT.wave>=RIFT.waves)depthCleared();
+    else{RIFT.intermission=2.2;riftBanner('WAVE CLEARED — brace for the next','#5dcaa5');sfxQuestComplete();}
+  }
+}
+function depthCleared(){
+  const d=RIFT.depth,sh=Math.round((5+d*2)*RIFT.shardMul);
+  G.riftShards+=sh;RIFT.banked+=sh;let msg='Depth '+d+' cleared! +'+sh+' ◈ Rift Shards';
+  if(d>G.riftBest){G.riftBest=d;const bonus=Math.round(d*3);G.riftShards+=bonus;RIFT.banked+=bonus;msg+=' (new record! +'+bonus+' ◈)';}
+  sfxFanfare();burst(PL.x,PL.y-40,'#ff4d6d',24,170);log('✦ '+msg,'x');updateHUD();saveGame();openRiftDraft();
+}
+function openRiftDraft(){
+  dlgOpen=true;keys={};jp={};document.getElementById('dlg-npc').textContent='◈ The Rift Deepens';
+  const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';
+  const pool=RIFT_MODS.slice();for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const draft=pool.slice(0,3);
+  box.innerHTML='<div style="font-size:10px;color:#a89cc8;font-style:italic;margin-bottom:8px">Depth '+RIFT.depth+' is sealed behind you. Embrace a curse to descend — greater danger, greater reward. Banked this run: <span style="color:#ff8aa0">'+RIFT.banked+' ◈</span></div>'+draft.map(m=>'<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span style="font-size:18px">'+m.e+'</span><div style="flex:1"><div style="font-size:11px;color:'+m.c+'">'+m.n+' <span style="color:#7878a0">(×'+m.shard+' shards)</span></div><div style="font-size:9px;color:#7878a0">'+m.d+'</div></div><button class="db primary" onclick="pickRiftMod(\''+m.id+'\')">Take</button></div>').join('');
+  dlgButtons([{l:'⮈ Extract (keep '+RIFT.banked+' ◈)',fn:()=>endRift(true)}]);
+  document.getElementById('dlg-overlay').classList.add('open');
+}
+function pickRiftMod(id){const m=riftMod(id);if(!m||!RIFT.active)return;RIFT.mods.push(id);RIFT.shardMul*=m.shard;sfxQuestAccept();log('Rift curse embraced: '+m.n+' — '+m.d,'d');closeDlg();startDepth(RIFT.depth+1);}
+function endRift(success){
+  const reached=RIFT.depth,banked=RIFT.banked;
+  RIFT.active=false;RIFT.ending=false;RIFT.spawned=false;RIFT.intermission=0;
+  closeDlg();loadZone(0);renderAll();updateHUD();
+  if(success)log('⮈ You extract from the Rift at Depth '+reached+' with '+banked+' ◈ Rift Shards. Best: Depth '+G.riftBest+'.','x');
+  else log('☠ The Rift overwhelms you at Depth '+reached+'... but your '+banked+' ◈ banked this run are safe.','d');
+  saveGame();
+}
+function openRift(){
+  dlgOpen=true;keys={};jp={};document.getElementById('dlg-npc').textContent='◈ Riftwarden Kael';
+  const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';
+  if(!riftUnlocked()){box.innerHTML='<div style="font-size:11px;color:#a89cc8;line-height:1.5">“The door is sealed, but the Rift still breathes beyond it. Only one who has faced the Hollow Oracle herself may descend and return.<br><br>Come back when Veyra is undone, '+G.name+'.”</div>';dlgButtons([{l:'I will return',fn:closeDlg}]);document.getElementById('dlg-overlay').classList.add('open');return;}
+  renderRiftMenu();document.getElementById('dlg-overlay').classList.add('open');
+}
+function renderRiftMenu(){
+  const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';const resume=Math.max(1,G.riftBest-2);
+  const shopRows=RIFT_SHOP.map(s=>{const af=G.riftShards>=s.cost;return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span style="font-size:16px">'+s.e+'</span><div style="flex:1"><div style="font-size:11px;color:#ff8aa0">'+s.n+'</div><div style="font-size:9px;color:#7878a0">'+s.d+'</div></div><button class="db'+(af?' primary':'')+'" style="opacity:'+(af?1:0.4)+'" onclick="buyRift(\''+s.id+'\')">'+s.cost+' ◈</button></div>';}).join('');
+  box.innerHTML='<div style="font-size:10px;color:#a89cc8;font-style:italic;margin-bottom:8px">“The Rift has no bottom — only deeper dark. Descend, survive its waves, and trade what you bring back for power.”</div>'
+   +'<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:8px"><span style="color:#ff8aa0">◈ Rift Shards: '+G.riftShards+'</span><span style="color:#bbb">Deepest reached: '+(G.riftBest||0)+'</span></div>'
+   +'<div style="font-size:10px;color:#5dcaa5;margin:4px 0;font-weight:600">Rift Caches</div>'+shopRows;
+  const btns=[{l:'▼ Descend (Depth 1)',fn:()=>startRift(1),p:true}];
+  if(G.riftBest>=3)btns.push({l:'▼ Resume (Depth '+resume+')',fn:()=>startRift(resume)});
+  btns.push({l:'Leave',fn:closeDlg});dlgButtons(btns);
+}
+function buyRift(id){const s=RIFT_SHOP.find(x=>x.id===id);if(!s)return;if(G.riftShards<s.cost){log('Not enough Rift Shards!','d');return;}G.riftShards-=s.cost;s.fn();sfxLoot();log('Rift Cache opened: '+s.n,'x');updateHUD();renderRiftMenu();saveGame();}
+
 const BOSS_DEFS=[
   {zone:1,t:'slime_sov',n:'Slime Sovereign',sheet:'slimeSov',frames:30,hp:400,mn:18,mx:27,xp:150,gold:25,spd:45,pat:140,fly:false,bossColor:'#1d9e75',sx:640,sy:200},
   {zone:2,t:'goblin_chief',n:'Goblin Warchief',sheet:'goblinChiefR',frames:20,hp:800,mn:26,mx:42,xp:300,gold:50,spd:55,pat:160,fly:false,bossColor:'#ef9f27',sx:600,sy:200},
@@ -1131,7 +1244,7 @@ const BOSS_DEFS=[
   {zone:4,t:'fallen_oracle',n:'The Fallen Oracle',sheet:'fallenOracle',frames:40,hp:2000,mn:48,mx:78,xp:800,gold:150,spd:42,pat:200,fly:true,bossColor:'#9040d0',sx:680,sy:180},
   {zone:5,t:'hollow_oracle',n:'Veyra, the Hollow Oracle',sheet:'fallenOracle',frames:40,hp:5000,mn:60,mx:95,xp:5000,gold:500,spd:50,pat:240,fly:true,bossColor:'#ff2d5d',sx:760,sy:170,scale:5.2}
 ];
-let bossTimers=[0,0,0,0,0,0],bossAlertT=0,bossAlertName='';
+let bossTimers=[0,0,0,0,0,0,0],bossAlertT=0,bossAlertName='';
 let cv,ctx2,camX=0,mons=[],npcs2=[],projs=[];
 let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[]};
 // Dodge dash — short burst of movement + invulnerability frames (Shift / touch dash button)
@@ -1159,7 +1272,8 @@ function saveGame(){
     localStorage.setItem(SAVE_KEY,JSON.stringify({
       v:2,name:G.name,level:G.level,xp:G.xp,xpNext:G.xpNext,
       hp:G.hp,maxHp:G.maxHp,mp:Math.floor(G.mp),maxMp:G.maxMp,
-      gold:G.gold,skillPoints:G.skillPoints,zone:G.zone,
+      gold:G.gold,skillPoints:G.skillPoints,zone:RIFT.active?0:G.zone,
+      riftBest:G.riftBest,riftShards:G.riftShards,
       kills:G.kills,questStates:G.questStates,equipment:G.equipment,
       inventory:G.inventory.filter(x=>x&&x.qty>0),spells:G.spells,
       storage:G.storage.filter(x=>x&&x.qty>0),storageMax:G.storageMax,hotbar:G.hotbar,
@@ -1181,6 +1295,8 @@ function applySave(d){
   G.hp=d.hp;G.maxHp=d.maxHp;G.mp=d.mp;G.maxMp=d.maxMp;
   G.gold=d.gold;G.skillPoints=d.skillPoints;
   G.zone=Math.min(Math.max((d.zone||0)+mig,0),ZD.length-1);
+  if(G.zone===RIFT_ZONE)G.zone=0; // the rift is never a valid persisted location
+  G.riftBest=d.riftBest||0;G.riftShards=d.riftShards||0;
   G.kills=d.kills||{};G.questStates=d.questStates||{};
   const toGear=x=>!x?null:(typeof x==='string'?(GEAR_FIXED[x]?{...GEAR_FIXED[x]}:null):x);
   G.equipment={weapon:toGear(d.equipment&&d.equipment.weapon),armor:toGear(d.equipment&&d.equipment.armor)};
@@ -1247,10 +1363,11 @@ const AFFIXES=[
 // Boss enrage — damage ramps the longer a boss fight runs, punishing endless kiting.
 const ENRAGE_AFTER=35,ENRAGE_RATE=0.015,ENRAGE_MAX=2.6;
 function enrageMul(m){if(!m||!m.boss||!m.fightT)return 1;const over=m.fightT-ENRAGE_AFTER;return over<=0?1:Math.min(ENRAGE_MAX,1+over*ENRAGE_RATE);}
-function mkMon(t,x,y){const d=MDEF[t],elite=Math.random()<0.1,af=elite?AFFIXES[Math.floor(Math.random()*AFFIXES.length)]:null,hm=elite?3:1,dm=elite?1.5:1,sm=(af&&af.id==='frenzied')?1.5:1;return{id:Math.random(),t,n:(elite?'★ '+(af?af.n+' ':''):'')+d.n,elite,affix:af?af.id:null,affixC:af?af.c:null,sheet:d.sheet,frames:d.frames,hp:Math.round(d.hp*hm),mhp:Math.round(d.hp*hm),mn:Math.round(d.mn*dm),mx:Math.round(d.mx*dm),xp:Math.round(d.xp*(elite?2.5:1)),gold:Math.round((d.gold||0)*(elite?3:1)),loot:d.loot,spd:d.spd*sm,pat:d.pat,fly:d.fly,x,y,bx:x,vx:d.spd*sm*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0};}
+function mkMon(t,x,y,forceElite){const d=MDEF[t],elite=forceElite||Math.random()<0.1,af=elite?AFFIXES[Math.floor(Math.random()*AFFIXES.length)]:null,hm=elite?3:1,dm=elite?1.5:1,sm=(af&&af.id==='frenzied')?1.5:1;return{id:Math.random(),t,n:(elite?'★ '+(af?af.n+' ':''):'')+d.n,elite,affix:af?af.id:null,affixC:af?af.c:null,sheet:d.sheet,frames:d.frames,hp:Math.round(d.hp*hm),mhp:Math.round(d.hp*hm),mn:Math.round(d.mn*dm),mx:Math.round(d.mx*dm),xp:Math.round(d.xp*(elite?2.5:1)),gold:Math.round((d.gold||0)*(elite?3:1)),loot:d.loot,spd:d.spd*sm,pat:d.pat,fly:d.fly,x,y,bx:x,vx:d.spd*sm*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0};}
 function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];nearNPC=null;nearPortal=null;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if(i===5&&!mons.some(m=>m.boss))spawnBoss(5);}
 function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(!dlgOpen&&!mapOpen)update(dt);jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();}draw();raf=requestAnimationFrame(tick);}
 function update(dt){
+  if(RIFT.ending){endRift(false);return;}
   const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
   if(L){PL.vx=Math.max(PL.vx-1200*dt,-SPD);PL.right=false;}
   if(R){PL.vx=Math.min(PL.vx+1200*dt,SPD);PL.right=true;}
@@ -1283,6 +1400,7 @@ function update(dt){
   else if((jp['f']||jp['e'])&&nearPortal)enterPortal(nearPortal);
   const tv=!!(nearNPC||nearPortal);
   if(touchMode&&tv!==talkVis){talkVis=tv;document.getElementById('tb-talk').style.display=tv?'flex':'none';}
+  if(RIFT.active&&!RIFT.ending)updateRift(dt);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1743,6 +1861,18 @@ function draw(){
     ctx2.fillText(activeBoss.hp+' / '+activeBoss.mhp,cv.width/2,by+23);
     ctx2.restore();
   }
+  if(RIFT.active){
+    ctx2.save();
+    const ph=RIFT.mods.length?54:42;
+    ctx2.fillStyle='rgba(0,0,0,0.62)';ctx2.beginPath();ctx2.roundRect(8,8,108,ph,5);ctx2.fill();
+    ctx2.textAlign='left';
+    ctx2.font='bold 10px sans-serif';ctx2.fillStyle='#ff6a9a';ctx2.fillText('◈ DEPTH '+RIFT.depth,14,21);
+    ctx2.font='9px sans-serif';ctx2.fillStyle='#ddd';ctx2.fillText(RIFT.boss?'Rift Boss':'Wave '+Math.max(1,RIFT.wave)+'/'+RIFT.waves,14,32);
+    ctx2.fillStyle='#ff8aa0';ctx2.fillText('Banked: '+RIFT.banked+' ◈',14,42);
+    if(RIFT.mods.length){ctx2.fillStyle='#ffd24a';ctx2.fillText(RIFT.mods.map(id=>{const m=riftMod(id);return m?m.e:'';}).join(' '),14,52);}
+    ctx2.restore();
+  }
+  if(riftMsgT>0){ctx2.save();ctx2.globalAlpha=Math.min(1,riftMsgT*1.1);ctx2.textAlign='center';ctx2.fillStyle='rgba(0,0,0,0.55)';ctx2.fillRect(0,cv.height*0.34-15,cv.width,30);ctx2.font='bold 14px sans-serif';ctx2.fillStyle=riftMsgC;ctx2.fillText(riftMsg,cv.width/2,cv.height*0.34+4);ctx2.restore();}
   ctx2.restore();
 }
 
@@ -1755,7 +1885,7 @@ function closest(r){let c=null,md=r;mons.forEach(m=>{const d=Math.sqrt((m.x-PL.x
 function killM(m){mons=mons.filter(x=>x.id!==m.id);G.kills[m.t]=(G.kills[m.t]||0)+1;sfxDeath();if(G.bounty&&!m.boss&&m.t===G.bounty.t&&G.bounty.p<G.bounty.n){G.bounty.p++;if(G.bounty.p>=G.bounty.n)log('📋 Bounty complete! Return to the board in Aethon City.','q');}if(m.boss){const bg=USK.has('gs')?Math.floor(m.gold*1.4):m.gold;G.gold+=bg;sfxQuestComplete();burst(m.x,m.y-30,m.bossColor,32,180);shake(0.4,6);log('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+bg+' gold!','x');gainXP(m.xp);addGear(rollGear(G.zone,true));if(m.t==='hollow_oracle'||Math.random()<0.01){log('✦ The boss drops something of impossible power...','x');addGear(rollArtifact());}updateHUD();renderQP();saveGame();return;}if(m.affix==='explosive'){burst(m.x,m.y-20,'#ffb030',26,180);shake(0.28,5);sfxFireball();if(Math.abs(PL.x-m.x)<92&&Math.abs(PL.y-m.y)<72&&PL.inv<=0){let edmg=Math.max(1,Math.round(m.mx*1.3)-eqDef());if(G.shield)edmg=Math.max(1,Math.floor(edmg*shieldFac()));G.hp=Math.max(0,G.hp-edmg);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,edmg,'#ffb030');log('💥 Explosive '+m.n+' detonates for '+edmg+'!','d');if(G.hp<=0)respawn();else updateHUD();}}log(m.n+' defeated! +'+m.xp+' XP','x');burst(m.x,m.y-20,m.elite?'#ffd24a':'#ffd27a',m.elite?24:14,m.elite?170:130);gainXP(m.xp);if((m.gold||0)>0){let gd=m.gold+Math.floor(Math.random()*m.gold);if(USK.has('gs'))gd=Math.floor(gd*1.4);G.gold+=gd;log('+'+gd+' gold','x');updateHUD();}if(Math.random()<0.01)addGear(rollGear(G.zone,m.elite));m.loot.forEach(([item,ch])=>{if(Math.random()<ch){addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}});renderQP();saveGame();setTimeout(()=>{const md2=CZ.mons.find(x=>x.t===m.t);if(!md2)return;mons.push(mkMon(md2.t,md2.x,md2.y));},12000);}
 function addItem(id){if(GEAR_FIXED[id]){addGear({...GEAR_FIXED[id]});return;}const nm=ITEMS[id]?ITEMS[id].n:id;const s=G.inventory.findIndex(x=>x&&x.id===id);if(s>=0)G.inventory[s].qty++;else{let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){if(bagAdd(G.storage,{id,qty:1},G.storageMax)){log('🎒 Bag full — '+nm+' sent to your Storage Chest.','q');}else{log('Bag and storage full! '+nm+' was lost...','d');}renderIP();return;}G.inventory[i]={id,qty:1};}autofillHotbar(id);renderIP();}
 function gainXP(amt){G.xp+=amt;while(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.floor(G.xpNext*1.4);G.maxHp+=20;G.hp=G.maxHp;G.maxMp+=10;G.mp=G.maxMp;G.skillPoints++;document.getElementById('hlvl').textContent='Lv.'+G.level+' Mage';const t=document.getElementById('lvt');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);burst(PL.x,PL.y-40,'#ef9f27',24,160);sfxLevelUp();log('LEVEL UP! Now level '+G.level+'!','x');log('Gained 1 Skill Point!','q');renderSP();}updateHUD();}
-function respawn(){G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];camX=0;const lost=Math.floor(G.gold*0.1);if(lost>0){G.gold-=lost;log('You dropped '+lost+' gold as you fell...','d');}log('Defeated! Respawned...','d');updateHUD();saveGame();}
+function respawn(){if(RIFT.active){RIFT.ending=true;G.hp=Math.floor(G.maxHp*0.5);PL.x=130;PL.y=260;PL.vx=0;PL.vy=0;PL.trail=[];updateHUD();return;}G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];camX=0;const lost=Math.floor(G.gold*0.1);if(lost>0){G.gold-=lost;log('You dropped '+lost+' gold as you fell...','d');}log('Defeated! Respawned...','d');updateHUD();saveGame();}
 function spawnBoss(zi){const bd=BOSS_DEFS.find(b=>b.zone===zi);if(!bd)return;mons.push({id:Math.random(),boss:true,t:bd.t,n:bd.n,sheet:bd.sheet,frames:bd.frames,hp:bd.hp,mhp:bd.hp,mn:bd.mn,mx:bd.mx,xp:bd.xp,gold:bd.gold,loot:[],spd:bd.spd,pat:bd.pat,fly:bd.fly,x:bd.sx,y:bd.sy,bx:bd.sx,vx:bd.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0,bossColor:bd.bossColor,bscale:bd.scale||4,a1T:0,a2T:0,splitDone:false,fightT:0,enraged:false});bossTimers[zi]=0;bossAlertT=3.5;bossAlertName=bd.n;shake(0.5,8);log('⚠ BOSS SPAWNED: '+bd.n+'!','d');sfxDeath();}
 function updateBossAbilities(m,dt,dx,adx){
   m.a1T=Math.max(0,m.a1T-dt);m.a2T=Math.max(0,m.a2T-dt);
@@ -1800,7 +1930,7 @@ function spawnDN(sx,sy,dmg,col){const el=document.createElement('div');el.classN
 function qtxt(s){return (s||'').replace(/\{name\}/g,G.name);}
 // Resolve which quest a giver should offer right now (givers may hold several quests across the story): active > newly available > still-locked > last completed.
 function npcQuest(npc){const qs=QUESTS.filter(x=>x.giver===npc.name);if(!qs.length)return null;const active=qs.find(q=>G.questStates[q.id]==='active');if(active)return active;const avail=qs.find(q=>!G.questStates[q.id]&&G.level>=q.rlvl&&(!q.prev||G.questStates[q.prev]==='done'));if(avail)return avail;const pending=qs.find(q=>!G.questStates[q.id]);if(pending)return pending;return qs[qs.length-1];}
-function openDlg(npc){if(npc.shop){openShop(npc);return;}if(npc.board){openBounty();return;}if(npc.forge){openForge(npc);return;}if(npc.storage){openStorage(npc);return;}dlgOpen=true;keys={};jp={};const q=npcQuest(npc);let txt='',btns=[];if(!q){txt='Greetings, adventurer!';btns=[{l:'Goodbye',fn:closeDlg}];}else if(!G.questStates[q.id]){if(G.level<q.rlvl){txt=qtxt(q.lock)||('You are not ready yet.\n(Requires Level '+q.rlvl+')');btns=[{l:'Goodbye',fn:closeDlg}];}else if(q.prev&&G.questStates[q.prev]!=='done'){txt=qtxt(q.lock)||'I have nothing for you yet.';btns=[{l:'Goodbye',fn:closeDlg}];}else{txt=qtxt(q.txt);btns=[{l:'✔ Accept Quest',fn:()=>acceptQ(q.id),p:true},{l:'Decline',fn:closeDlg}];}}else if(G.questStates[q.id]==='active'){if(isQDone(q.id)){txt=qtxt(q.done)||('You have done it, '+G.name+'!');btns=[{l:'✔ Turn In Quest',fn:()=>turnInQ(q.id),p:true},{l:'Not yet',fn:closeDlg}];}else{txt='Not done yet...\n\n'+qProg(q.id);btns=[];if(q.tp!=null)btns.push({l:'⟴ Return to the Hollow Rift',fn:()=>{closeDlg();loadZone(q.tp);renderAll();updateHUD();log('Reality tears open — you are pulled into the Hollow Rift!','d');},p:true});btns.push({l:'I will return',fn:closeDlg});}}else{txt=qtxt(q.after)||('Thank you again, '+G.name+'!');btns=[{l:'Goodbye',fn:closeDlg}];}document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-txt').textContent=txt;const bc=document.getElementById('dlg-btns');bc.innerHTML='';btns.forEach(b=>{const btn=document.createElement('button');btn.className='db'+(b.p?' primary':'');btn.textContent=b.l;btn.addEventListener('click',b.fn);bc.appendChild(btn);});document.getElementById('dlg-overlay').classList.add('open');}
+function openDlg(npc){if(npc.shop){openShop(npc);return;}if(npc.board){openBounty();return;}if(npc.forge){openForge(npc);return;}if(npc.storage){openStorage(npc);return;}if(npc.rift){openRift();return;}dlgOpen=true;keys={};jp={};const q=npcQuest(npc);let txt='',btns=[];if(!q){txt='Greetings, adventurer!';btns=[{l:'Goodbye',fn:closeDlg}];}else if(!G.questStates[q.id]){if(G.level<q.rlvl){txt=qtxt(q.lock)||('You are not ready yet.\n(Requires Level '+q.rlvl+')');btns=[{l:'Goodbye',fn:closeDlg}];}else if(q.prev&&G.questStates[q.prev]!=='done'){txt=qtxt(q.lock)||'I have nothing for you yet.';btns=[{l:'Goodbye',fn:closeDlg}];}else{txt=qtxt(q.txt);btns=[{l:'✔ Accept Quest',fn:()=>acceptQ(q.id),p:true},{l:'Decline',fn:closeDlg}];}}else if(G.questStates[q.id]==='active'){if(isQDone(q.id)){txt=qtxt(q.done)||('You have done it, '+G.name+'!');btns=[{l:'✔ Turn In Quest',fn:()=>turnInQ(q.id),p:true},{l:'Not yet',fn:closeDlg}];}else{txt='Not done yet...\n\n'+qProg(q.id);btns=[];if(q.tp!=null)btns.push({l:'⟴ Return to the Hollow Rift',fn:()=>{closeDlg();loadZone(q.tp);renderAll();updateHUD();log('Reality tears open — you are pulled into the Hollow Rift!','d');},p:true});btns.push({l:'I will return',fn:closeDlg});}}else{txt=qtxt(q.after)||('Thank you again, '+G.name+'!');btns=[{l:'Goodbye',fn:closeDlg}];}document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-txt').textContent=txt;const bc=document.getElementById('dlg-btns');bc.innerHTML='';btns.forEach(b=>{const btn=document.createElement('button');btn.className='db'+(b.p?' primary':'');btn.textContent=b.l;btn.addEventListener('click',b.fn);bc.appendChild(btn);});document.getElementById('dlg-overlay').classList.add('open');}
 function closeDlg(){dlgOpen=false;keys={};jp={};document.getElementById('dlg-txt').style.whiteSpace='';document.getElementById('dlg-overlay').classList.remove('open');}
 let shopNPC=null;
 function openShop(npc){dlgOpen=true;keys={};jp={};shopNPC=npc;document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-overlay').classList.add('open');renderShop();}
@@ -1897,7 +2027,7 @@ function initTouch(){
   window.addEventListener('touchstart',enableTouch,{passive:true,once:true});
 }
 function travelTo(i){if(G.level<ZD[i].req){log(ZD[i].name+' requires Level '+ZD[i].req+'!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');saveGame();}
-function enterPortal(p){if(G.level<ZD[p.toZone].req){log(ZD[p.toZone].name+' requires Level '+ZD[p.toZone].req+'!','d');return;}const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
+function enterPortal(p){if(RIFT.active){endRift(true);return;}if(G.level<ZD[p.toZone].req){log(ZD[p.toZone].name+' requires Level '+ZD[p.toZone].req+'!','d');return;}const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
 function drawPortals(){
   portals2.forEach(p=>{
     const sx=p.x-camX;if(sx<-100||sx>cv.width+100)return;

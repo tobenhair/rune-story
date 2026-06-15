@@ -28,7 +28,11 @@ retention lever because it gives the game a *loop* instead of an *ending*.
 
 ---
 
-## Proposal 1 — The Endless Rift (infinite scaling endgame) ⭐ flagship
+## Proposal 1 — The Endless Rift (infinite scaling endgame) ⭐ flagship — ✅ IMPLEMENTED
+
+> **Status: shipped.** Built into `index.html` (the `RIFT` controller, `RIFT_MODS`, `RIFT_SHOP`,
+> arena zone `RIFT_ZONE`, Riftwarden Kael in the hub) with full coverage in `tests/rift.spec.js`.
+> The description below is the original proposal; it matches what was built.
 
 **Problem solved:** The game ends. This gives it a *forever* mode.
 

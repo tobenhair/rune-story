@@ -16,7 +16,7 @@ test.describe('Boot & core data', () => {
       zones: ZD.length, quests: QUESTS.length, spells: SPELLS.length, rars: RARS.length,
       bosses: BOSS_DEFS.length, affixes: AFFIXES.length, artifacts: ARTIFACTS.length, skills: SKN.length,
     }));
-    expect(c.zones).toBe(6);
+    expect(c.zones).toBe(7); // 5 story zones + hub + the Endless Rift arena
     expect(c.quests).toBe(15);
     expect(c.spells).toBe(4);
     expect(c.rars).toBe(6);
