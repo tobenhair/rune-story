@@ -42,8 +42,9 @@ test.describe('Ascension & meta-progression', () => {
 
   test('mkMon scales enemy HP up with ascension level', async ({ game }) => {
     const r = await game.evaluate(() => {
-      META.asc = 0; const base = mkMon('goblin', 0, 0, false).hp;
-      META.asc = 4; const scaled = mkMon('goblin', 0, 0, false).hp;
+      // withRandom([]) forces Math.random → 0.5 so neither roll is a (random) elite
+      META.asc = 0; const base = T.withRandom([], () => mkMon('goblin', 0, 0)).hp;
+      META.asc = 4; const scaled = T.withRandom([], () => mkMon('goblin', 0, 0)).hp;
       META.asc = 0;
       return { base, scaled };
     });

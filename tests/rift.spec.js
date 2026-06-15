@@ -67,9 +67,10 @@ test.describe('The Endless Rift', () => {
     const r = await game.evaluate(() => {
       const base = MDEF.goblin;
       RIFT.mods = []; RIFT.depth = 1;
-      const shallow = mkRiftMon('goblin', 400, 300);
+      // withRandom([]) forces Math.random → 0.5 so neither roll is a (random) elite
+      const shallow = T.withRandom([], () => mkRiftMon('goblin', 400, 300));
       RIFT.depth = 10;
-      const deep = mkRiftMon('goblin', 400, 300);
+      const deep = T.withRandom([], () => mkRiftMon('goblin', 400, 300));
       return {
         baseHp: base.hp, baseMx: base.mx,
         shallowHp: shallow.hp, deepHp: deep.hp,

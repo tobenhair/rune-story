@@ -23,7 +23,7 @@ test.describe('Boot & core data', () => {
     expect(c.bosses).toBe(5);
     expect(c.affixes).toBe(4);
     expect(c.artifacts).toBe(4);
-    expect(c.skills).toBe(10);
+    expect(c.skills).toBe(13); // 10 base + 3 school capstones
   });
 
   test('save → load round-trips key progress', async ({ game }) => {

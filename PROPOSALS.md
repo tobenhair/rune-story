@@ -106,7 +106,12 @@ to endless) with a **permanent meta-talent tree** funded by Rift Shards (Proposa
 
 ---
 
-## Proposal 3 — Deep build system: schools, runes & respec
+## Proposal 3 — Deep build system: schools, runes & respec — ✅ IMPLEMENTED
+
+> **Status: shipped.** Runes + sockets (`RUNES`, drilled at the Forge), a free `respec`, and
+> three school capstones (`inferno`/`chain`/`glacier`) are in `index.html`, covered by
+> `tests/runes.spec.js`. Sockets are drilled (gold sink) rather than rolled, so `rollGear`'s
+> RNG — and the gear test suite — is untouched.
 
 **Problem solved:** One build, no experimentation, shallow theorycrafting.
 
@@ -139,7 +144,11 @@ Turn the thin `SKN` tree into a real **build engine** with three specializable s
 
 ---
 
-## Proposal 4 — Living hub: rebuild Aethon City (settlement progression)
+## Proposal 4 — Living hub: rebuild Aethon City (settlement progression) — ✅ IMPLEMENTED
+
+> **Status: shipped.** `CITY`/`G.city` districts upgraded via Master Builder Sora, each wired
+> into a single gameplay chokepoint, with a skyline monument that grows with investment.
+> Covered by `tests/city.spec.js`.
 
 **Problem solved:** The hub is static set-dressing; gold has few long-term sinks.
 
