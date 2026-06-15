@@ -28,6 +28,26 @@ test.describe('The Endless Rift', () => {
     expect(r.warden).toBe(true);
   });
 
+  test('loadZone preserves hub NPC routing flags so the Riftwarden can be entered', async ({ game }) => {
+    // Regression: loadZone copies hub NPCs into the runtime npcs2 array; the newer
+    // routing flags (rift/asc/town/codex) must survive that copy or openDlg falls
+    // through to the generic quest path and the feature can't be opened.
+    const r = await game.evaluate(() => {
+      loadZone(0, 100);
+      const find = pred => npcs2.find(pred);
+      return {
+        rift: !!(find(n => n.name === 'Riftwarden Kael') || {}).rift,
+        town: !!(find(n => n.name === 'Master Builder Sora') || {}).town,
+        codex: !!(find(n => n.name === 'Chronicler Ily') || {}).codex,
+        asc: !!(find(n => n.name === 'Astralwright Nyx') || {}).asc,
+      };
+    });
+    expect(r.rift).toBe(true);
+    expect(r.town).toBe(true);
+    expect(r.codex).toBe(true);
+    expect(r.asc).toBe(true);
+  });
+
   test('Riftwarden gate is locked until Veyra is defeated', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.questStates = {}; G.kills = {};
