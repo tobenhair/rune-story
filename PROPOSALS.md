@@ -71,7 +71,14 @@ stronger.
 
 ---
 
-## Proposal 2 — Ascension / New Game+ (meta-progression & prestige)
+## Proposal 2 — Ascension / New Game+ (meta-progression & prestige) — ✅ IMPLEMENTED
+
+> **Status: shipped.** Built into `index.html` (the `META` object + `ASCN` talent board,
+> Astralwright Nyx in the hub, paragon multipliers wired into mkMon/spawnBoss/fireAt/killM/
+> depthCleared) with coverage in `tests/ascension.spec.js`. One refinement vs. the original
+> proposal: the permanent tree is funded by a dedicated prestige currency, **Astral Echoes**
+> (earned by ascending), rather than Rift Shards — Shards stay the in-run rift currency, giving
+> two clean, separate economies. Meta lives under its own localStorage key as proposed.
 
 **Problem solved:** Nothing carries between "lifetimes"; reaching max feels like a dead end.
 
