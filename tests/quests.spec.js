@@ -78,10 +78,11 @@ test.describe('Quests', () => {
 
   test('accepting and completing q1 grants its rewards', async ({ game }) => {
     const r = await game.evaluate(() => {
-      G.questStates = {}; G.kills = {}; G.inventory = []; G.gold = 0; G.equipment = { weapon: null, armor: null };
+      G.questStates = {}; G.questProg = {}; G.kills = {}; G.inventory = []; G.gold = 0; G.equipment = { weapon: null, armor: null };
       acceptQ('q1');
       const accepted = G.questStates.q1 === 'active';
-      G.kills.slime = 15; G.inventory = [{ id: 'slime_goo', qty: 2 }]; // q1 now needs 15 kills (5×)
+      // Progress is tracked per-quest from acceptance: credit 15 slime kills + 2 slime_goo loots.
+      G.questProg.q1.kills.slime = 15; G.questProg.q1.items.slime_goo = 2;
       const ready = isQDone('q1');
       turnInQ('q1');
       return { accepted, ready, done: G.questStates.q1 === 'done', gold: G.gold, armor: G.equipment.armor && G.equipment.armor.n };
@@ -91,6 +92,37 @@ test.describe('Quests', () => {
     expect(r.done).toBe(true);
     expect(r.gold).toBe(15);
     expect(r.armor).toBe('Apprentice Robe'); // q1 reward item
+  });
+
+  test('accepting a quest resets its counters — prior lifetime kills/loot do not count', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.questStates = {}; G.questProg = {}; G.level = 1;
+      G.kills = { slime: 99 }; G.inventory = [{ id: 'slime_goo', qty: 50 }]; // lots of prior progress
+      acceptQ('q1');
+      const progAtAccept = qProg('q1');
+      const doneAtAccept = isQDone('q1');
+      questCredit('kill', 'slime'); questCredit('col', 'slime_goo'); // +1 each, after accepting
+      return { progAtAccept, doneAtAccept, killAfter: G.questProg.q1.kills.slime, itemAfter: G.questProg.q1.items.slime_goo };
+    });
+    expect(r.doneAtAccept).toBe(false);     // 99 lifetime kills / 50 goo are ignored
+    expect(r.progAtAccept).toContain('0/15');
+    expect(r.progAtAccept).toContain('0/2');
+    expect(r.killAfter).toBe(1);
+    expect(r.itemAfter).toBe(1);
+  });
+
+  test('killing and looting credit active quests (counters advance from zero)', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.questStates = { q1: 'active' }; G.questProg = { q1: { kills: {}, items: {} } };
+      T.clear(); T.resetPlayer(); G.zone = 1; CZ = ZD[1]; G.hp = 999; G.maxHp = 999;
+      const m = mkMon('slime', PL.x + 500, 260);
+      const o = Math.random; Math.random = () => 0.99; try { killM(m); } finally { Math.random = o; } // 0.99 → no loot drop during kill
+      const killCredit = G.questProg.q1.kills.slime || 0;
+      addItem('slime_goo');
+      return { killCredit, lootCredit: G.questProg.q1.items.slime_goo || 0 };
+    });
+    expect(r.killCredit).toBe(1);
+    expect(r.lootCredit).toBe(1);
   });
 
   test('regular-monster kill quests demand 5× kills for 2× XP', async ({ game }) => {
@@ -109,7 +141,7 @@ test.describe('Quests', () => {
 
   test('q14 turn-in hands out the guaranteed Legendary staff', async ({ game }) => {
     const r = await game.evaluate(() => {
-      G.equipment = { weapon: null, armor: null }; G.questStates = { q14: 'active' }; G.kills = { fallen_oracle: 1 };
+      G.equipment = { weapon: null, armor: null }; G.questStates = { q14: 'active' }; G.questProg = { q14: { kills: { fallen_oracle: 1 }, items: {} } };
       const ready = isQDone('q14');
       turnInQ('q14');
       const w = G.equipment.weapon;
