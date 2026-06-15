@@ -1,12 +1,12 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Zones & travel', () => {
-  test('all six zones with correct names and level requirements', async ({ game }) => {
+  test('all seven zones with correct names and level requirements', async ({ game }) => {
     const z = await game.evaluate(() => ZD.map(z => ({ n: z.name, req: z.req })));
     expect(z.map(x => x.n)).toEqual([
-      'Aethon City', 'Village Outskirts', 'Verdant Forest', 'Crystal Caverns', 'Ancient Ruins', 'The Hollow Rift',
+      'Aethon City', 'Village Outskirts', 'Verdant Forest', 'Crystal Caverns', 'Ancient Ruins', 'The Hollow Rift', 'The Endless Rift',
     ]);
-    expect(z.map(x => x.req)).toEqual([1, 1, 5, 10, 15, 25]);
+    expect(z.map(x => x.req)).toEqual([1, 1, 5, 10, 15, 25, 1]);
   });
 
   test('only the hub has NPCs; combat zones have monsters; rift has neither', async ({ game }) => {

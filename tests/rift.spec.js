@@ -219,9 +219,11 @@ test.describe('The Endless Rift', () => {
       G.equipment = { weapon: null, armor: null }; G.inventory = [];
       G.riftShards = 50;
       buyRift('cache');
+      const shards = G.riftShards; // 50 - 15, captured before the affordability check below mutates it
       const gearCount = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean).length;
-      const tooPoor = (() => { G.riftShards = 0; const before = G.riftShards; buyRift('artifact'); return G.riftShards === before; })();
-      return { shards: G.riftShards, gearCount, tooPoor };
+      G.riftShards = 5; const before = G.riftShards; buyRift('artifact'); // 140 cost → can't afford
+      const tooPoor = G.riftShards === before;
+      return { shards, gearCount, tooPoor };
     });
     expect(r.shards).toBe(35); // 50 - 15
     expect(r.gearCount).toBeGreaterThan(0);
