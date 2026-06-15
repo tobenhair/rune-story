@@ -80,6 +80,8 @@ test.describe('Ascension & meta-progression', () => {
     const r = await game.evaluate(() => {
       G.questStates = { q15: 'done' };
       META.asc = 0; META.echoes = 0; META.talents = { vigor: 2 };
+      // isolate the kept-shards assertion from achievement payouts (asc1/rift1 etc.)
+      META.achievements = {}; ACHV.forEach(a => { META.achievements[a.id] = true; });
       G.level = 30; G.gold = 999; G.skillPoints = 5;
       G.riftBest = 4; G.riftShards = 77;
       G.storage = [{ id: 'slime_goo', qty: 3 }]; G.storageMax = 20;

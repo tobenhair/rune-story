@@ -175,7 +175,12 @@ gives every farming session a visible, persistent payoff.
 
 ---
 
-## Proposal 5 — Daily Rifts, achievements & the Codex (engagement + collection)
+## Proposal 5 — Daily Rifts, achievements & the Codex (engagement + collection) — ✅ IMPLEMENTED
+
+> **Status: shipped.** A deterministic UTC-seeded **Daily Rift** (Riftwarden dialog, streaks),
+> ~24 account-wide **achievements** (`ACHV`/`checkAchv`) that pay Rift Shards, and a **Bestiary/
+> Codex** (Chronicler Ily) that fills as creatures are slain. All state is account-wide on `META`,
+> so it survives Ascension. Covered by `tests/engagement.spec.js`.
 
 **Problem solved:** No reason to log in *today*; no long-tail collection goals.
 

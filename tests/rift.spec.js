@@ -123,6 +123,8 @@ test.describe('The Endless Rift', () => {
   test('clearing a depth banks shards, records a new best, and opens the curse draft', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.questStates = { q15: 'done' }; G.riftShards = 0; G.riftBest = 0;
+      // isolate the depth-reward math from achievement payouts
+      META.achievements = {}; ACHV.forEach(a => { META.achievements[a.id] = true; });
       startRift(1);
       RIFT.wave = RIFT.waves; RIFT.spawned = true; RIFT.intermission = 0; mons.length = 0;
       const shardsBefore = G.riftShards;
