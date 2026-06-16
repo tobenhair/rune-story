@@ -152,16 +152,16 @@ test.describe('Quests', () => {
     expect(r.rar).toBe(4); // Legendary
   });
 
-  test('q15 is the level-25 finale that teleports into the Rift', async ({ game }) => {
+  test('q15 is the level-20 finale that teleports into the Rift', async ({ game }) => {
     const meta = await game.evaluate(() => { const q = QUESTS.find(x => x.id === 'q15'); return { rlvl: q.rlvl, tp: q.tp, prev: q.prev, task: q.tasks[0] }; });
-    expect(meta.rlvl).toBe(25);
+    expect(meta.rlvl).toBe(20);
     expect(meta.tp).toBe(5);
     expect(meta.prev).toBe('q14');
     expect(meta.task).toEqual({ type: 'kill', tgt: 'hollow_oracle', n: 1 });
 
     const r = await game.evaluate(() => {
       QUESTS.slice(0, 14).forEach(q => G.questStates[q.id] = 'done');
-      G.level = 25; mons.length = 0;
+      G.level = 20; mons.length = 0;
       acceptQ('q15');
       return { zone: G.zone, boss: mons.some(m => m.boss && m.t === 'hollow_oracle') };
     });
