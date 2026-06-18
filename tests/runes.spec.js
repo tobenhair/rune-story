@@ -69,6 +69,20 @@ test.describe('Runes & sockets', () => {
     expect(r.gold).toBe(700); // 1000 - 300
     expect(r.have).toBe(true);
   });
+
+  test('runes in storage are socketable from the Forge (bag-overflow case)', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.equipment = { weapon: { slot: 'weapon', rar: 2, n: 'W', mag: 5, sockets: [null] }, armor: null };
+      G.inventory = [];                       // rune sits only in storage, not the bag
+      G.storage = [{ id: 'rune_ruby', qty: 1 }];
+      const seen = countItemAll('rune_ruby');
+      socketRune('weapon', 0, 'rune_ruby');
+      return { seen, socketed: G.equipment.weapon.sockets[0], storageLeft: countItemAll('rune_ruby') };
+    });
+    expect(r.seen).toBe(1);                    // Forge sees the rune even though the bag is empty
+    expect(r.socketed).toBe('rune_ruby');      // and can socket it
+    expect(r.storageLeft).toBe(0);             // consumed from storage
+  });
 });
 
 test.describe('Respec & school capstones', () => {
