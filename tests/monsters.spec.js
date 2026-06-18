@@ -97,4 +97,20 @@ test.describe('Monsters, loot & elite affixes', () => {
     expect(r.dropped).toBeGreaterThan(0);
     expect(r.gone).toBe(true);
   });
+
+  test('zoneSpawnPoint spreads respawns across the zone, biased away from the player', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.zone = 1; CZ = ZD[1]; plats = CZ.plats; PL.x = 100;
+      const pts = []; for (let i = 0; i < 40; i++) pts.push(zoneSpawnPoint());
+      const inBounds = pts.every(p => p.x >= 0 && p.x <= CZ.bound);
+      const unique = new Set(pts.map(p => Math.round(p.x))).size;
+      const onPlats = pts.every(p => CZ.plats.some(pl => Math.abs(p.y - (pl.y - 2)) < 1));
+      const farFromPlayer = pts.filter(p => Math.abs(p.x - PL.x) > 220).length;
+      return { inBounds, unique, onPlats, farFromPlayer, total: pts.length };
+    });
+    expect(r.inBounds).toBe(true);
+    expect(r.onPlats).toBe(true);
+    expect(r.unique).toBeGreaterThan(5);            // not the same spot every time
+    expect(r.farFromPlayer).toBeGreaterThan(r.total * 0.5); // mostly away from the player
+  });
 });
