@@ -23,7 +23,7 @@ python3 -m http.server 8080
 
 ## Testing & CI
 
-The game logic is covered by a **Playwright** suite in `tests/` that loads `index.html` in headless Chromium and drives the real game functions/state via `page.evaluate` (the RAF loop is cancelled so time is stepped deterministically). A shared fixture (`tests/fixtures.js`) boots the game and exposes in-page helpers (`window.T`: `withRandom`, `clear`, `resetPlayer`, `mon`). Specs are organized by domain: `boot`, `zones`, `monsters` (+ affixes), `combat`, `skills`, `gear` (+ forge), `quests`, `economy`, `bosses` (+ enrage), `movement` (dash/i-frames).
+The game logic is covered by a **Playwright** suite in `tests/` that loads `index.html` in headless Chromium and drives the real game functions/state via `page.evaluate` (the RAF loop is cancelled so time is stepped deterministically). A shared fixture (`tests/fixtures.js`) boots the game and exposes in-page helpers (`window.T`: `withRandom`, `clear`, `resetPlayer`, `mon`). Specs are organized by domain: `boot`, `zones`, `monsters` (+ affixes), `combat`, `skills`, `gear` (+ forge), `quests`, `economy`, `bosses` (+ enrage), `movement` (dash/i-frames), `render` (every zone draws without error: sprites, props, foreground, lighting).
 
 ```bash
 npm install                                  # installs @playwright/test
@@ -41,7 +41,7 @@ The file is one HTML document with all CSS, JavaScript, game data, rendering, an
 |---|---|---|
 | Audio Engine | ~216–318 | Procedural music and SFX via Web Audio API (no audio files) |
 | Cutscene System | ~320–853 | Narrative scenes rendered to Canvas 2D |
-| Sprite System | ~855–881 | Pixel sprites generated at runtime (no image assets) |
+| Sprite System | ~900–1130 | Hi-res 32×48 pixel sprites generated at runtime (no image assets) |
 | Game Engine | ~883–1220 | State, physics, combat, quests, skills, main loop |
 
 ### Global State
@@ -101,6 +101,10 @@ The main loop uses `requestAnimationFrame`. Each frame calls:
 ### Rendering
 
 Everything is procedural Canvas 2D. Backgrounds use multi-layer parallax (depths 0.2–0.9). Sprites are generated into off-screen canvases at startup and indexed for animation frames. No image files are ever loaded.
+
+**Sprite resolution.** Sprites are authored on a hi-res **32×48** internal grid (`SD`/`SDH` = `SW*SS`/`SH*SS`, `SS=2`) for shading, outlines and faces, then drawn into the unchanged on-screen footprint (`SW*SCALE × SH*SCALE`). All gameplay math — hitboxes, the boss/elite `bScale` multipliers, projectile offsets — still uses `SW`/`SH`/`SCALE`, so the supersample is purely cosmetic. Every `draw*` sprite function clears and paints `0,0,SD,SDH`; the six `drawImage` blit sites (preview, HUD, NPC, monster, dash trail, player) read source rects in `SD`/`SDH`. Shared sprite helpers: `vg` (vertical 3-stop gradient body shading), `orc` (outlined rect), `band` (light/dark banding), `glow` (radial glow for eyes/orbs), `fx` (mirror an x-coord so R-facing sprites author once and flip for left).
+
+**Environment polish layer** (cosmetic, layered over the per-zone parallax BGs). `zoneTheme(z)` maps each zone to a theme; three passes run inside `draw()`: `drawProps()` (world-space ground decorations — trees/crystals/columns/lampposts/obelisks, behind characters), `drawForeground()` (ground fog + animated ambient particles — leaves/embers/spores/fireflies — and a translucent foreground silhouette band, in front of characters), and `drawLighting()` (per-zone colour grade via `ZGRADE` + a warm radial light on the player + spell-coloured light per live projectile + a vignette, under the HUD). All are procedural and add no new `G` state.
 
 ### Audio
 
