@@ -16,11 +16,11 @@ test.describe('Boot & core data', () => {
       zones: ZD.length, quests: QUESTS.length, spells: SPELLS.length, rars: RARS.length,
       bosses: BOSS_DEFS.length, affixes: AFFIXES.length, artifacts: ARTIFACTS.length, skills: SKN.length,
     }));
-    expect(c.zones).toBe(7); // 5 story zones + hub + the Endless Rift arena
-    expect(c.quests).toBe(15);
+    expect(c.zones).toBe(10); // hub + 6 combat zones + 3 arenas (Hollow Rift, Endless Rift, Ashen Sanctum)
+    expect(c.quests).toBe(22); // 15 Act 1 + 7 Act 2
     expect(c.spells).toBe(4);
     expect(c.rars).toBe(6);
-    expect(c.bosses).toBe(5);
+    expect(c.bosses).toBe(8); // 5 Act 1 + 3 Act 2
     expect(c.affixes).toBe(4);
     expect(c.artifacts).toBe(4);
     expect(c.skills).toBe(13); // 10 base + 3 school capstones
