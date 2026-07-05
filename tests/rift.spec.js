@@ -19,11 +19,11 @@ test.describe('The Endless Rift', () => {
         warden: ZD[0].npcs.some(n => n.rift),
       };
     });
-    expect(r.zoneCount).toBe(7);
+    expect(r.zoneCount).toBe(11);
     expect(r.riftZone).toBe(6);
     expect(r.name).toBe('The Endless Rift');
-    expect(r.bossTimersLen).toBe(7);
-    expect(r.musicLen).toBe(7);
+    expect(r.bossTimersLen).toBe(11);
+    expect(r.musicLen).toBe(11);
     expect(r.onMap).toBe(false);
     expect(r.warden).toBe(true);
   });

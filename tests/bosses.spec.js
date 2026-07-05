@@ -1,18 +1,25 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Bosses & enrage', () => {
-  test('five bosses including the scaled-up Hollow Oracle', async ({ game }) => {
+  test('nine bosses including the Hollow Oracle, the Act 2 trio, and the raid idol', async ({ game }) => {
     const r = await game.evaluate(() => ({
       count: BOSS_DEFS.length,
       zones: BOSS_DEFS.map(b => b.zone),
       gold: BOSS_DEFS.map(b => b.gold),
       oracle: BOSS_DEFS.find(b => b.t === 'hollow_oracle'),
+      malachar: BOSS_DEFS.find(b => b.t === 'ash_sage'),
+      idol: BOSS_DEFS.find(b => b.t === 'hollow_idol'),
     }));
-    expect(r.count).toBe(5);
-    expect(r.zones).toEqual([1, 2, 3, 4, 5]);
-    expect(r.gold).toEqual([25, 50, 100, 150, 500]); // halved boss gold
+    expect(r.count).toBe(9);
+    expect(r.zones).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10]);
+    expect(r.gold).toEqual([25, 50, 100, 150, 500, 300, 450, 1500, 4000]);
     expect(r.oracle.hp).toBe(5000);
     expect(r.oracle.scale).toBe(5.2);
+    expect(r.malachar.hp).toBe(16000);
+    expect(r.malachar.scale).toBe(5);
+    expect(r.idol.hp).toBe(80000);
+    expect(r.idol.scale).toBe(7);
+    expect(r.idol.noEcho).toBe(true);
   });
 
   test('spawnBoss creates a boss with fresh enrage state', async ({ game }) => {
@@ -72,6 +79,16 @@ test.describe('Bosses & enrage', () => {
     const hasArtifact = await game.evaluate(() => {
       mons.length = 0; G.zone = 5; CZ = ZD[5]; G.equipment = { weapon: null, armor: null }; G.inventory = [];
       spawnBoss(5); const b = mons.find(m => m.t === 'hollow_oracle'); killM(b);
+      const all = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean);
+      return all.some(g => g.rar === 5);
+    });
+    expect(hasArtifact).toBe(true);
+  });
+
+  test('Malachar also drops a guaranteed Artifact', async ({ game }) => {
+    const hasArtifact = await game.evaluate(() => {
+      mons.length = 0; G.zone = 9; CZ = ZD[9]; G.equipment = { weapon: null, armor: null }; G.inventory = [];
+      spawnBoss(9); const b = mons.find(m => m.t === 'ash_sage'); killM(b);
       const all = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean);
       return all.some(g => g.rar === 5);
     });

@@ -12,9 +12,9 @@ test('every zone renders without error (sprites, props, lighting)', async ({ gam
     // give the canvas a real backing store so gradients/vignette actually paint
     cv.width = 640; cv.height = 408; ctx2 = cv.getContext('2d'); ctx2.imageSmoothingEnabled = false;
     let lit = 0;
-    for (let z = 0; z <= 6; z++) {
+    for (let z = 0; z <= 10; z++) {
       loadZone(z);
-      if (z >= 1 && z <= 4) {
+      if ((z >= 1 && z <= 4) || z === 7 || z === 8) {
         spawnBoss(z);                       // boss sprite + aura + healthbar
         const t = ZD[z].mons[0] && ZD[z].mons[0].t;
         if (t) mons.push(mkMon(t, 700, 300)); // a regular/elite mob
