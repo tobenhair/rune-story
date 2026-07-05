@@ -108,18 +108,18 @@ test.describe('Act 2 quest chain', () => {
   });
 });
 
-test.describe('Post-20 level curve', () => {
-  test('xpNext grows 1.4× before level 20 and 1.15× after', async ({ game }) => {
+test.describe('Post-16 level curve', () => {
+  test('xpNext grows 1.4× before level 16 and 1.15× after', async ({ game }) => {
     const r = await game.evaluate(() => {
-      G.level = 18; G.xp = 0; G.xpNext = 1000;
-      gainXP(1000); const at19 = G.xpNext;          // reached 19 → ×1.4
-      gainXP(at19); const at20 = G.xpNext;          // reached 20 → ×1.15 (flattened)
-      gainXP(at20); const at21 = G.xpNext;          // reached 21 → ×1.15
-      return { at19, at20, at21 };
+      G.level = 14; G.xp = 0; G.xpNext = 1000;
+      gainXP(1000); const at15 = G.xpNext;          // reached 15 → ×1.4
+      gainXP(at15); const at16 = G.xpNext;          // reached 16 → ×1.15 (flattened)
+      gainXP(at16); const at17 = G.xpNext;          // reached 17 → ×1.15
+      return { at15, at16, at17 };
     });
-    expect(r.at19).toBe(1400);
-    expect(r.at20).toBe(Math.floor(1400 * 1.15));
-    expect(r.at21).toBe(Math.floor(Math.floor(1400 * 1.15) * 1.15));
+    expect(r.at15).toBe(1400);
+    expect(r.at16).toBe(Math.floor(1400 * 1.15));
+    expect(r.at17).toBe(Math.floor(Math.floor(1400 * 1.15) * 1.15));
   });
 
   test('applySave caps an inflated pre-flattening xpNext at the canonical value', async ({ game }) => {
@@ -129,11 +129,50 @@ test.describe('Post-20 level curve', () => {
         gold: 0, skillPoints: 0, zone: 0, kills: {}, questStates: {}, questProg: {}, equipment: {}, inventory: [], spells: [true, false, false, true], skills: [],
       }));
       applySave(d);
-      let x = 100; for (let l = 2; l <= 25; l++) x = Math.floor(x * (l >= 20 ? 1.15 : 1.4));
+      let x = 100; for (let l = 2; l <= 25; l++) x = Math.floor(x * (l >= 16 ? 1.15 : 1.4));
       return { got: G.xpNext, canonical: x };
     });
     expect(r.got).toBe(r.canonical);
     expect(r.got).toBeLessThan(480000);
+  });
+
+  test('zone 2–4 kill XP is rescaled to bridge toward the Act 2 band', async ({ game }) => {
+    const xp = await game.evaluate(() => ({ bat: MDEF.bat.xp, golem: MDEF.golem.xp, skeleton: MDEF.skeleton.xp, wraith: MDEF.wraith.xp }));
+    expect(xp).toEqual({ bat: 48, golem: 200, skeleton: 150, wraith: 190 });
+  });
+});
+
+test.describe('Relic bad-luck protection', () => {
+  test('the 1% relic chance ramps after 75 dry kills and resets on a drop', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      T.clear(); T.resetPlayer(); G.zone = 7; CZ = ZD[7]; G.hp = 999; G.maxHp = 999;
+      G.inventory = []; G.relicPity = {}; G.bounty = null;
+      const killWith = rnd => {
+        const m = T.withRandom([0.5, 0.5, 0.9, 0.5], () => mkMon('magmite', PL.x + 400, 260));
+        const o = Math.random; Math.random = () => rnd;
+        try { killM(m); } finally { Math.random = o; }
+      };
+      killWith(0.15);                       // 15% roll ≫ 1% base → no relic, pity ticks up
+      const pityAfterMiss = G.relicPity.ember_heart;
+      G.relicPity.ember_heart = 175;        // deep dry streak → eff = 1% + 100×0.2% = 21%
+      killWith(0.15);                       // 15% < 21% → relic drops
+      const dropped = G.inventory.some(x => x && x.id === 'ember_heart');
+      return { pityAfterMiss, dropped, pityAfterDrop: G.relicPity.ember_heart };
+    });
+    expect(r.pityAfterMiss).toBe(1);
+    expect(r.dropped).toBe(true);
+    expect(r.pityAfterDrop).toBe(0);
+  });
+
+  test('pity state persists through save/load', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.relicPity = { frozen_tear: 42 };
+      saveGame();
+      G.relicPity = {};
+      applySave(loadSave());
+      return G.relicPity.frozen_tear;
+    });
+    expect(r).toBe(42);
   });
 });
 
