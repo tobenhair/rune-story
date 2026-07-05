@@ -10,7 +10,8 @@ test.describe('Runes & sockets', () => {
       inItems: !!(ITEMS.rune_ruby && ITEMS.rune_ruby.rune),
       bulkSell: isBulkSellable({ id: 'rune_ruby', qty: 1 }),
     }));
-    expect(r.ids).toEqual(['rune_ruby', 'rune_emerald', 'rune_topaz', 'rune_amethyst', 'rune_citrine', 'rune_onyx']);
+    expect(r.ids).toEqual(['rune_ruby', 'rune_emerald', 'rune_topaz', 'rune_amethyst', 'rune_citrine', 'rune_onyx',
+      'rune_ruby2', 'rune_emerald2', 'rune_topaz2', 'rune_amethyst2', 'rune_citrine2', 'rune_onyx2']); // + Greater tier (Forge-crafted)
     expect(r.inItems).toBe(true);
     expect(r.bulkSell).toBe(false); // runes are never sold by "sell all materials"
   });
