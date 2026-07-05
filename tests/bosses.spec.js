@@ -1,21 +1,25 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Bosses & enrage', () => {
-  test('eight bosses including the scaled-up Hollow Oracle and the Act 2 trio', async ({ game }) => {
+  test('nine bosses including the Hollow Oracle, the Act 2 trio, and the raid idol', async ({ game }) => {
     const r = await game.evaluate(() => ({
       count: BOSS_DEFS.length,
       zones: BOSS_DEFS.map(b => b.zone),
       gold: BOSS_DEFS.map(b => b.gold),
       oracle: BOSS_DEFS.find(b => b.t === 'hollow_oracle'),
       malachar: BOSS_DEFS.find(b => b.t === 'ash_sage'),
+      idol: BOSS_DEFS.find(b => b.t === 'hollow_idol'),
     }));
-    expect(r.count).toBe(8);
-    expect(r.zones).toEqual([1, 2, 3, 4, 5, 7, 8, 9]);
-    expect(r.gold).toEqual([25, 50, 100, 150, 500, 300, 450, 1500]);
+    expect(r.count).toBe(9);
+    expect(r.zones).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10]);
+    expect(r.gold).toEqual([25, 50, 100, 150, 500, 300, 450, 1500, 4000]);
     expect(r.oracle.hp).toBe(5000);
     expect(r.oracle.scale).toBe(5.2);
     expect(r.malachar.hp).toBe(16000);
     expect(r.malachar.scale).toBe(5);
+    expect(r.idol.hp).toBe(80000);
+    expect(r.idol.scale).toBe(7);
+    expect(r.idol.noEcho).toBe(true);
   });
 
   test('spawnBoss creates a boss with fresh enrage state', async ({ game }) => {

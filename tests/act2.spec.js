@@ -222,12 +222,14 @@ test.describe('Act 2 bosses', () => {
     expect(r.flock).toBe(2);
   });
 
-  test('deep rift echoes can reuse the Act 2 bosses', async ({ game }) => {
-    const idx = await game.evaluate(() => {
-      // depth 45 → floor(45/5)-1 = 8 → clamped to the last (Act 2) boss
-      return Math.max(0, Math.min(BOSS_DEFS.length - 1, Math.floor(45 / 5) - 1));
+  test('deep rift echoes reuse the Act 2 bosses but never the Hollow One', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      const echoes = BOSS_DEFS.filter(b => !b.noEcho);
+      return { last: echoes[echoes.length - 1].t, idolExcluded: !!BOSS_DEFS.find(b => b.t === 'hollow_idol').noEcho, count: echoes.length };
     });
-    expect(idx).toBe(7);
+    expect(r.last).toBe('ash_sage'); // the deepest echo — an armless idol Echo would be unkillable
+    expect(r.idolExcluded).toBe(true);
+    expect(r.count).toBe(8);
   });
 });
 
@@ -241,7 +243,7 @@ test.describe('Act 2 environments', () => {
     }));
     expect(r.themes).toEqual(['ember', 'glacier', 'ashen']);
     expect(r.grades).toEqual([true, true, true]);
-    expect(r.music).toBe(10);
-    expect(r.portalCols).toBe(10);
+    expect(r.music).toBe(11);
+    expect(r.portalCols).toBe(11);
   });
 });

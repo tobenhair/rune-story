@@ -1,7 +1,7 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Quests', () => {
-  test('all 22 quests are well-formed and form a single prev-chain', async ({ game }) => {
+  test('all 23 quests are well-formed and form a single prev-chain', async ({ game }) => {
     const r = await game.evaluate(() => {
       const givers = new Set(['Elder Mira', 'Guard Tomlin', 'Ranger Sylva', 'Sage Oriax', 'Scholar Aldric', 'Seer Vesper', 'Envoy Sable']);
       const byId = Object.fromEntries(QUESTS.map(q => [q.id, q]));
@@ -20,16 +20,16 @@ test.describe('Quests', () => {
       while (cur && !seen.has(cur.id)) { seen.add(cur.id); len++; cur = QUESTS.find(q => q.prev === cur.id); }
       return { count: QUESTS.length, problems, roots: roots.length, chainLen: len };
     });
-    expect(r.count).toBe(22);
+    expect(r.count).toBe(23);
     expect(r.problems).toEqual([]);
     expect(r.roots).toBe(1);
-    expect(r.chainLen).toBe(22);
+    expect(r.chainLen).toBe(23);
   });
 
   test('the chain is ordered by ascending zone (low-level zones first)', async ({ game }) => {
     const zonesInOrder = await game.evaluate(() => {
       // Map each quest to the zone of its kill/relic target, then read them in chain order.
-      const monZone = { slime: 1, goblin: 1, slime_sov: 1, bat: 2, goblin_chief: 2, golem: 3, crystal_lich: 3, skeleton: 4, wraith: 4, fallen_oracle: 4, hollow_oracle: 5, magmite: 7, ashwing: 7, ember_tyrant: 7, frostmaw: 8, sleetwisp: 8, frost_matriarch: 8, ash_sage: 9 };
+      const monZone = { slime: 1, goblin: 1, slime_sov: 1, bat: 2, goblin_chief: 2, golem: 3, crystal_lich: 3, skeleton: 4, wraith: 4, fallen_oracle: 4, hollow_oracle: 5, magmite: 7, ashwing: 7, ember_tyrant: 7, frostmaw: 8, sleetwisp: 8, frost_matriarch: 8, ash_sage: 9, hollow_idol: 10 };
       const relicZone = { rift_seed: 1, wither_heart: 2, resonant_core: 3, rift_sigil: 4, ember_heart: 7, frozen_tear: 8 };
       const zoneOf = q => { const t = q.tasks[0]; return t.type === 'kill' ? monZone[t.tgt] : relicZone[t.item]; };
       const order = [];
@@ -40,7 +40,7 @@ test.describe('Quests', () => {
     // Zones must never decrease as the chain advances.
     for (let i = 1; i < zonesInOrder.length; i++) expect(zonesInOrder[i]).toBeGreaterThanOrEqual(zonesInOrder[i - 1]);
     expect(zonesInOrder[0]).toBe(1);
-    expect(zonesInOrder[zonesInOrder.length - 1]).toBe(9);
+    expect(zonesInOrder[zonesInOrder.length - 1]).toBe(10);
   });
 
   test('every combat zone has a 1% rare-hunt and a boss-kill quest', async ({ game }) => {

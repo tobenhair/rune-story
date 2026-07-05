@@ -1,13 +1,13 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Zones & travel', () => {
-  test('all ten zones with correct names and level requirements', async ({ game }) => {
+  test('all eleven zones with correct names and level requirements', async ({ game }) => {
     const z = await game.evaluate(() => ZD.map(z => ({ n: z.name, req: z.req })));
     expect(z.map(x => x.n)).toEqual([
       'Aethon City', 'Village Outskirts', 'Verdant Forest', 'Crystal Caverns', 'Ancient Ruins', 'The Hollow Rift', 'The Endless Rift',
-      'Emberfall Wastes', 'Frostveil Glacier', 'The Ashen Sanctum',
+      'Emberfall Wastes', 'Frostveil Glacier', 'The Ashen Sanctum', 'The Riftheart',
     ]);
-    expect(z.map(x => x.req)).toEqual([1, 1, 5, 10, 15, 25, 1, 20, 24, 28]);
+    expect(z.map(x => x.req)).toEqual([1, 1, 5, 10, 15, 25, 1, 20, 24, 28, 30]);
   });
 
   test('only the hub has NPCs; combat zones have monsters; arenas have neither', async ({ game }) => {
@@ -15,7 +15,7 @@ test.describe('Zones & travel', () => {
     expect(info[0].npcs).toBeGreaterThan(0);   // hub has NPCs
     expect(info[0].mons).toBe(0);              // hub is safe
     for (const i of [1, 2, 3, 4, 7, 8]) { expect(info[i].npcs).toBe(0); expect(info[i].mons).toBeGreaterThan(0); }
-    for (const i of [5, 6, 9]) { expect(info[i].npcs).toBe(0); expect(info[i].mons).toBe(0); } // arenas: bosses/waves spawn, not pre-placed
+    for (const i of [5, 6, 9, 10]) { expect(info[i].npcs).toBe(0); expect(info[i].mons).toBe(0); } // arenas: bosses/waves spawn, not pre-placed
   });
 
   test('the map lists five zones until Act 2 unlocks, then seven (arenas stay teleport-only)', async ({ game }) => {
