@@ -1641,21 +1641,21 @@ const QUESTS=[
  done:'It is done — the seal is woven and the door is barred.\n\nBut it already strains, {name}. Veyra’s shadow walks the Ruins, working the lock from within. Scholar Aldric has been reading marks on the risen bones — go back to him. Together you may learn how she picks it.',
  after:'The seal holds. As long as her shadow keeps falling, it always will.',
  tasks:[{type:'kill',tgt:'wraith',n:20},{type:'col',item:'shadow_essence',n:2}],rew:{xp:1100,gold:150,item:'runic_robe'}},
-{id:'q13',title:'The Rift Sigil',giver:'Scholar Aldric',rlvl:19,prev:'q6',
+{id:'q13',title:'The Rift Sigil',giver:'Scholar Aldric',rlvl:17,prev:'q6',
  lock:'Help Vesper weave her seal first, {name}. Only when the door is barred will the bones show me what truly matters.',
  txt:'The seal is set, yet the dead grow bolder still — and on one risen skeleton in a hundred I have glimpsed a Rift Sigil branded into the bone, a key-mark to the very door Vesper sealed.\n\nBring me a Rift Sigil from the Ancient Ruins. If it is what I fear, the seal is already being worked loose.',
  done:'A true Rift Sigil — and see how the edges are worn smooth. This key has been turned, {name}. Again and again, from the inside, by Veyra’s own shadow.\n\nThere is only one shape that could be doing such a thing. You have met it before.',
  after:'I have copied the Sigil into three ledgers, lest the original try to walk off on its own.',
  tasks:[{type:'col',item:'rift_sigil',n:1}],rew:{xp:1900,gold:250}},
-{id:'q14',title:'The Fallen Oracle',giver:'Scholar Aldric',rlvl:20,prev:'q13',
+{id:'q14',title:'The Fallen Oracle',giver:'Scholar Aldric',rlvl:18,prev:'q13',
  lock:'The Sigil first, {name}. I will not name the thing in the Ruins until I am certain what it is.',
  txt:'The shadow picking the lock is the Fallen Oracle — Veyra’s cast-off image, the husk she left behind when she turned to gaze into the rift. While it walks the Ruins, the seal will never truly hold.\n\nReturn to the Ancient Ruins and strike her down. Take this with you — the Council forged it to seal that very door. You will need it where you are bound.',
  done:'The Oracle falls, and the lock-picking stops. For a night. Perhaps two.\n\nBut you understand now, {name}. The shadow is only her reflection. The true Veyra still gazes from the far side of the rift, and while she endures, the husk will always re-form. There is but one way to end this — and it means walking through the door yourself.\n\nSeer Vesper alone can open it. Heaven keep you both.',
  after:'You carry the Staff of the Sealed Door now. See that the door does not open you instead.',
  tasks:[{type:'kill',tgt:'fallen_oracle',n:1}],rew:{xp:2400,gold:320,item:'oracle_staff'}},
 // ── Finale: The Hollow Rift ──
-{id:'q15',title:'Into the Hollow Rift',giver:'Seer Vesper',rlvl:20,prev:'q14',tp:5,
- lock:'The threads are not yet ready, {name} — nor are you. Lay her shadow to rest in the Ruins, and reach the very height of your power, a score of seasons of mastery and no less, before you ask me to open the door. Beyond it, anything less is merely a slower way to die. Bring the Sealed Door’s Staff, or do not come at all.',
+{id:'q15',title:'Into the Hollow Rift',giver:'Seer Vesper',rlvl:18,prev:'q14',tp:5,
+ lock:'The threads are not yet ready, {name} — nor are you. Lay her shadow to rest in the Ruins, and reach the very height of your power, eighteen seasons of mastery and no less, before you ask me to open the door. Beyond it, anything less is merely a slower way to die. Bring the Sealed Door’s Staff, or do not come at all.',
  txt:'So Aldric sends you to me at last, the Staff in your hand. Then you mean to do it — to step through and face the true Veyra in the Hollow Rift itself.\n\nUnderstand what waits, {name}: not a shadow this time, but the Oracle entire, swollen vast on everything the rift has ever devoured. Without that Legendary Staff and every season of strength you have earned, you will not last a single breath. I can open the door. I cannot promise to bring you back through it.\n\nAccepting this is no errand. It is a one-way step into the dark — the moment you agree, the rift will take you. Are you ready?',
  done:'It is over. The rift is closed — truly, finally closed — and Veyra is at rest.\n\nYou walked through the door, {name}, and you walked back out. No one in all the ages has done that. Aethoria will not forget you. Neither will I.',
  after:'The sky is whole again. Whenever I lift my eyes to it, I think of you.',
@@ -1750,7 +1750,7 @@ function openBounty(){dlgOpen=true;keys={};jp={};document.getElementById('dlg-np
   box.textContent=txt;dlgButtons(btns);document.getElementById('dlg-overlay').classList.add('open');}
 function acceptBounty(){if(!bountyOffer)return;G.bounty=bountyOffer;bountyOffer=null;sfxQuestAccept();log('📋 Bounty accepted: '+G.bounty.n+'× '+MDEF[G.bounty.t].n,'q');closeDlg();renderQP();saveGame();}
 function abandonBounty(){G.bounty=null;log('Bounty abandoned.','d');closeDlg();renderQP();saveGame();}
-function collectBounty(){const b=G.bounty;if(!b||b.p<b.n)return;G.gold+=b.gold;gainXP(b.xp);addGear(rollGear(b.z,false));G.bounty=null;sfxQuestComplete();log('📋 Bounty paid: +'+b.gold+' gold, +'+b.xp+' XP!','x');closeDlg();renderQP();updateHUD();saveGame();}
+function collectBounty(){const b=G.bounty;if(!b||b.p<b.n)return;G.gold+=b.gold;gainXP(b.xp);G.bounty=null;sfxQuestComplete();log('📋 Bounty paid: +'+b.gold+' gold, +'+b.xp+' XP!','x');closeDlg();renderQP();updateHUD();saveGame();}
 // ── Forge — upgrade gear rarity for gold + monster materials ──
 const UPG=[{gold:50,mats:[['slime_goo',3]]},{gold:150,mats:[['goblin_ear',3],['bat_wing',2]]},{gold:400,mats:[['crystal_shard',4],['bone_shard',2]]},{gold:1000,mats:[['shadow_essence',3],['crystal_shard',4]]}];
 function countItem(id){const s=G.inventory.find(x=>x&&x.id===id);return s?s.qty:0;}

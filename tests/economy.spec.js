@@ -140,6 +140,22 @@ test.describe('Economy: shop, storage, hotbar, potions', () => {
     expect(r.xp).toBe(r.expectXp); // original per-kill XP formula × 2
   });
 
+  test('collecting a bounty pays gold and XP but no gear cache', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.gold = 0; G.xp = 0; G.equipment = { weapon: null, armor: null }; G.inventory = [];
+      G.bounty = { t: 'slime', n: 5, p: 5, z: 1, gold: 120, xp: 300 };
+      collectBounty();
+      return {
+        gold: G.gold, xpGained: G.xp > 0 || G.level > 1, cleared: G.bounty === null,
+        gear: !!(G.equipment.weapon || G.equipment.armor || G.inventory.some(x => x && x.g)),
+      };
+    });
+    expect(r.gold).toBe(120);
+    expect(r.xpGained).toBe(true);
+    expect(r.cleared).toBe(true);
+    expect(r.gear).toBe(false); // gear caches removed from recurring bounties
+  });
+
   test('health potion scales to 35% of max HP (min 50)', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.maxHp = 600; G.hp = 100; G.inventory = [{ id: 'health_potion', qty: 1 }];
