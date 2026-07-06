@@ -1581,7 +1581,7 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 const GRAV=900,JUMP=-390,SPD=175;
 const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null],relicPity:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0}};
 const ZD=[
-  {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'guard',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'guard',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'guard',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'sage',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'elder',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'ranger',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'sage',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'sage',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'guard',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'elder',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'sage',asc:true}],portals:[{toZone:1,x:1100,y:388,dir:'right'}]},
+  {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'guard',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'guard',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'guard',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'sage',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'elder',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'ranger',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'sage',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'sage',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'guard',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'elder',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'sage',asc:true}],portals:[{toZone:7,x:40,y:388,dir:'left'},{toZone:1,x:1100,y:388,dir:'right'}]},
   {name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,plats:[{x:0,y:310,w:280,h:14,c:'#1e4a7a'},{x:320,y:278,w:200,h:14,c:'#1e4a7a'},{x:560,y:244,w:160,h:14,c:'#1e4a7a'},{x:760,y:278,w:180,h:14,c:'#1e4a7a'},{x:980,y:244,w:220,h:14,c:'#1e4a7a'},{x:140,y:218,w:140,h:14,c:'#2a5a8a'},{x:420,y:174,w:120,h:14,c:'#2a5a8a'},{x:660,y:154,w:130,h:14,c:'#2a5a8a'},{x:870,y:170,w:110,h:14,c:'#2a5a8a'},{x:480,y:104,w:140,h:14,c:'#3a6a9a'},{x:700,y:90,w:150,h:14,c:'#3a6a9a'},{x:0,y:388,w:1400,h:18,c:'#163052'}],mons:[{t:'slime',x:140,y:310},{t:'goblin',x:420,y:278},{t:'slime',x:850,y:278},{t:'goblin',x:1080,y:244},{t:'slime',x:210,y:218},{t:'goblin',x:480,y:174},{t:'goblin',x:720,y:154},{t:'slime',x:550,y:104},{t:'goblin',x:770,y:90}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:2,x:1250,y:388,dir:'right'}]},
   {name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,plats:[{x:0,y:310,w:240,h:14,c:'#2a5a30'},{x:280,y:274,w:180,h:14,c:'#2a5a30'},{x:510,y:238,w:200,h:14,c:'#2a5a30'},{x:760,y:278,w:180,h:14,c:'#2a5a30'},{x:990,y:244,w:220,h:14,c:'#2a5a30'},{x:110,y:208,w:130,h:14,c:'#3a7040'},{x:400,y:164,w:110,h:14,c:'#3a7040'},{x:620,y:144,w:130,h:14,c:'#3a7040'},{x:850,y:154,w:110,h:14,c:'#3a7040'},{x:440,y:94,w:130,h:14,c:'#4a8050'},{x:640,y:84,w:150,h:14,c:'#4a8050'},{x:0,y:388,w:1500,h:18,c:'#1a4020'}],mons:[{t:'goblin',x:120,y:310},{t:'goblin',x:360,y:274},{t:'bat',x:850,y:278},{t:'bat',x:1100,y:244},{t:'goblin',x:170,y:208},{t:'goblin',x:455,y:164},{t:'bat',x:685,y:144},{t:'goblin',x:505,y:94},{t:'bat',x:715,y:84}],npcs:[],portals:[{toZone:1,x:40,y:388,dir:'left'},{toZone:3,x:1360,y:388,dir:'right'}]},
   {name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,plats:[{x:0,y:310,w:200,h:14,c:'#3a2060'},{x:250,y:274,w:160,h:14,c:'#3a2060'},{x:460,y:238,w:180,h:14,c:'#3a2060'},{x:700,y:276,w:160,h:14,c:'#3a2060'},{x:920,y:238,w:200,h:14,c:'#3a2060'},{x:120,y:204,w:110,h:14,c:'#5a3090'},{x:370,y:158,w:120,h:14,c:'#5a3090'},{x:600,y:138,w:130,h:14,c:'#5a3090'},{x:820,y:154,w:110,h:14,c:'#5a3090'},{x:410,y:88,w:130,h:14,c:'#6a40a0'},{x:620,y:78,w:140,h:14,c:'#6a40a0'},{x:0,y:388,w:1300,h:18,c:'#1e0a3a'}],mons:[{t:'bat',x:100,y:310},{t:'golem',x:330,y:274},{t:'bat',x:780,y:276},{t:'golem',x:1010,y:238},{t:'bat',x:175,y:204},{t:'golem',x:430,y:158},{t:'bat',x:665,y:138},{t:'golem',x:475,y:88},{t:'bat',x:690,y:78}],npcs:[],portals:[{toZone:2,x:40,y:388,dir:'left'},{toZone:4,x:1250,y:388,dir:'right'}]},
@@ -1591,8 +1591,10 @@ const ZD=[
   {name:'The Endless Rift',sky:'#10040c',bound:1400,req:1,plats:[{x:0,y:388,w:1400,h:18,c:'#2a0a1e'},{x:120,y:312,w:220,h:14,c:'#4a1030'},{x:430,y:300,w:200,h:14,c:'#4a1030'},{x:740,y:312,w:220,h:14,c:'#4a1030'},{x:1040,y:300,w:220,h:14,c:'#4a1030'},{x:280,y:226,w:180,h:14,c:'#6a1840'},{x:620,y:214,w:200,h:14,c:'#6a1840'},{x:960,y:226,w:180,h:14,c:'#6a1840'},{x:470,y:140,w:240,h:14,c:'#8a2050'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]},
   // ── Act 2: The Emberfall Saga (zones 7–9, unlocked by finishing q15). Appended after the
   // hidden arenas so the load-bearing indices 5 (Hollow Rift) and 6 (RIFT_ZONE) never shift.
-  {name:'Emberfall Wastes',sky:'#1a0a06',bound:1400,req:20,plats:[{x:0,y:310,w:250,h:14,c:'#4a2414'},{x:300,y:276,w:190,h:14,c:'#4a2414'},{x:540,y:240,w:190,h:14,c:'#4a2414'},{x:780,y:278,w:180,h:14,c:'#4a2414'},{x:1010,y:244,w:220,h:14,c:'#4a2414'},{x:120,y:206,w:130,h:14,c:'#5a2e18'},{x:410,y:162,w:120,h:14,c:'#5a2e18'},{x:640,y:142,w:130,h:14,c:'#5a2e18'},{x:860,y:156,w:110,h:14,c:'#5a2e18'},{x:450,y:92,w:130,h:14,c:'#6a3820'},{x:650,y:82,w:150,h:14,c:'#6a3820'},{x:0,y:388,w:1500,h:18,c:'#30160c'}],mons:[{t:'magmite',x:130,y:310},{t:'magmite',x:380,y:276},{t:'ashwing',x:860,y:278},{t:'ashwing',x:1110,y:244},{t:'magmite',x:180,y:206},{t:'magmite',x:465,y:162},{t:'ashwing',x:700,y:142},{t:'magmite',x:510,y:92},{t:'ashwing',x:720,y:82}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:8,x:1360,y:388,dir:'right'}]},
-  {name:'Frostveil Glacier',sky:'#081018',bound:1400,req:24,plats:[{x:0,y:310,w:220,h:14,c:'#2a4a6e'},{x:270,y:274,w:170,h:14,c:'#2a4a6e'},{x:490,y:238,w:190,h:14,c:'#2a4a6e'},{x:730,y:278,w:170,h:14,c:'#2a4a6e'},{x:950,y:242,w:220,h:14,c:'#2a4a6e'},{x:130,y:206,w:120,h:14,c:'#3a5a82'},{x:390,y:160,w:120,h:14,c:'#3a5a82'},{x:610,y:140,w:130,h:14,c:'#3a5a82'},{x:830,y:156,w:110,h:14,c:'#3a5a82'},{x:430,y:90,w:130,h:14,c:'#4a6a96'},{x:630,y:80,w:150,h:14,c:'#4a6a96'},{x:0,y:388,w:1500,h:18,c:'#1c3450'}],mons:[{t:'frostmaw',x:110,y:310},{t:'frostmaw',x:350,y:274},{t:'sleetwisp',x:810,y:278},{t:'sleetwisp',x:1050,y:242},{t:'frostmaw',x:185,y:206},{t:'frostmaw',x:450,y:160},{t:'sleetwisp',x:675,y:140},{t:'frostmaw',x:495,y:90},{t:'sleetwisp',x:705,y:80}],npcs:[],portals:[{toZone:7,x:40,y:388,dir:'left'}]},
+  // Geography runs WEST of the hub: city ← Emberfall Wastes ← Frostveil Glacier, walkable
+  // through edge portals once Act 2 is open (enterPortal/drawPortals gate on actTwoOpen()).
+  {name:'Emberfall Wastes',sky:'#1a0a06',bound:1400,req:20,plats:[{x:0,y:310,w:250,h:14,c:'#4a2414'},{x:300,y:276,w:190,h:14,c:'#4a2414'},{x:540,y:240,w:190,h:14,c:'#4a2414'},{x:780,y:278,w:180,h:14,c:'#4a2414'},{x:1010,y:244,w:220,h:14,c:'#4a2414'},{x:120,y:206,w:130,h:14,c:'#5a2e18'},{x:410,y:162,w:120,h:14,c:'#5a2e18'},{x:640,y:142,w:130,h:14,c:'#5a2e18'},{x:860,y:156,w:110,h:14,c:'#5a2e18'},{x:450,y:92,w:130,h:14,c:'#6a3820'},{x:650,y:82,w:150,h:14,c:'#6a3820'},{x:0,y:388,w:1500,h:18,c:'#30160c'}],mons:[{t:'magmite',x:130,y:310},{t:'magmite',x:380,y:276},{t:'ashwing',x:860,y:278},{t:'ashwing',x:1110,y:244},{t:'magmite',x:180,y:206},{t:'magmite',x:465,y:162},{t:'ashwing',x:700,y:142},{t:'magmite',x:510,y:92},{t:'ashwing',x:720,y:82}],npcs:[],portals:[{toZone:8,x:40,y:388,dir:'left'},{toZone:0,x:1360,y:388,dir:'right'}]},
+  {name:'Frostveil Glacier',sky:'#081018',bound:1400,req:24,plats:[{x:0,y:310,w:220,h:14,c:'#2a4a6e'},{x:270,y:274,w:170,h:14,c:'#2a4a6e'},{x:490,y:238,w:190,h:14,c:'#2a4a6e'},{x:730,y:278,w:170,h:14,c:'#2a4a6e'},{x:950,y:242,w:220,h:14,c:'#2a4a6e'},{x:130,y:206,w:120,h:14,c:'#3a5a82'},{x:390,y:160,w:120,h:14,c:'#3a5a82'},{x:610,y:140,w:130,h:14,c:'#3a5a82'},{x:830,y:156,w:110,h:14,c:'#3a5a82'},{x:430,y:90,w:130,h:14,c:'#4a6a96'},{x:630,y:80,w:150,h:14,c:'#4a6a96'},{x:0,y:388,w:1500,h:18,c:'#1c3450'}],mons:[{t:'frostmaw',x:110,y:310},{t:'frostmaw',x:350,y:274},{t:'sleetwisp',x:810,y:278},{t:'sleetwisp',x:1050,y:242},{t:'frostmaw',x:185,y:206},{t:'frostmaw',x:450,y:160},{t:'sleetwisp',x:675,y:140},{t:'frostmaw',x:495,y:90},{t:'sleetwisp',x:705,y:80}],npcs:[],portals:[{toZone:7,x:1360,y:388,dir:'right'}]},
   // The Ashen Sanctum — Act 2 finale arena: teleport-only (q22 tp:9), never on the map; only exit is the edge portal home.
   {name:'The Ashen Sanctum',sky:'#140d04',bound:1250,req:28,plats:[{x:0,y:388,w:1250,h:18,c:'#2a1608'},{x:120,y:300,w:200,h:14,c:'#3a2210'},{x:520,y:288,w:200,h:14,c:'#3a2210'},{x:900,y:300,w:200,h:14,c:'#3a2210'},{x:300,y:212,w:160,h:14,c:'#4a2c14'},{x:660,y:200,w:160,h:14,c:'#4a2c14'},{x:470,y:120,w:200,h:14,c:'#5a3618'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]},
   // The Riftheart — the true-final raid arena (q23 tp:10): Zal'Guroth, the Hollow One, waits here. Teleport-only.
@@ -1785,7 +1787,37 @@ const QUESTS=[
  txt:'I was wrong, {name}. We were ALL wrong, twice over.\n\nThe Hollow Voice that marched the goblins. The thing that gazed back when Veyra gazed in. The whisper that turned Malachar\'s brilliance to ash. One voice. One will. Veyra was only its DOOR. Malachar was only its FORGE. And while we celebrated their falls, it took everything we failed to burn — the harvested hearts, the rift-stone, the ice we shattered — and built itself a BODY.\n\nBeneath the wastes, where the first shard fell, sits Zal\'Guroth, the Hollow One: a colossus of fused debris, six arms of ash and ice and void keeping vigil around a sleeping core. While the arms endure, no spell will so much as scratch it.\n\nThis is the last door, {name}, and there is no one else left to walk through it. Shatter the arms. Wake the core. End the voice that started all of this — or Aethoria only ever bought itself time.',
  done:'Silence.\n\nDo you hear it, {name}? For the first time since the sky first tore — TRUE silence. No voice in the crystal. No pulse in the embers. The Shattering is not sealed, not barred, not sleeping. It is OVER.\n\nThree times the dark reached for this world, and three times it found you standing in the way. The Council of Sages is gone... but I think Aethoria has outgrown the need for one. It has you. Rest now, old friend. You have earned an age of it.',
  after:'The Riftheart lies quiet. The Worldheart sleeps warm and safe under the ice. And I — I tend my garden, and hear nothing at all. It is wonderful.',
- tasks:[{type:'kill',tgt:'hollow_idol',n:1}],rew:{xp:600000,gold:12000}}];
+ tasks:[{type:'kill',tgt:'hollow_idol',n:1}],rew:{xp:600000,gold:12000}},
+// ══ Guild introductions — side mini-quests (side:true, outside the story prev-chain) that walk
+// the player to the hub's service NPCs as each becomes relevant. Level-gated (the endgame pair
+// additionally on q15); the 'talk' task type is credited by openDlg via questCredit('talk',name).
+{id:'n1',side:true,title:'The Forgemaster\'s Craft',giver:'Elder Mira',rlvl:3,prev:null,
+ txt:'The fields are already fraying that robe of yours, {name}. Before the road hardens you the cruel way, let the city harden your gear the smart way.\n\nForgemaster Bren keeps the great anvil east of the market. Go and hear what his hammer can do with the trophies you carry.',
+ done:'You have met Bren, then — good. Feed his forge your monster-hunt trophies and a little gold, and no slime in Aethoria will bite through your hems again.\n\nHere, this should cover your first commission.',
+ after:'Bren asks after you whenever I pass the forge. He likes anyone who makes his anvil ring.',
+ tasks:[{type:'talk',tgt:'Forgemaster Bren',n:1}],rew:{xp:60,gold:150}},
+{id:'n2',side:true,title:'Ink for the Chronicler',giver:'Scholar Aldric',rlvl:5,prev:null,
+ txt:'A colleague of mine — Chronicler Ily, down by the fountain — is compiling a bestiary of everything the Shattering has twisted. Every creature you fell is a page for her codex, and she pays her sources in more than gratitude: she keeps a ledger of deeds, and the Riftwardens honor it in shards.\n\nIntroduce yourself, {name}. Your hunts are already worth recording.',
+ done:'She showed you the codex? Then you understand — every monster you meet fills a page, and every feat fills her ledger of deeds. Scholarship with a bounty on it. My favorite kind.',
+ after:'Ily says your pages are among the fullest in the codex. Keep hunting; the book is far from finished.',
+ tasks:[{type:'talk',tgt:'Chronicler Ily',n:1}],rew:{xp:150,gold:60}},
+{id:'n3',side:true,title:'Stone by Stone',giver:'Guard Tomlin',rlvl:8,prev:null,
+ txt:'Look at these walls, {name} — patched with cart-wood and prayer. The Shattering hit the city harder than it ever hit the fields, and the council finally hired someone to rebuild: Master Builder Sora, down in the lower quarter.\n\nShe has plans for every district — sanctum, forge, apothecary, the guild hall, the vault — but plans need coin, and coin follows heroes. Go talk to her. What she raises stays raised, for good.',
+ done:'Sora walked you through the districts? Every one she raises makes this city stronger — and makes YOU stronger, every time you come home.\n\nTake this toward her first foundation. The walls thank you in advance.',
+ after:'I can see Sora\'s scaffolds from my post now. First new stone in this city since the sky tore.',
+ tasks:[{type:'talk',tgt:'Master Builder Sora',n:1}],rew:{xp:300,gold:400}},
+{id:'n4',side:true,title:'The Warden at the Gate',giver:'Seer Vesper',rlvl:18,prev:'q15',
+ lock:'There is a stranger by the gate I cannot read, {name}... but the threads say his hour comes only after the door is closed.',
+ txt:'You closed the door, {name} — but the Rift you walked does not simply end. It DESCENDS, deeper than even Veyra ever gazed. A warden has taken post by the city gate: Riftwarden Kael. He holds the only stable way down, and he only opens it for one who has faced the Hollow Oracle and returned.\n\nThat is you, and no one else alive. Speak with him.',
+ done:'So Kael showed you the descent. Depth upon depth, each crueler than the last, and shards of pure rift-stuff for those who climb back out.\n\nThe door is closed, {name}, but you need never stop growing stronger. I suspect that pleases you.',
+ after:'Kael speaks of your descents the way sailors speak of storms — with respect, and a little fear.',
+ tasks:[{type:'talk',tgt:'Riftwarden Kael',n:1}],rew:{xp:3000,gold:500}},
+{id:'n5',side:true,title:'The Spiral Stair',giver:'Sage Oriax',rlvl:18,prev:'q15',
+ lock:'There is one more introduction I owe you, {name}... but she will not show herself while the Hollow Rift still gapes.',
+ txt:'One last introduction, {name}, and the strangest. Since you closed the rift, a figure has appeared by the eastern stair — Astralwright Nyx. She claims to weave fate itself: to unmake a hero\'s journey and begin it again, keeping an echo of everything that was.\n\nI half believe her. The other half of me is afraid to. Go and judge for yourself.',
+ done:'Ascension... to fold a whole life into echoes and start anew, stronger at the root. The Council would have called it heresy. The Council is gone, and you have earned choices they never dreamed of.\n\nWhatever you decide, {name} — this world is already twice saved because of you.',
+ after:'Nyx tells me the spiral remembers every step you take. I sleep better knowing it remembers yours.',
+ tasks:[{type:'talk',tgt:'Astralwright Nyx',n:1}],rew:{xp:3000,gold:500}}];
 const SHOP=[{id:'health_potion',price:40},{id:'mana_potion',price:30},{id:'ward_scroll',price:35}];
 const SKN=[{id:'am',n:'Arcane Mastery',d:'+20% spell dmg',e:'⚡',cost:1,req:null},{id:'mf',n:'Mana Flow',d:'+30 max MP',e:'💧',cost:1,req:null},{id:'vt',n:'Vitality',d:'+60 max HP',e:'❤️',cost:1,req:null},{id:'gs',n:'Gold Sense',d:'+40% gold from kills',e:'💰',cost:1,req:null},{id:'fb',n:'Fireball',d:'Unlock Fireball',e:'🔥',cost:2,req:'am'},{id:'is',n:'Ice Shard',d:'Unlock Ice Shard',e:'❄️',cost:2,req:'mf'},{id:'as',n:'Arcane Surge',d:'20% crit 2× dmg',e:'✨',cost:3,req:'fb'},{id:'py',n:'Pyromancy',d:'+50% Fireball dmg',e:'☄️',cost:2,req:'fb'},{id:'fr',n:'Deep Frost',d:'Ice +30% dmg, 2.5s slow',e:'🧊',cost:2,req:'is'},{id:'bw',n:'Greater Ward',d:'Shield lasts 8s, absorbs 90%',e:'🔰',cost:2,req:'mf'},
 // ── School capstones (build-defining spell mutators) ──
@@ -2314,7 +2346,7 @@ function applySave(d){
   // Migration: pre-questProg saves seed each active quest's progress from the legacy
   // lifetime-kills / inventory counts (capped at the requirement) so in-flight quests
   // aren't wiped. From here on, counters reset to 0 on every accept.
-  QUESTS.forEach(q=>{if(G.questStates[q.id]==='active'&&!G.questProg[q.id]){const p={kills:{},items:{}};q.tasks.forEach(t=>{if(t.type==='kill')p.kills[t.tgt]=Math.min(G.kills[t.tgt]||0,t.n);else{const s=G.inventory.find(x=>x&&x.id===t.item);p.items[t.item]=Math.min(s?s.qty:0,t.n);}});G.questProg[q.id]=p;}});
+  QUESTS.forEach(q=>{if(G.questStates[q.id]==='active'&&!G.questProg[q.id]){const p={kills:{},items:{}};q.tasks.forEach(t=>{if(t.type==='kill')p.kills[t.tgt]=Math.min(G.kills[t.tgt]||0,t.n);else if(t.type==='col'){const s=G.inventory.find(x=>x&&x.id===t.item);p.items[t.item]=Math.min(s?s.qty:0,t.n);}});G.questProg[q.id]=p;}});
 }
 function startGame(){
   // In-page confirm: a native confirm() can be blocked in sandboxed embeds
@@ -2613,6 +2645,10 @@ function drawCityBG(){
     ctx2.fillStyle=rg;ctx2.fillRect(x-6,y-6,12,12);
     ctx2.fillStyle=`rgba(230,215,255,${pulse})`;ctx2.beginPath();ctx2.arc(x,y,1.4,0,Math.PI*2);ctx2.fill();
   }
+  // ── District buildings (HoMM-style town growth): each district appears on the skyline once
+  // its first level is bought at Master Builder Sora, and every further level adds a visible
+  // piece — the city literally grows with investment. Same parallax band as the monument (0.8).
+  drawCityDistricts();
   // Monument of the Reforged City — rises as the hub's districts are rebuilt (Proposal 4)
   const ct=cityTotal();
   if(ct>0){
@@ -2628,6 +2664,92 @@ function drawCityBG(){
     ctx2.fillStyle='#ffe9a0';ctx2.beginPath();ctx2.arc(mx,base-h-6,2.5+ct*0.3,0,Math.PI*2);ctx2.fill();
     ctx2.restore();
   }
+}
+
+// The five CITY districts drawn into the hub skyline. Nothing is drawn at level 0, so a fresh
+// city looks exactly as before; each bought level adds one concrete visual piece per district.
+function drawCityDistricts(){
+  const base=cv.height-18,X=wx=>wx-camX*0.8;
+
+  // Apothecary (Sora's herb quarter, west end) — cottage; +1 glowing potion window per level,
+  // herb planters at Lv2, a bubbling cauldron out front at Lv5.
+  let lv=cityLvl('apothecary');
+  if(lv>0){const x=X(170);ctx2.save();
+    ctx2.fillStyle='#241c38';ctx2.fillRect(x-24,base-40,48,40);
+    ctx2.fillStyle='#3a2c50';ctx2.beginPath();ctx2.moveTo(x-30,base-40);ctx2.lineTo(x,base-58);ctx2.lineTo(x+30,base-40);ctx2.fill();
+    ctx2.fillStyle='#151024';ctx2.fillRect(x-6,base-20,12,20);
+    const pc=['rgba(93,202,165,','rgba(226,75,106,','rgba(106,163,255,','rgba(239,159,39,'];
+    for(let i=0;i<Math.min(lv,4);i++){const g=0.55+0.3*Math.sin(gTime*2+i*1.7);ctx2.fillStyle=pc[i]+g+')';ctx2.fillRect(x-19+i*10,base-34,7,8);}
+    if(lv>=2){ctx2.fillStyle='#2c5a34';ctx2.fillRect(x-36,base-7,11,7);ctx2.fillRect(x+25,base-7,11,7);
+      ctx2.fillStyle='#3f7a46';ctx2.fillRect(x-33,base-11,5,4);ctx2.fillRect(x+28,base-11,5,4);}
+    if(lv>=5){ctx2.fillStyle='#222';ctx2.beginPath();ctx2.arc(x+40,base-5,6,0,Math.PI,true);ctx2.fill();
+      for(let i=0;i<3;i++){const by2=base-11-((gTime*16+i*13)%22),a=Math.max(0,1-(base-11-by2)/22);
+        ctx2.fillStyle=`rgba(120,230,170,${0.5*a})`;ctx2.beginPath();ctx2.arc(x+40+Math.sin(gTime*3+i*2)*3,by2,1.6,0,Math.PI*2);ctx2.fill();}}
+    ctx2.restore();}
+
+  // Grand Forge (behind Bren's anvil) — smithy hall with a glowing furnace mouth; a working
+  // chimney with drifting smoke at Lv2, a roaring furnace glow at Lv3 (max).
+  lv=cityLvl('forge');
+  if(lv>0){const x=X(430);ctx2.save();
+    ctx2.fillStyle='#2b1d18';ctx2.fillRect(x-30,base-42,60,42);
+    ctx2.fillStyle='#40291f';ctx2.fillRect(x-34,base-48,68,8);
+    const fg=0.5+0.35*Math.sin(gTime*5);
+    ctx2.fillStyle=`rgba(255,120,40,${0.45+0.3*fg})`;ctx2.fillRect(x-9,base-24,18,24);
+    ctx2.fillStyle='rgba(20,10,8,0.9)';ctx2.fillRect(x-9,base-24,18,3);
+    if(lv>=2){ctx2.fillStyle='#1a0f0c';ctx2.fillRect(x+16,base-58,10,12);
+      for(let i=0;i<3;i++){const sy=base-60-((gTime*14+i*17)%34),a=Math.max(0,1-(base-60-sy)/34);
+        ctx2.fillStyle=`rgba(130,120,130,${0.3*a})`;ctx2.beginPath();ctx2.arc(x+21+Math.sin(gTime+i*2)*3,sy,2.5+(base-60-sy)*0.09,0,Math.PI*2);ctx2.fill();}}
+    if(lv>=3){const g=ctx2.createRadialGradient(x,base-18,2,x,base-18,36);
+      g.addColorStop(0,`rgba(255,140,50,${0.28+0.14*fg})`);g.addColorStop(1,'rgba(255,140,50,0)');
+      ctx2.fillStyle=g;ctx2.fillRect(x-36,base-54,72,54);}
+    ctx2.restore();}
+
+  // Reinforced Vault (by the Storage Chest) — squat stone strongbox; +1 stone tier per level,
+  // banded iron door at Lv2, golden treasure-glint through the seams at Lv4 (max).
+  lv=cityLvl('vault');
+  if(lv>0){const x=X(790);ctx2.save();
+    for(let i=0;i<lv;i++){const w=52-i*8,h=13;ctx2.fillStyle=i%2?'#33304a':'#2a273e';ctx2.fillRect(x-w/2,base-h*(i+1),w,h);
+      ctx2.fillStyle='rgba(255,255,255,0.07)';ctx2.fillRect(x-w/2,base-h*(i+1),w,2);}
+    if(lv>=2){ctx2.fillStyle='#191625';ctx2.fillRect(x-8,base-16,16,16);
+      ctx2.fillStyle='#4a4562';ctx2.fillRect(x-8,base-13,16,2);ctx2.fillRect(x-8,base-7,16,2);}
+    if(lv>=4){const g=0.4+0.3*Math.sin(gTime*2.4);ctx2.fillStyle=`rgba(255,210,90,${g})`;
+      ctx2.fillRect(x-20,base-27,3,2);ctx2.fillRect(x+16,base-40,3,2);ctx2.fillRect(x-2,base-52,4,2);}
+    ctx2.restore();}
+
+  // Arcane Sanctum (the mage quarter) — a tower that gains a segment per level, crowned by a
+  // mana orb whose glow grows with investment; orbiting motes at Lv4+.
+  lv=cityLvl('sanctum');
+  if(lv>0){const x=X(870),h=26+lv*13,top=base-h;ctx2.save();
+    ctx2.fillStyle='#262048';ctx2.fillRect(x-11,top,22,h);
+    for(let i=1;i<=lv;i++){ctx2.fillStyle='rgba(255,255,255,0.08)';ctx2.fillRect(x-11,base-26-(i-1)*13,22,2);
+      const g=0.5+0.3*Math.sin(gTime*2+i);ctx2.fillStyle=`rgba(140,120,255,${0.5*g})`;ctx2.fillRect(x-3,base-22-(i-1)*13,6,7);}
+    ctx2.fillStyle='#342a60';ctx2.beginPath();ctx2.moveTo(x-14,top);ctx2.lineTo(x,top-14);ctx2.lineTo(x+14,top);ctx2.fill();
+    const op=0.5+0.3*Math.sin(gTime*2.2),orr=3+lv*0.8;
+    const og=ctx2.createRadialGradient(x,top-18,1,x,top-18,orr*3.2);
+    og.addColorStop(0,`rgba(150,120,255,${0.55*op})`);og.addColorStop(1,'rgba(150,120,255,0)');
+    ctx2.fillStyle=og;ctx2.beginPath();ctx2.arc(x,top-18,orr*3.2,0,Math.PI*2);ctx2.fill();
+    ctx2.fillStyle='#cabaff';ctx2.beginPath();ctx2.arc(x,top-18,orr*0.55,0,Math.PI*2);ctx2.fill();
+    if(lv>=4)for(let i=0;i<3;i++){const a=gTime*1.6+i*Math.PI*2/3;
+      ctx2.fillStyle=`rgba(190,170,255,${0.7*op})`;ctx2.beginPath();ctx2.arc(x+Math.cos(a)*orr*2.2,top-18+Math.sin(a)*orr*1.2,1.3,0,Math.PI*2);ctx2.fill();}
+    ctx2.restore();}
+
+  // Mercenary Guild (east end) — timber hall; +1 swaying banner per level, torch braziers at
+  // Lv3, a mounted trophy skull over the door at Lv5.
+  lv=cityLvl('guild');
+  if(lv>0){const x=X(1100);ctx2.save();
+    ctx2.fillStyle='#2e2236';ctx2.fillRect(x-32,base-38,64,38);
+    ctx2.fillStyle='#41304c';ctx2.beginPath();ctx2.moveTo(x-38,base-38);ctx2.lineTo(x,base-54);ctx2.lineTo(x+38,base-38);ctx2.fill();
+    ctx2.fillStyle='#1a1322';ctx2.fillRect(x-7,base-20,14,20);
+    for(let i=0;i<lv;i++){const bx2=x-26+i*13,sway=Math.sin(gTime*2.5+i)*1.5;
+      ctx2.fillStyle=['#e24b6a','#ef9f27','#5dcaa5','#6aa3ff','#b050f0'][i];
+      ctx2.beginPath();ctx2.moveTo(bx2,base-36);ctx2.lineTo(bx2+7,base-36);ctx2.lineTo(bx2+7+sway,base-24);ctx2.lineTo(bx2+3.5+sway,base-27);ctx2.lineTo(bx2+sway,base-24);ctx2.fill();}
+    if(lv>=3)[x-38,x+38].forEach(tx=>{const f=0.6+0.35*Math.sin(gTime*7+tx);
+      ctx2.fillStyle='#3a2c22';ctx2.fillRect(tx-1.5,base-26,3,26);
+      ctx2.fillStyle=`rgba(255,160,60,${f})`;ctx2.beginPath();ctx2.arc(tx,base-28,3,0,Math.PI*2);ctx2.fill();
+      ctx2.fillStyle=`rgba(255,220,120,${f})`;ctx2.beginPath();ctx2.arc(tx,base-29,1.4,0,Math.PI*2);ctx2.fill();});
+    if(lv>=5){ctx2.fillStyle='#d8d4c8';ctx2.beginPath();ctx2.arc(x,base-44,4,0,Math.PI*2);ctx2.fill();
+      ctx2.fillStyle='#1a1322';ctx2.fillRect(x-2.5,base-45,2,2);ctx2.fillRect(x+1,base-45,2,2);}
+    ctx2.restore();}
 }
 
 function drawVillageBG(){
@@ -2996,7 +3118,7 @@ function draw(){
   plats.forEach(p=>{const sx=p.x-camX;if(sx+p.w<0||sx>cv.width)return;ctx2.fillStyle=p.c;ctx2.fillRect(sx,p.y,p.w,p.h);ctx2.fillStyle='rgba(255,255,255,0.15)';ctx2.fillRect(sx,p.y,p.w,2);ctx2.fillStyle='rgba(0,0,0,0.3)';ctx2.fillRect(sx,p.y+p.h-2,p.w,2);});
   drawPortals();
   drawProps();
-  npcs2.forEach(n=>{const sx=n.x-camX-SW*SCALE/2;if(sx+SW*SCALE<0||sx>cv.width)return;const sh=SHS[n.sheet],tf=sh.width/SD,f=Math.floor(n.frame)%tf;ctx2.drawImage(sh,f*SD,0,SD,SDH,sx,n.y-SH*SCALE,SW*SCALE,SH*SCALE);ctx2.font='9px sans-serif';ctx2.textAlign='center';ctx2.fillStyle='#6aa3ff';ctx2.fillText(n.name,sx+SW*SCALE/2,n.y-SH*SCALE-2);const q=n.q?npcQuest(n):null,qs=q?G.questStates[q.id]:null,hasNew=(q&&!qs&&G.level>=q.rlvl&&(!q.prev||G.questStates[q.prev]==='done'))||(n.board&&!G.bounty),canTI=(q&&qs==='active'&&isQDone(q.id))||(n.board&&G.bounty&&G.bounty.p>=G.bounty.n);if(hasNew||canTI){ctx2.font='bold 14px sans-serif';ctx2.fillStyle=hasNew&&!canTI?'#ef9f27':'#5dcaa5';ctx2.fillText(hasNew&&!canTI?'!':'?',sx+SW*SCALE/2,n.y-SH*SCALE-13);}const near=nearNPC&&nearNPC.name===n.name;if(near){ctx2.fillStyle='rgba(106,163,255,0.88)';ctx2.beginPath();ctx2.roundRect(sx+SW*SCALE/2-22,n.y-SH*SCALE-30,44,14,4);ctx2.fill();ctx2.fillStyle='#fff';ctx2.font='8px sans-serif';ctx2.fillText('[F] Talk',sx+SW*SCALE/2,n.y-SH*SCALE-19);}});
+  npcs2.forEach(n=>{const sx=n.x-camX-SW*SCALE/2;if(sx+SW*SCALE<0||sx>cv.width)return;const sh=SHS[n.sheet],tf=sh.width/SD,f=Math.floor(n.frame)%tf;ctx2.drawImage(sh,f*SD,0,SD,SDH,sx,n.y-SH*SCALE,SW*SCALE,SH*SCALE);ctx2.font='9px sans-serif';ctx2.textAlign='center';ctx2.fillStyle='#6aa3ff';ctx2.fillText(n.name,sx+SW*SCALE/2,n.y-SH*SCALE-2);const q=n.q?npcQuest(n):null,qs=q?G.questStates[q.id]:null,talkTgt=QUESTS.some(tq=>G.questStates[tq.id]==='active'&&tq.tasks.some(t=>t.type==='talk'&&t.tgt===n.name&&qCount(tq.id,t)<t.n)),hasNew=(q&&!qs&&G.level>=q.rlvl&&(!q.prev||G.questStates[q.prev]==='done'))||(n.board&&!G.bounty)||talkTgt,canTI=(q&&qs==='active'&&isQDone(q.id))||(n.board&&G.bounty&&G.bounty.p>=G.bounty.n);if(hasNew||canTI){ctx2.font='bold 14px sans-serif';ctx2.fillStyle=hasNew&&!canTI?'#ef9f27':'#5dcaa5';ctx2.fillText(hasNew&&!canTI?'!':'?',sx+SW*SCALE/2,n.y-SH*SCALE-13);}const near=nearNPC&&nearNPC.name===n.name;if(near){ctx2.fillStyle='rgba(106,163,255,0.88)';ctx2.beginPath();ctx2.roundRect(sx+SW*SCALE/2-22,n.y-SH*SCALE-30,44,14,4);ctx2.fill();ctx2.fillStyle='#fff';ctx2.font='8px sans-serif';ctx2.fillText('[F] Talk',sx+SW*SCALE/2,n.y-SH*SCALE-19);}});
   mons.forEach(m=>{const bSc=m.boss?(m.bscale||4):m.elite?3.5:SCALE,sx=m.x-camX-SW*bSc/2;if(sx+SW*bSc<0||sx>cv.width)return;if(m.boss||m.elite){ctx2.save();ctx2.globalAlpha=(Math.sin(gTime*3)*0.25+0.75)*(m.enraged?0.55:0.35);ctx2.fillStyle=m.boss?(m.enraged?'#ff2d2d':m.bossColor):(m.affixC||'#ffd24a');ctx2.beginPath();ctx2.arc(m.x-camX,m.y-SH*bSc/2,SW*bSc*(m.boss?(m.enraged?0.9:0.75):0.6),0,Math.PI*2);ctx2.fill();ctx2.restore();}const bw=m.boss?SW*bSc*1.5:SW*bSc,bh=m.boss?7:4,bsx=m.boss?m.x-camX-bw/2:sx;ctx2.fillStyle='rgba(0,0,0,0.7)';ctx2.fillRect(bsx,m.y-SH*bSc-12,bw,bh);ctx2.fillStyle=m.boss?(m.hit>0?'#ffaaaa':m.bossColor):(m.hit>0?'#ff8888':'#e24b4a');ctx2.fillRect(bsx,m.y-SH*bSc-12,bw*(m.hp/m.mhp),bh);ctx2.globalAlpha=m.st>0?0.4:1;const sk=m.t==='goblin_chief'?(m.right?'goblinChiefR':'goblinChiefL'):m.sheet==='goblin'?(m.right?'goblinR':'goblinL'):m.t==='skeleton'?(m.right?'skeletonR':'skeletonL'):m.sheet,sh=SHS[sk],tf=sh.width/SD,f=Math.floor(m.frame)%tf;if(m.hit>0){ctx2.fillStyle='rgba(255,100,100,0.35)';ctx2.fillRect(sx,m.y-SH*bSc,SW*bSc,SH*bSc);}ctx2.drawImage(sh,f*SD,0,SD,SDH,sx,m.y-SH*bSc,SW*bSc,SH*bSc);ctx2.globalAlpha=1;ctx2.font=(m.boss?'bold 9px':m.elite?'bold 8px':'8px')+' sans-serif';ctx2.fillStyle=m.boss?(m.enraged?'#ff5050':m.bossColor):m.elite?(m.affixC||'#ffd24a'):'#ccc';ctx2.textAlign='center';ctx2.fillText((m.boss?'👑 ':'')+(m.enraged?'🔥 ':'')+m.n,m.x-camX,m.y-SH*bSc-14);});
   projs.forEach(p=>{const sh=SHS[p.proj];if(!sh)return;ctx2.drawImage(sh,0,0,p.pw,p.ph,p.x-camX-p.pw/2,p.y-p.ph/2,p.pw*SCALE,p.ph*SCALE);});
   ctx2.save();parts.forEach(p=>{ctx2.globalAlpha=Math.max(0,Math.min(1,p.life/0.85));ctx2.fillStyle=p.c;ctx2.beginPath();ctx2.arc(p.x-camX,p.y,p.r,0,Math.PI*2);ctx2.fill();});ctx2.restore();
@@ -3201,7 +3323,7 @@ function spawnDN(sx,sy,dmg,col){const el=document.createElement('div');el.classN
 function qtxt(s){return (s||'').replace(/\{name\}/g,G.name);}
 // Resolve which quest a giver should offer right now (givers may hold several quests across the story): active > newly available > still-locked > last completed.
 function npcQuest(npc){const qs=QUESTS.filter(x=>x.giver===npc.name);if(!qs.length)return null;const active=qs.find(q=>G.questStates[q.id]==='active');if(active)return active;const avail=qs.find(q=>!G.questStates[q.id]&&G.level>=q.rlvl&&(!q.prev||G.questStates[q.prev]==='done'));if(avail)return avail;const pending=qs.find(q=>!G.questStates[q.id]);if(pending)return pending;return qs[qs.length-1];}
-function openDlg(npc){if(npc.shop){openShop(npc);return;}if(npc.board){openBounty();return;}if(npc.forge){openForge(npc);return;}if(npc.storage){openStorage(npc);return;}if(npc.rift){openRift();return;}if(npc.asc){openAscension();return;}if(npc.town){openCity();return;}if(npc.codex){openCodex();return;}dlgOpen=true;keys={};jp={};const q=npcQuest(npc);let txt='',btns=[];if(!q){txt='Greetings, adventurer!';btns=[{l:'Goodbye',fn:closeDlg}];}else if(!G.questStates[q.id]){if(G.level<q.rlvl){txt=qtxt(q.lock)||('You are not ready yet.\n(Requires Level '+q.rlvl+')');btns=[{l:'Goodbye',fn:closeDlg}];}else if(q.prev&&G.questStates[q.prev]!=='done'){txt=qtxt(q.lock)||'I have nothing for you yet.';btns=[{l:'Goodbye',fn:closeDlg}];}else{txt=qtxt(q.txt);btns=[{l:'✔ Accept Quest',fn:()=>acceptQ(q.id),p:true},{l:'Decline',fn:closeDlg}];}}else if(G.questStates[q.id]==='active'){if(isQDone(q.id)){txt=qtxt(q.done)||('You have done it, '+G.name+'!');btns=[{l:'✔ Turn In Quest',fn:()=>turnInQ(q.id),p:true},{l:'Not yet',fn:closeDlg}];}else{txt='Not done yet...\n\n'+qProg(q.id);btns=[];if(q.tp!=null)btns.push({l:'⟴ Return to '+ZD[q.tp].name,fn:()=>{closeDlg();loadZone(q.tp);renderAll();updateHUD();log('Reality tears open — you are pulled into '+ZD[q.tp].name+'!','d');},p:true});btns.push({l:'I will return',fn:closeDlg});}}else{txt=qtxt(q.after)||('Thank you again, '+G.name+'!');btns=[{l:'Goodbye',fn:closeDlg}];}document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-txt').textContent=txt;const bc=document.getElementById('dlg-btns');bc.innerHTML='';btns.forEach(b=>{const btn=document.createElement('button');btn.className='db'+(b.p?' primary':'');btn.textContent=b.l;btn.addEventListener('click',b.fn);bc.appendChild(btn);});document.getElementById('dlg-overlay').classList.add('open');}
+function openDlg(npc){questCredit('talk',npc.name);renderQP();if(npc.shop){openShop(npc);return;}if(npc.board){openBounty();return;}if(npc.forge){openForge(npc);return;}if(npc.storage){openStorage(npc);return;}if(npc.rift){openRift();return;}if(npc.asc){openAscension();return;}if(npc.town){openCity();return;}if(npc.codex){openCodex();return;}dlgOpen=true;keys={};jp={};const q=npcQuest(npc);let txt='',btns=[];if(!q){txt='Greetings, adventurer!';btns=[{l:'Goodbye',fn:closeDlg}];}else if(!G.questStates[q.id]){if(G.level<q.rlvl){txt=qtxt(q.lock)||('You are not ready yet.\n(Requires Level '+q.rlvl+')');btns=[{l:'Goodbye',fn:closeDlg}];}else if(q.prev&&G.questStates[q.prev]!=='done'){txt=qtxt(q.lock)||'I have nothing for you yet.';btns=[{l:'Goodbye',fn:closeDlg}];}else{txt=qtxt(q.txt);btns=[{l:'✔ Accept Quest',fn:()=>acceptQ(q.id),p:true},{l:'Decline',fn:closeDlg}];}}else if(G.questStates[q.id]==='active'){if(isQDone(q.id)){txt=qtxt(q.done)||('You have done it, '+G.name+'!');btns=[{l:'✔ Turn In Quest',fn:()=>turnInQ(q.id),p:true},{l:'Not yet',fn:closeDlg}];}else{txt='Not done yet...\n\n'+qProg(q.id);btns=[];if(q.tp!=null)btns.push({l:'⟴ Return to '+ZD[q.tp].name,fn:()=>{closeDlg();loadZone(q.tp);renderAll();updateHUD();log('Reality tears open — you are pulled into '+ZD[q.tp].name+'!','d');},p:true});btns.push({l:'I will return',fn:closeDlg});}}else{txt=qtxt(q.after)||('Thank you again, '+G.name+'!');btns=[{l:'Goodbye',fn:closeDlg}];}document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-txt').textContent=txt;const bc=document.getElementById('dlg-btns');bc.innerHTML='';btns.forEach(b=>{const btn=document.createElement('button');btn.className='db'+(b.p?' primary':'');btn.textContent=b.l;btn.addEventListener('click',b.fn);bc.appendChild(btn);});document.getElementById('dlg-overlay').classList.add('open');}
 function closeDlg(){dlgOpen=false;keys={};jp={};document.getElementById('dlg-txt').style.whiteSpace='';document.getElementById('dlg-overlay').classList.remove('open');}
 let shopNPC=null;
 function openShop(npc){dlgOpen=true;keys={};jp={};shopNPC=npc;document.getElementById('dlg-npc').textContent=npc.name;document.getElementById('dlg-overlay').classList.add('open');renderShop();}
@@ -3250,15 +3372,16 @@ function renderStorage(){const box=document.getElementById('dlg-txt');box.style.
   dlgButtons([{l:'Close Chest',fn:closeDlg}]);}
 function acceptQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='active';G.questProg[id]={kills:{},items:{}};sfxQuestAccept();log('Quest accepted: '+q.title,'q');closeDlg();renderQP();saveGame();if(q.tp!=null){loadZone(q.tp);renderAll();updateHUD();log('Reality tears open — you are pulled into '+ZD[q.tp].name+'!','d');saveGame();}}
 // Per-quest progress since acceptance (counters reset on acceptQ); decoupled from lifetime G.kills / current inventory.
-function qCount(id,t){const p=G.questProg[id];if(!p)return 0;return t.type==='kill'?(p.kills[t.tgt]||0):(p.items[t.item]||0);}
-// Credit a kill / loot toward every active quest that wants it.
-function questCredit(kind,key){QUESTS.forEach(q=>{if(G.questStates[q.id]!=='active')return;const p=G.questProg[q.id];if(!p)return;q.tasks.forEach(t=>{if(kind==='kill'&&t.type==='kill'&&t.tgt===key)p.kills[key]=(p.kills[key]||0)+1;else if(kind==='col'&&t.type==='col'&&t.item===key)p.items[key]=(p.items[key]||0)+1;});});}
+function qCount(id,t){const p=G.questProg[id];if(!p)return 0;return t.type==='col'?(p.items[t.item]||0):(p.kills[t.tgt]||0);}
+// Credit a kill / loot / NPC conversation toward every active quest that wants it.
+// 'talk' progress shares the kills map, keyed by NPC name (never collides with monster ids).
+function questCredit(kind,key){QUESTS.forEach(q=>{if(G.questStates[q.id]!=='active')return;const p=G.questProg[q.id];if(!p)return;q.tasks.forEach(t=>{if(kind==='kill'&&t.type==='kill'&&t.tgt===key)p.kills[key]=(p.kills[key]||0)+1;else if(kind==='col'&&t.type==='col'&&t.item===key)p.items[key]=(p.items[key]||0)+1;else if(kind==='talk'&&t.type==='talk'&&t.tgt===key)p.kills[key]=(p.kills[key]||0)+1;});});}
 function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}if(q.rew.teach==='emberstorm'&&!G.emberstorm){G.emberstorm=true;sfxFanfare();burst(PL.x,PL.y-36,'#ff9a40',22,150);log('✦ EMBERSTORM learned — your Fireballs now erupt, splashing 40% damage to nearby foes!','x');}closeDlg();renderQP();renderIP();checkAchv();saveGame();}
 function isQDone(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.every(t=>qCount(id,t)>=t.n);}
 function monName(t){return (MDEF[t]&&MDEF[t].n)||(BOSS_DEFS.find(b=>b.t===t)||{}).n||t;}
 // Which monster drops a collectible item (first MDEF entry whose loot table lists it).
 function itemSource(itemId){for(const t in MDEF){if(MDEF[t].loot&&MDEF[t].loot.some(l=>l[0]===itemId))return MDEF[t].n;}return null;}
-function qProg(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.map(t=>{if(t.type==='kill')return'• '+monName(t.tgt)+': '+Math.min(qCount(id,t),t.n)+'/'+t.n;const src=itemSource(t.item);return'• '+ITEMS[t.item].n+(src?' (drops from '+src+')':'')+': '+Math.min(qCount(id,t),t.n)+'/'+t.n;}).join('\n');}
+function qProg(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.map(t=>{if(t.type==='kill')return'• '+monName(t.tgt)+': '+Math.min(qCount(id,t),t.n)+'/'+t.n;if(t.type==='talk')return'• Speak with '+t.tgt+' (in Aethon City): '+Math.min(qCount(id,t),t.n)+'/'+t.n;const src=itemSource(t.item);return'• '+ITEMS[t.item].n+(src?' (drops from '+src+')':'')+': '+Math.min(qCount(id,t),t.n)+'/'+t.n;}).join('\n');}
 function renderAll(){renderQP();renderIP();renderSP();renderHotbar();}
 // ── Potion hotbar: two consumable slots bound to T / Y ──
 let hbAssign=0;
@@ -3304,14 +3427,15 @@ function initTouch(){
   window.addEventListener('touchstart',enableTouch,{passive:true,once:true});
 }
 function travelTo(i){if(G.level<ZD[i].req){log(ZD[i].name+' requires Level '+ZD[i].req+'!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');saveGame();}
-function enterPortal(p){if(RIFT.active){endRift(true);return;}if(G.level<ZD[p.toZone].req){log(ZD[p.toZone].name+' requires Level '+ZD[p.toZone].req+'!','d');return;}const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
+function enterPortal(p){if(RIFT.active){endRift(true);return;}if((p.toZone===7||p.toZone===8)&&!actTwoOpen()){log('A wall of ashen wind seals the western road. Close the Hollow Rift first.','d');return;}if(G.level<ZD[p.toZone].req){log(ZD[p.toZone].name+' requires Level '+ZD[p.toZone].req+'!','d');return;}const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
 function drawPortals(){
   portals2.forEach(p=>{
     const sx=p.x-camX;if(sx<-100||sx>cv.width+100)return;
     const col=ZONE_PORTAL_COLORS[p.toZone];
     const h=80,r=18,by=p.y-2,ty=by-h;
     const pulse=Math.sin(gTime*2.5)*0.25+0.75;
-    const locked=(p.toZone===2&&G.level<10)||(p.toZone===3&&G.level<15);
+    const sealed=(p.toZone===7||p.toZone===8)&&!actTwoOpen();
+    const locked=sealed||G.level<ZD[p.toZone].req;
     const dc=locked?'#778':col;
     ctx2.save();
     // Glow layers (wide to narrow)
@@ -3352,7 +3476,7 @@ function drawPortals(){
     ctx2.font='bold 8px sans-serif';ctx2.textAlign='center';
     ctx2.fillStyle=dc;ctx2.globalAlpha=locked?0.55:pulse*0.92;
     ctx2.fillText((p.dir==='right'?'→ ':'← ')+ZD[p.toZone].name,sx,ly);
-    if(locked){ctx2.fillStyle='#e24b4a';ctx2.globalAlpha=0.8;ctx2.font='8px sans-serif';ctx2.fillText('Lv.'+ZD[p.toZone].req+' req.',sx,ly-10);}
+    if(locked){ctx2.fillStyle='#e24b4a';ctx2.globalAlpha=0.8;ctx2.font='8px sans-serif';ctx2.fillText(sealed?'Sealed by ash':'Lv.'+ZD[p.toZone].req+' req.',sx,ly-10);}
     ctx2.restore();
     // [F] Enter / locked prompt when nearby
     if(nearPortal===p){

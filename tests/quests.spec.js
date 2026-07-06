@@ -1,12 +1,13 @@
 const { test, expect } = require('./fixtures');
 
 test.describe('Quests', () => {
-  test('all 23 quests are well-formed and form a single prev-chain', async ({ game }) => {
+  test('all 23 story quests are well-formed and form a single prev-chain', async ({ game }) => {
     const r = await game.evaluate(() => {
       const givers = new Set(['Elder Mira', 'Guard Tomlin', 'Ranger Sylva', 'Sage Oriax', 'Scholar Aldric', 'Seer Vesper', 'Envoy Sable']);
       const byId = Object.fromEntries(QUESTS.map(q => [q.id, q]));
+      const story = QUESTS.filter(q => !q.side);
       const problems = [];
-      QUESTS.forEach(q => {
+      story.forEach(q => {
         if (!/^q\d+$/.test(q.id)) problems.push('id ' + q.id);
         if (!givers.has(q.giver)) problems.push('giver ' + q.id);
         if (typeof q.rlvl !== 'number') problems.push('rlvl ' + q.id);
@@ -14,16 +15,58 @@ test.describe('Quests', () => {
         if (!q.rew) problems.push('rew ' + q.id);
         if (q.prev !== null && !byId[q.prev]) problems.push('prev ' + q.id);
       });
-      // Exactly one root, and following the chain reaches every quest exactly once.
-      const roots = QUESTS.filter(q => q.prev === null);
+      // Exactly one story root, and following the chain (story quests always precede side
+      // quests in the array, so find() stays on the chain) reaches every story quest once.
+      const roots = story.filter(q => q.prev === null);
       let len = 0, cur = roots[0], seen = new Set();
-      while (cur && !seen.has(cur.id)) { seen.add(cur.id); len++; cur = QUESTS.find(q => q.prev === cur.id); }
-      return { count: QUESTS.length, problems, roots: roots.length, chainLen: len };
+      while (cur && !seen.has(cur.id)) { seen.add(cur.id); len++; cur = QUESTS.find(q => q.prev === cur.id && !q.side); }
+      return { count: story.length, problems, roots: roots.length, chainLen: len };
     });
     expect(r.count).toBe(23);
     expect(r.problems).toEqual([]);
     expect(r.roots).toBe(1);
     expect(r.chainLen).toBe(23);
+  });
+
+  test('guild-introduction side quests cover every hub service NPC', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      const side = QUESTS.filter(q => q.side);
+      const hubNames = new Set(ZD[0].npcs.map(n => n.name));
+      const problems = [];
+      side.forEach(q => {
+        if (!/^n\d+$/.test(q.id)) problems.push('id ' + q.id);
+        if (!hubNames.has(q.giver)) problems.push('giver ' + q.id);
+        q.tasks.forEach(t => { if (t.type !== 'talk' || !hubNames.has(t.tgt)) problems.push('task ' + q.id); });
+      });
+      return { problems, targets: side.map(q => q.tasks[0].tgt), gates: side.map(q => [q.rlvl, q.prev]) };
+    });
+    expect(r.problems).toEqual([]);
+    // One introduction per service NPC the story never sends you to.
+    expect(r.targets).toEqual(['Forgemaster Bren', 'Chronicler Ily', 'Master Builder Sora', 'Riftwarden Kael', 'Astralwright Nyx']);
+    // Early intros gate on level only; the endgame pair also waits for the Act 1 finale.
+    expect(r.gates).toEqual([[3, null], [5, null], [8, null], [18, 'q15'], [18, 'q15']]);
+  });
+
+  test('talking to the target NPC credits and completes an introduction quest', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.questStates = {}; G.questProg = {}; G.gold = 0; G.level = 3;
+      loadZone(0);
+      const offered = npcQuest({ name: 'Elder Mira' }); // q1 (story) is offered before the intro
+      acceptQ('n1');
+      const beforeTalk = isQDone('n1');
+      const bren = npcs2.find(n => n.name === 'Forgemaster Bren');
+      openDlg(bren); closeDlg(); // opens the forge UI and credits the 'talk' task
+      const afterTalk = isQDone('n1');
+      const prog = qProg('n1');
+      turnInQ('n1');
+      return { offered: offered.id, beforeTalk, afterTalk, prog, done: G.questStates.n1 === 'done', gold: G.gold };
+    });
+    expect(r.offered).toBe('q1');
+    expect(r.beforeTalk).toBe(false);
+    expect(r.afterTalk).toBe(true);
+    expect(r.prog).toContain('Speak with Forgemaster Bren');
+    expect(r.done).toBe(true);
+    expect(r.gold).toBe(150);
   });
 
   test('the chain is ordered by ascending zone (low-level zones first)', async ({ game }) => {

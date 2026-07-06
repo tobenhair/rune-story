@@ -30,6 +30,32 @@ test.describe('Zones & travel', () => {
     expect(r.after).toBe(7);
   });
 
+  test('Act 2 lies west of the hub and is walkable once Act 1 is done', async ({ game }) => {
+    // Portal geography: city ← Emberfall Wastes ← Frostveil Glacier (west chain).
+    const layout = await game.evaluate(() => ({
+      hubWest: ZD[0].portals[0],
+      emberfall: ZD[7].portals.map(p => [p.toZone, p.dir]),
+      frostveil: ZD[8].portals.map(p => [p.toZone, p.dir]),
+    }));
+    expect(layout.hubWest).toEqual({ toZone: 7, x: 40, y: 388, dir: 'left' });
+    expect(layout.emberfall).toEqual([[8, 'left'], [0, 'right']]);
+    expect(layout.frostveil).toEqual([[7, 'right']]);
+
+    // The western road is sealed until q15 (Act 1 finale) is done, even at high level.
+    const r = await game.evaluate(() => {
+      G.level = 30; loadZone(0);
+      enterPortal(ZD[0].portals[0]);
+      const sealedZone = G.zone;
+      G.questStates.q15 = 'done';
+      enterPortal(ZD[0].portals[0]);
+      const openZone = G.zone;
+      delete G.questStates.q15;
+      return { sealedZone, openZone };
+    });
+    expect(r.sealedZone).toBe(0);
+    expect(r.openZone).toBe(7);
+  });
+
   test('portals respect zone level requirements', async ({ game }) => {
     const blocked = await game.evaluate(() => {
       G.level = 1; const before = G.zone;
