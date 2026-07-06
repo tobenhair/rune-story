@@ -13,11 +13,13 @@ test.describe('Boot & core data', () => {
 
   test('content tables have the expected sizes', async ({ game }) => {
     const c = await game.evaluate(() => ({
-      zones: ZD.length, quests: QUESTS.length, spells: SPELLS.length, rars: RARS.length,
+      zones: ZD.length, quests: QUESTS.filter(q => !q.side).length, intros: QUESTS.filter(q => q.side).length,
+      spells: SPELLS.length, rars: RARS.length,
       bosses: BOSS_DEFS.length, affixes: AFFIXES.length, artifacts: ARTIFACTS.length, skills: SKN.length,
     }));
     expect(c.zones).toBe(11); // hub + 6 combat zones + 4 arenas (Hollow Rift, Endless Rift, Ashen Sanctum, Riftheart)
     expect(c.quests).toBe(23); // 15 Act 1 + 7 Act 2 + the Riftheart raid finale
+    expect(c.intros).toBe(5); // guild-introduction side quests (Bren, Ily, Sora, Kael, Nyx)
     expect(c.spells).toBe(4);
     expect(c.rars).toBe(6);
     expect(c.bosses).toBe(9); // 5 Act 1 + 3 Act 2 + the Hollow One raid

@@ -87,6 +87,27 @@ test.describe('Living hub — Aethon City', () => {
     expect(r.boostMp).toBeGreaterThan(r.baseMp);
   });
 
+  test('district buildings appear on the hub skyline as levels rise (HoMM-style growth)', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      cv.width = 640; cv.height = 408; ctx2 = cv.getContext('2d'); ctx2.imageSmoothingEnabled = false;
+      loadZone(0);
+      const snap = () => ctx2.getImageData(0, 0, cv.width, cv.height).data;
+      // Same frozen frame (gTime fixed) with and without districts — the only diff is the buildings.
+      G.city = { sanctum: 0, forge: 0, apothecary: 0, guild: 0, vault: 0 };
+      gTime = 1.0; draw(); const before = snap();
+      G.city = { sanctum: 5, forge: 3, apothecary: 5, guild: 5, vault: 4 };
+      gTime = 1.0; draw(); const maxed = snap();
+      let changed = 0;
+      for (let i = 0; i < before.length; i += 4) if (Math.abs(before[i] - maxed[i]) + Math.abs(before[i + 1] - maxed[i + 1]) + Math.abs(before[i + 2] - maxed[i + 2]) > 12) changed++;
+      // Animate a few frames at max to exercise smoke/orbits/braziers without errors.
+      for (let i = 0; i < 10; i++) { gTime += 0.1; draw(); }
+      G.city = { sanctum: 0, forge: 0, apothecary: 0, guild: 0, vault: 0 };
+      return { changed };
+    });
+    // The raised districts repaint a substantial patch of skyline.
+    expect(r.changed).toBeGreaterThan(1500);
+  });
+
   test('city districts persist through save/load', async ({ game }) => {
     const r = await game.evaluate(() => {
       G.city = { sanctum: 1, forge: 2, apothecary: 0, guild: 3, vault: 1 };
