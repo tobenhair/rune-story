@@ -2267,6 +2267,9 @@ const BOSS_DEFS=[
 ];
 // idol_arm — the six destructible limbs of the Hollow One (part-bosses: no gear/artifact on kill)
 const IDOL_ARM={t:'idol_arm',n:'Arm of the Hollow One',sheet:'idolArm',frames:30,hp:7000,mn:70,mx:105,xp:15000,gold:300};
+// The teleport-only finale/raid arenas (Hollow Rift, Ashen Sanctum, Riftheart): their boss is spawned
+// once on entry by loadZone and must NOT auto-respawn after being slain — you clear it and walk out.
+function isFinaleArena(z){return z===5||z===9||z===10;}
 let bossTimers=[0,0,0,0,0,0,0,0,0,0,0],bossAlertT=0,bossAlertName='';
 let cv,ctx2,camX=0,mons=[],npcs2=[],projs=[];
 let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[]};
@@ -2397,7 +2400,7 @@ const AFFIXES=[
 const ENRAGE_AFTER=35,ENRAGE_RATE=0.015,ENRAGE_MAX=2.6;
 function enrageMul(m){if(!m||!m.boss||!m.fightT)return 1;const over=m.fightT-(m.enrageAfter||ENRAGE_AFTER);return over<=0?1:Math.min(ENRAGE_MAX,1+over*ENRAGE_RATE);}
 function mkMon(t,x,y,forceElite){const d=MDEF[t],elite=forceElite||Math.random()<0.1,af=elite?AFFIXES[Math.floor(Math.random()*AFFIXES.length)]:null,hm=elite?3:1,dm=elite?1.5:1,sm=(af&&af.id==='frenzied')?1.5:1,em=ascEnemyMul(),rm=metaRewardMul();return{id:Math.random(),t,n:(elite?'★ '+(af?af.n+' ':''):'')+d.n,elite,affix:af?af.id:null,affixC:af?af.c:null,sheet:d.sheet,frames:d.frames,hp:Math.round(d.hp*hm*em),mhp:Math.round(d.hp*hm*em),mn:Math.round(d.mn*dm*em),mx:Math.round(d.mx*dm*em),xp:Math.round(d.xp*(elite?2.5:1)*rm),gold:Math.round((d.gold||0)*(elite?3:1)*rm),loot:d.loot,spd:d.spd*sm,pat:d.pat,fly:d.fly,x,y,bx:x,vx:d.spd*sm*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0};}
-function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];nearNPC=null;nearPortal=null;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,rift:n.rift,asc:n.asc,town:n.town,codex:n.codex,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if((i===5||i===9||i===10)&&!mons.some(m=>m.boss))spawnBoss(i);}
+function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;mons=[];npcs2=[];projs=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];nearNPC=null;nearPortal=null;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,rift:n.rift,asc:n.asc,town:n.town,codex:n.codex,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if(isFinaleArena(i)&&!mons.some(m=>m.boss))spawnBoss(i);}
 // Pick a fresh respawn spot somewhere in the current zone, biased away from the player so
 // monsters don't always reappear in the exact same place — keeps the maps feeling alive.
 function zoneSpawnPoint(){const ps=plats.filter(p=>p.w>=60);let best=null;for(let i=0;i<8;i++){const p=ps[Math.floor(Math.random()*ps.length)]||plats[0];const x=Math.max(30,Math.min(CZ.bound-30,p.x+20+Math.random()*Math.max(1,p.w-40)));best={x,y:p.y-2};if(Math.abs(x-PL.x)>220)return best;}return best||{x:CZ.bound/2,y:300};}
@@ -2429,7 +2432,7 @@ function update(dt){
   parts=parts.filter(p=>{p.life-=dt;p.vy+=300*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;return p.life>0;});
   if(legendT>0){legendT-=dt;const lc=legendKind==='art'?ART_COLS:LEG_COLS;swirls.forEach(s=>{s.a+=s.w*dt;s.h+=s.vh*dt;if(s.h>95)s.h-=95;});fwT-=dt;if(fwT<=0&&legendT>0.7){fwT=0.42;const fx=PL.x+(Math.random()*140-70),fy=PL.y-40-Math.random()*70;burstRing(fx,fy,lc[Math.floor(Math.random()*4)],16,150);burst(fx,fy,lc[Math.floor(Math.random()*4)],8,90);sfxLoot();}if(legendT<=0)swirls=[];}
   if(G.mp<G.maxMp){G.mp=Math.min(G.maxMp,G.mp+(4+(hasPow('manaregen')?8:0)+runeSum('mpregen')+cityLvl('sanctum'))*dt);updateHUD();}
-  if(BOSS_DEFS.some(b=>b.zone===G.zone)){bossTimers[G.zone]+=dt;if(!mons.some(m=>m.boss)&&bossTimers[G.zone]>=300)spawnBoss(G.zone);}if(bossAlertT>0)bossAlertT-=dt;
+  if(BOSS_DEFS.some(b=>b.zone===G.zone)&&!isFinaleArena(G.zone)){bossTimers[G.zone]+=dt;if(!mons.some(m=>m.boss)&&bossTimers[G.zone]>=300)spawnBoss(G.zone);}if(bossAlertT>0)bossAlertT-=dt;
   nearNPC=null;npcs2.forEach(n=>{if(Math.abs(PL.x-n.x)<48&&Math.abs(PL.y-n.y)<60)nearNPC=n;n.frame+=0.03;});
   nearPortal=null;portals2.forEach(p=>{if(Math.abs(PL.x-p.x)<38&&Math.abs(PL.y-p.y)<55)nearPortal=p;});
   if((jp['f']||jp['e'])&&nearNPC)openDlg(nearNPC);
@@ -3162,7 +3165,7 @@ function draw(){
   if(bossAlertT>0){ctx2.save();ctx2.globalAlpha=Math.min(1,bossAlertT*1.2);ctx2.fillStyle='rgba(0,0,0,0.6)';ctx2.fillRect(0,cv.height/2-28,cv.width,56);ctx2.textAlign='center';ctx2.font='bold 16px sans-serif';ctx2.fillStyle='#e24b4a';ctx2.fillText('⚠  BOSS: '+bossAlertName+'  ⚠',cv.width/2,cv.height/2+6);ctx2.restore();}
   const activeBoss=mons.find(m=>m.boss);
   const bd2=BOSS_DEFS.find(b=>b.zone===G.zone);
-  if(bd2&&!activeBoss){
+  if(bd2&&!activeBoss&&!isFinaleArena(G.zone)){
     const rem=Math.max(0,300-bossTimers[G.zone]),mm=Math.floor(rem/60),ss=Math.floor(rem%60);
     ctx2.save();
     ctx2.fillStyle='rgba(0,0,0,0.55)';
@@ -3301,18 +3304,18 @@ function updateBossAbilities(m,dt,dx,adx){
     // ── Stage 1: the idol sleeps behind its arms — impervious, only a slow warning ring ──
     if(m.stage===1){
       if(!arms){m.stage=2;m.invuln=false;m.fightT=0;bossAlertT=3.2;bossAlertName='ZAL’GUROTH AWAKENS';shake(0.7,10);burstRing(m.x,m.y-SH*m.bscale/2,'#b050f0',36,220);log('💢 The last arm shatters — Zal’Guroth’s core lies exposed!','d');sfxVoid();}
-      else if(adx<640&&m.a1T<=0){m.a1T=7;for(let k=0;k<4;k++){const a=Math.PI*0.25+k/4*Math.PI*1.5;projs.push({x:m.x,y:m.y-SH*m.bscale*0.55,vx:Math.cos(a)*200,vy:Math.sin(a)*200,dmg:Math.round((70+Math.floor(Math.random()*15))*er),proj:'curseOrb',c:'#6a3ab0',slow:false,life:2.6,pw:10,ph:10,hostile:true,src:'Zal’Guroth'});}sfxVoid();}
+      else if(adx<960&&m.a1T<=0){m.a1T=7;for(let k=0;k<4;k++){const a=Math.PI*0.25+k/4*Math.PI*1.5;projs.push({x:m.x,y:m.y-SH*m.bscale*0.55,vx:Math.cos(a)*200,vy:Math.sin(a)*200,dmg:Math.round((70+Math.floor(Math.random()*15))*er),proj:'curseOrb',c:'#6a3ab0',slow:false,life:2.6,pw:10,ph:10,hostile:true,src:'Zal’Guroth'});}sfxVoid();}
       return;
     }
     // ── Stage 3 trigger at 40%: the third eye opens — faster cadence, lances, two arms regrow ──
     if(m.stage===2&&m.hp<m.mhp*0.4){m.stage=3;bossAlertT=3.2;bossAlertName='THE THIRD EYE OPENS';shake(0.8,11);spawnIdolArms(2);log('👁 The Hollow One’s third eye opens — its severed arms claw back out of the void!','d');sfxVoid();}
     const cad=m.stage===3?0.62:1;
     // Void Ring: an 8-way nova from the core
-    if(adx<640&&m.a1T<=0){m.a1T=4.6*cad;for(let k=0;k<8;k++){const a=k/8*Math.PI*2;projs.push({x:m.x,y:m.y-SH*m.bscale*0.55,vx:Math.cos(a)*255,vy:Math.sin(a)*255,dmg:Math.round((85+Math.floor(Math.random()*20))*er),proj:'curseOrb',c:'#b050f0',slow:false,life:2.6,pw:10,ph:10,hostile:true,src:'Zal’Guroth'});}sfxVoid();}
+    if(adx<960&&m.a1T<=0){m.a1T=4.6*cad;for(let k=0;k<8;k++){const a=k/8*Math.PI*2;projs.push({x:m.x,y:m.y-SH*m.bscale*0.55,vx:Math.cos(a)*255,vy:Math.sin(a)*255,dmg:Math.round((85+Math.floor(Math.random()*20))*er),proj:'curseOrb',c:'#b050f0',slow:false,life:2.6,pw:10,ph:10,hostile:true,src:'Zal’Guroth'});}sfxVoid();}
     // Hollow Meteors: rift-stone rains down around the player
     if(m.a2T<=0){m.a2T=5.4*cad;const n=m.stage===3?6:4;for(let k=0;k<n;k++){const mx2=Math.max(40,Math.min(CZ.bound-40,PL.x+(Math.random()*340-170)));projs.push({x:mx2,y:-12-Math.random()*40,vx:0,vy:140+Math.random()*90,grav:true,dmg:Math.round((95+Math.floor(Math.random()*22))*er),proj:'fireball',c:'#8a5cf0',slow:false,life:3.4,pw:12,ph:12,hostile:true,src:'Zal’Guroth'});}log('☄ The Riftheart splinters — hollow meteors fall!','d');sfxFireball();}
     // Hollow Lance (stage 3 only): a blistering aimed bolt
-    if(m.stage===3){m.a3T=Math.max(0,(m.a3T||0)-dt);if(adx<560&&m.a3T<=0){m.a3T=2.3;const ddx=PL.x-m.x,ddy=PL.y-(m.y-SH*m.bscale*0.55),dd=Math.sqrt(ddx*ddx+ddy*ddy)||1;projs.push({x:m.x,y:m.y-SH*m.bscale*0.55,vx:(ddx/dd)*470,vy:(ddy/dd)*470,dmg:Math.round((112+Math.floor(Math.random()*26))*er),proj:'curseOrb',c:'#ff4dff',slow:false,life:1.8,pw:10,ph:10,hostile:true,src:'Zal’Guroth'});sfxBolt();}}
+    if(m.stage===3){m.a3T=Math.max(0,(m.a3T||0)-dt);if(adx<960&&m.a3T<=0){m.a3T=2.3;const ddx=PL.x-m.x,ddy=PL.y-(m.y-SH*m.bscale*0.55),dd=Math.sqrt(ddx*ddx+ddy*ddy)||1;projs.push({x:m.x,y:m.y-SH*m.bscale*0.55,vx:(ddx/dd)*470,vy:(ddy/dd)*470,dmg:Math.round((112+Math.floor(Math.random()*26))*er),proj:'curseOrb',c:'#ff4dff',slow:false,life:1.8,pw:10,ph:10,hostile:true,src:'Zal’Guroth'});sfxBolt();}}
     // Hollow Crush: hugging the idol invites its fist
     m.a4T=Math.max(0,(m.a4T||0)-dt);
     if(adx<SW*m.bscale*0.62&&Math.abs(PL.y-m.y)<60&&m.a4T<=0){m.a4T=4;const kDir=PL.x>m.x?1:-1;PL.vx=kDir*520;PL.vy=-300;let dmg=Math.max(1,Math.round((70+Math.floor(Math.random()*24))*er)-eqDef());if(G.shield){dmg=Math.max(1,Math.floor(dmg*shieldFac()));log('Shield absorbed the crush!','h');}G.hp=Math.max(0,G.hp-dmg);PL.inv=0.8;sfxPlayerHit();sfxFireball();spawnDN(PL.x-camX,PL.y,dmg,'#b050f0');shake(0.4,7);log('HOLLOW CRUSH — the idol’s fist hurls you away!','d');if(G.hp<=0)respawn();else updateHUD();}

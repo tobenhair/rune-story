@@ -122,6 +122,35 @@ test.describe('The Riftheart raid — Zal\'Guroth', () => {
     expect(n).toBe(4); // stage 2 meteor volley
   });
 
+  test('the anchored core cannot be out-ranged: its Void Ring reaches the whole arena', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      loadZone(10); T.resetPlayer();
+      PL.x = 100; PL.y = 380; // far-west platforms — the idol is anchored at x=760 (adx ~660)
+      const body = mons.find(m => m.t === 'hollow_idol');
+      mons.filter(m => m.t === 'idol_arm').forEach(a => killM(a));
+      updateBossAbilities(body, 0.016, 900, 900); // wake -> stage 2
+      body.a1T = 0; body.a2T = 1e9; // isolate the Void Ring from the meteor volley
+      const adx = Math.abs(PL.x - body.x);
+      updateBossAbilities(body, 0.016, PL.x - body.x, adx);
+      return { adx, voidRing: projs.filter(p => p.hostile && !p.grav).length };
+    });
+    expect(r.adx).toBeGreaterThan(640); // used to fall outside the old gate
+    expect(r.voidRing).toBe(8);          // the 8-way nova still fires at max range
+  });
+
+  test('slaying Zal\'Guroth clears the arena — the raid boss does not re-spawn', async ({ game }) => {
+    const seen = await game.evaluate(() => {
+      loadZone(10);
+      bossTimers[10] = 320; // a ~10-min clear pushes the timer well past 300
+      mons.filter(m => m.t === 'idol_arm').forEach(a => killM(a));
+      killM(mons.find(m => m.t === 'hollow_idol'));
+      let max = 0;
+      for (let i = 0; i < 120; i++) { update(0.05); max = Math.max(max, mons.filter(m => m.boss).length); }
+      return max;
+    });
+    expect(seen).toBe(0);
+  });
+
   test('killing the idol pays a guaranteed Artifact and the raid achievement', async ({ game }) => {
     const r = await game.evaluate(() => {
       loadZone(10); T.resetPlayer(); G.equipment = { weapon: null, armor: null }; G.inventory = []; META.achievements = {};
