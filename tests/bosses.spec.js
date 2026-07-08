@@ -75,6 +75,37 @@ test.describe('Bosses & enrage', () => {
     expect(kills).toBe(1);
   });
 
+  test('a slain boss re-spawns in a regular boss zone after the timer', async ({ game }) => {
+    const n = await game.evaluate(() => {
+      loadZone(1); G.zone = 1; CZ = ZD[1];
+      mons = mons.filter(m => !m.boss); spawnBoss(1);
+      killM(mons.find(m => m.boss));
+      bossTimers[1] = 320; // > 300s elapsed
+      update(0.05);
+      return mons.filter(m => m.boss).length;
+    });
+    expect(n).toBe(1); // farmable: the Slime Sovereign returns
+  });
+
+  test('teleport-only finale/raid bosses do NOT re-spawn after the kill', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      const out = {};
+      [5, 9, 10].forEach(z => {
+        loadZone(z);
+        bossTimers[z] = 320; // a long clear leaves the timer past 300
+        mons.filter(m => m.part).forEach(a => killM(a)); // shatter the idol's arms first
+        killM(mons.find(m => m.boss && !m.part));
+        let seen = 0;
+        for (let i = 0; i < 120; i++) { update(0.05); seen = Math.max(seen, mons.filter(m => m.boss).length); }
+        out['z' + z] = seen;
+      });
+      return out;
+    });
+    expect(r.z5).toBe(0);  // Hollow Rift — Veyra stays dead
+    expect(r.z9).toBe(0);  // Ashen Sanctum — Malachar stays dead
+    expect(r.z10).toBe(0); // Riftheart — Zal'Guroth stays dead
+  });
+
   test('the final boss drops a guaranteed Artifact', async ({ game }) => {
     const hasArtifact = await game.evaluate(() => {
       mons.length = 0; G.zone = 5; CZ = ZD[5]; G.equipment = { weapon: null, armor: null }; G.inventory = [];
