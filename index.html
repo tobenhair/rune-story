@@ -930,8 +930,22 @@ function glow(c,x,y,r,col){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColo
 // mirror an x-coordinate when facing left (author sprites facing right)
 function fx(R,x,w){return R?x:SD-(x+w);}
 const MC={skinL:'#ffd9a8',skin:'#f4c08a',skinD:'#cf9462',hatL:'#7e5ce0',hat:'#5534b7',hatD:'#341f7a',robeL:'#3a63d4',robe:'#1e3a8a',robeD:'#0f2050',belt:'#7fb0ff',beltD:'#3a6ad0',staff:'#9a6a3c',staffD:'#5f3c1c',orb:'#9fd0ff',orbG:'#ffffff',shoe:'#171734',cape:'#2c49a0',capeD:'#16285e',eye:'#16203e'};
+// Phase 2 — the mage sprite reflects equipped gear: staff head swaps by weapon base tier,
+// robe trim colour tracks armour rarity. Sheets are re-baked on equip via rebuildMage().
+function mageVisual(){const w=(typeof G!=='undefined')&&G.equipment&&G.equipment.weapon,a=(typeof G!=='undefined')&&G.equipment&&G.equipment.armor;let wt=-1;if(w){wt=GEAR_BASES.weapon.findIndex(bb=>bb[0]===w.bn);if(wt<0)wt=Math.min(5,w.rar);}return{wt,wr:w?w.rar:-1,ar:a?a.rar:-1};}
+function drawStaffHead(ctx,hx,hy,f,wt,wr){const op=Math.sin(f*0.4)*0.25+0.75,col=wr>=0?RARS[wr].c:'#9fd0ff',rgb=hexRGB(col).join(',');
+  if(wt<0){ctx.fillStyle='#7a5a34';ctx.beginPath();ctx.arc(hx,hy,2.5,0,Math.PI*2);ctx.fill();pxl(ctx,hx-1,hy-1,'#9a7a4a');return;}
+  ctx.save();ctx.globalAlpha=op;glow(ctx,hx,hy,8,`rgba(${rgb},0.9)`);ctx.restore();
+  if(wt===1){ctx.strokeStyle='#3a8a44';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,3,0,Math.PI*1.6);ctx.stroke();ctx.fillStyle='#7ad07a';ctx.beginPath();ctx.arc(hx,hy,2,0,Math.PI*2);ctx.fill();}
+  else if(wt===2){ctx.fillStyle=col;[[-2,0,3],[1,-1,4],[0,1,3]].forEach(([dx,dy,h])=>{ctx.beginPath();ctx.moveTo(hx+dx-1,hy+dy);ctx.lineTo(hx+dx+1,hy+dy);ctx.lineTo(hx+dx,hy+dy-h);ctx.closePath();ctx.fill();});}
+  else if(wt===3){ctx.fillStyle='#c8c8dc';ctx.beginPath();ctx.moveTo(hx,hy-5);ctx.lineTo(hx+2,hy);ctx.lineTo(hx-2,hy);ctx.closePath();ctx.fill();pxl(ctx,hx,hy-2,col);}
+  else if(wt===4){ctx.fillStyle='#ff8a30';ctx.beginPath();ctx.moveTo(hx-2,hy+1);ctx.quadraticCurveTo(hx-2,hy-4,hx,hy-5);ctx.quadraticCurveTo(hx+2,hy-4,hx+2,hy+1);ctx.closePath();ctx.fill();ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(hx,hy-1,1.4,0,Math.PI*2);ctx.fill();}
+  else if(wt===5){ctx.fillStyle='#bfe8ff';ctx.beginPath();ctx.moveTo(hx,hy-5);ctx.lineTo(hx+2.5,hy);ctx.lineTo(hx,hy+3);ctx.lineTo(hx-2.5,hy);ctx.closePath();ctx.fill();pxl(ctx,hx,hy-1,'#fff');}
+  else{ctx.fillStyle=col;ctx.beginPath();ctx.arc(hx,hy,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx-0.5,hy-0.5,1.2,0,Math.PI*2);ctx.fill();}}
+function rebuildMage(){SHS.mR=mkSheet((c,f)=>drawMage(c,f,true,false),8,SD,SDH);SHS.mL=mkSheet((c,f)=>drawMage(c,f,false,false),8,SD,SDH);SHS.mCR=mkSheet((c,f)=>drawMage(c,f,true,true),8,SD,SDH);SHS.mCL=mkSheet((c,f)=>drawMage(c,f,false,true),8,SD,SDH);}
 function drawMage(ctx,f,R,cast){ctx.clearRect(0,0,SD,SDH);
   const s=Math.sin(f/8*Math.PI*2),leg=Math.round(s*2),bob=-Math.round(Math.abs(s)*1.5),X=(x,w)=>fx(R,x,w);
+  const MV=mageVisual(),TRIM=MV.ar>=0?RARS[MV.ar].c:null;
   // cape behind the body (flutters)
   const cf=Math.round(s*1.5);
   ctx.fillStyle=MC.capeD;ctx.beginPath();ctx.moveTo(X(8,8)+0,20+bob);ctx.lineTo(X(8,8)+8,20+bob);ctx.lineTo(X(8,8)+10-cf,42+bob);ctx.lineTo(X(8,8)-2-cf,42+bob);ctx.closePath();ctx.fill();
@@ -942,8 +956,9 @@ function drawMage(ctx,f,R,cast){ctx.clearRect(0,0,SD,SDH);
   ctx.fillStyle=MC.robeD;ctx.beginPath();ctx.moveTo(X(10,12),19+bob);ctx.lineTo(X(10,12)+12,19+bob);ctx.lineTo(X(10,12)+15,42+bob);ctx.lineTo(X(10,12)-3,42+bob);ctx.closePath();ctx.fill();
   vg(ctx,X(10,12),20+bob,12,21,MC.robeL,MC.robe,MC.robeD);
   ctx.fillStyle=MC.robeD;ctx.fillRect(X(8,16),41+bob,16,2);
-  // robe center seam highlight
-  ctx.fillStyle='rgba(120,160,255,0.4)';ctx.fillRect(X(15,2),22+bob,2,18);
+  // robe center seam highlight — trim colour tracks equipped armour rarity
+  ctx.fillStyle=TRIM?TRIM:'rgba(120,160,255,0.4)';ctx.fillRect(X(15,2),22+bob,2,18);
+  if(TRIM){ctx.fillStyle=TRIM;ctx.fillRect(X(9,14),20+bob,14,1);ctx.fillRect(X(8,16),40+bob,16,1);}
   // belt
   band(ctx,X(9,14),29+bob,14,3,MC.belt,MC.belt,MC.beltD);pxl(ctx,X(15,2),30+bob,'#dff0ff');
   // front leg/shoe
@@ -973,13 +988,11 @@ function drawMage(ctx,f,R,cast){ctx.clearRect(0,0,SD,SDH);
   const ax=cast?9:11;
   rc(ctx,X(20,3),cast?16+bob:22+bob,3,cast?7:9,MC.robe);
   rc(ctx,X(20,3),cast?14+bob:30+bob,3,3,MC.skin);
-  // staff
+  // staff — shaft tints faintly toward weapon rarity, head swaps by weapon tier
   const sx=R?25:4;
   vg(ctx,sx,4+bob,3,38,MC.staff,MC.staff,MC.staffD);ctx.fillStyle=MC.staffD;ctx.fillRect(sx+2,4+bob,1,38);
-  // orb at staff head
-  const op=Math.sin(f*0.4)*0.25+0.75;ctx.save();ctx.globalAlpha=op;glow(ctx,sx+1,3+bob,7,'rgba(130,180,255,0.9)');ctx.restore();
-  ctx.fillStyle=MC.orb;ctx.beginPath();ctx.arc(sx+1,3+bob,3,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=MC.orbG;ctx.beginPath();ctx.arc(sx+0.5,2.5+bob,1.2,0,Math.PI*2);ctx.fill();
+  if(MV.wr>=3){ctx.save();ctx.globalAlpha=0.3;ctx.fillStyle=RARS[MV.wr].c;ctx.fillRect(sx,4+bob,3,38);ctx.restore();}
+  drawStaffHead(ctx,sx+1,3+bob,f,MV.wt,MV.wr);
   // casting spark at the hand
   if(cast){const cx=X(20,3)+(R?3:0),cy=15+bob;ctx.save();ctx.globalAlpha=0.85;glow(ctx,cx,cy,8,'rgba(150,200,255,0.95)');ctx.restore();ctx.fillStyle='#dff0ff';ctx.beginPath();ctx.arc(cx,cy,2,0,Math.PI*2);ctx.fill();}
 }
@@ -1122,6 +1135,139 @@ function drawSage(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f
   ctx.fillStyle='#af99ec';ctx.beginPath();ctx.arc(7,oy,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e8e0ff';ctx.beginPath();ctx.arc(6.5,oy-0.5,1.3,0,Math.PI*2);ctx.fill();
   // orbiting motes
   [0,1,2].forEach(i=>{const a=f*0.08+i*2.1,mx=16+Math.cos(a)*11,my=12+b+Math.sin(a)*5;ctx.fillStyle=['#6aa3ff','#af99ec','#82b4ff'][i];ctx.fillRect(mx|0,my|0,1.5,1.5);});}
+// ── Phase 2: unique hub-NPC sprites — one dedicated sheet + silhouette + signature idle per named NPC ──
+// Guard Tomlin — planted tower shield, steel + Aethon red, visor glint sweep + shield tap.
+function drawTomlin(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.045));
+  rc(ctx,10,36+b,5,9,'#34344a');rc(ctx,17,36+b,5,9,'#34344a');rc(ctx,10,43+b,5,2,'#191926');rc(ctx,17,43+b,5,2,'#191926');
+  orc(ctx,8,17+b,15,15,'#565676','#22223a');vg(ctx,9,18+b,13,13,'#727294','#4e4e6c','#2e2e48');
+  ctx.fillStyle='#b0242c';ctx.fillRect(13,18+b,5,17);ctx.fillStyle='#e0424a';ctx.fillRect(14,19+b,2,15);ctx.fillStyle='#ef9f27';ctx.beginPath();ctx.arc(15.5,24+b,2,0,Math.PI*2);ctx.fill();
+  rc(ctx,12,14+b,7,4,'#d4a574');
+  ctx.fillStyle='#4a4a66';ctx.beginPath();ctx.arc(15,10+b,7,Math.PI,0);ctx.fill();rc(ctx,8,10+b,15,5,'#3e3e58');ctx.fillStyle='#c0c0d8';ctx.fillRect(8,9+b,15,1);
+  ctx.fillStyle='#11111c';ctx.fillRect(10,11+b,11,2);const g=f%60;if(g<11)pxl(ctx,10+g,11+b,'#dff0ff');
+  ctx.fillStyle='#c4202a';ctx.fillRect(13,-1+b,4,6);ctx.fillStyle='#e23a44';ctx.fillRect(14,-1+b,2,5);
+  const tap=(f%120<8)?1:0;ctx.save();ctx.translate(0,tap);
+  orc(ctx,22,16+b,9,26,'#6a6a8e','#26263e');vg(ctx,23,17+b,7,24,'#8a8ab0','#5a5a7e','#34344e');
+  ctx.fillStyle='#b0242c';ctx.beginPath();ctx.moveTo(26,20+b);ctx.lineTo(30,26+b);ctx.lineTo(26,38+b);ctx.lineTo(23,26+b);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ef9f27';ctx.beginPath();ctx.arc(26,26+b,2,0,Math.PI*2);ctx.fill();ctx.restore();}
+// Merchant Galen — apron, coin scale whose pans tip back and forth.
+function drawGalen(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05));
+  rc(ctx,11,37+b,4,8,'#3a2c1e');rc(ctx,17,37+b,4,8,'#3a2c1e');
+  vg(ctx,9,18+b,14,20,'#1f7a74','#166058','#0e463f');
+  ctx.fillStyle='#c9b58a';ctx.fillRect(11,24+b,10,14);ctx.fillStyle='#7a5a2a';ctx.fillRect(11,24+b,10,1);
+  ctx.fillStyle='#c79a3a';ctx.beginPath();ctx.arc(20,31+b,2.5,0,Math.PI*2);ctx.fill();
+  rc(ctx,12,10+b,8,8,'#f0c088');rc(ctx,12,10+b,8,2,'#d0a068');pxl(ctx,14,13+b,'#2a2a3a');pxl(ctx,18,13+b,'#2a2a3a');rc(ctx,13,16+b,6,1,'#c08858');
+  ctx.fillStyle='#155a54';ctx.beginPath();ctx.arc(16,9+b,6,Math.PI,0);ctx.fill();ctx.fillStyle='#c79a3a';ctx.fillRect(10,8+b,12,1);
+  const tip=Math.sin(f*0.14)*3;rc(ctx,7,20+b,4,3,'#f0c088');
+  ctx.strokeStyle='#8a6a2a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(8,16+b);ctx.lineTo(8,20+b);ctx.stroke();
+  ctx.strokeStyle='#c79a3a';ctx.beginPath();ctx.moveTo(2,16+b-tip);ctx.lineTo(14,16+b+tip);ctx.stroke();
+  ctx.fillStyle='#e0c060';ctx.fillRect(0,18+b-tip,4,1);ctx.fillRect(11,18+b+tip,4,1);
+  ctx.strokeStyle='#8a6a2a';ctx.beginPath();ctx.moveTo(2,16+b-tip);ctx.lineTo(2,18+b-tip);ctx.moveTo(13,16+b+tip);ctx.lineTo(13,18+b+tip);ctx.stroke();}
+// Forgemaster Bren — leather apron, huge tongs over shoulder, mask on brow, anvil spark burst.
+function drawBren(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.04));
+  rc(ctx,10,37+b,5,8,'#2a1c12');rc(ctx,17,37+b,5,8,'#2a1c12');
+  vg(ctx,7,18+b,18,20,'#3a2418','#2a1810','#180c06');
+  ctx.fillStyle='#5a3a1e';ctx.beginPath();ctx.moveTo(10,20+b);ctx.lineTo(22,20+b);ctx.lineTo(24,40+b);ctx.lineTo(8,40+b);ctx.closePath();ctx.fill();ctx.fillStyle='#3a2410';ctx.fillRect(15,22+b,2,16);
+  rc(ctx,4,22+b,4,9,'#c98a5a');rc(ctx,24,20+b,4,9,'#c98a5a');
+  rc(ctx,11,10+b,10,9,'#d89a64');rc(ctx,11,10+b,10,2,'#b87a44');ctx.fillStyle='#2a2a2e';ctx.fillRect(10,8+b,12,3);
+  pxl(ctx,14,14+b,'#2a1a10');pxl(ctx,18,14+b,'#2a1a10');rc(ctx,12,16+b,8,2,'#7a4a28');ctx.fillStyle='#5a3418';ctx.fillRect(11,17+b,10,1);
+  ctx.strokeStyle='#555';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(25,22+b);ctx.lineTo(30,4+b);ctx.stroke();
+  ctx.strokeStyle='#777';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(30,4+b);ctx.lineTo(27,1+b);ctx.moveTo(30,4+b);ctx.lineTo(31,0+b);ctx.stroke();
+  const sp=f%80;if(sp<8){const a=1-sp/8;ctx.save();ctx.globalAlpha=a;glow(ctx,6,34+b,8,'rgba(255,180,60,0.9)');ctx.restore();for(let i=0;i<4;i++)pxl(ctx,4+i*2,32+b-i,'#ffd24a');}}
+// Master Builder Sora — sandstone/cobalt, rolled blueprint unrolled and studied, plumb line.
+function drawSora(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05));
+  rc(ctx,11,37+b,4,8,'#2a3a4a');rc(ctx,17,37+b,4,8,'#2a3a4a');
+  vg(ctx,9,18+b,14,20,'#c8a870','#a88850','#7a5e34');
+  ctx.fillStyle='#2a5ac0';ctx.fillRect(10,19+b,13,3);ctx.fillStyle='#3a6ad0';ctx.fillRect(14,22+b,3,15);
+  rc(ctx,12,11+b,8,8,'#e0b888');pxl(ctx,14,14+b,'#2a2a3a');pxl(ctx,18,14+b,'#2a2a3a');
+  ctx.fillStyle='#2a5ac0';ctx.fillRect(10,9+b,13,3);ctx.fillStyle='#1a3a8a';ctx.fillRect(20,9+b,4,2);
+  const open=(f%120)<60;
+  if(open){orc(ctx,2,22+b,11,10,'#dfeaff','#3a5a9a');ctx.strokeStyle='#3a6ad0';ctx.lineWidth=1;ctx.strokeRect(4,24+b,7,6);pxl(ctx,7,27+b,'#c0242c');}
+  else{vg(ctx,4,22+b,4,11,'#dfeaff','#b8c8e0','#8a9ac0');ctx.fillStyle='#3a6ad0';ctx.fillRect(4,22+b,4,1);ctx.fillRect(4,32+b,4,1);}
+  rc(ctx,6,20+b,3,3,'#e0b888');
+  ctx.strokeStyle='#8a8a9a';ctx.lineWidth=1;const pl=Math.sin(f*0.1);ctx.beginPath();ctx.moveTo(22,30+b);ctx.lineTo(22+pl,40+b);ctx.stroke();ctx.fillStyle='#c0c0d0';ctx.beginPath();ctx.moveTo(21+pl,40+b);ctx.lineTo(23+pl,40+b);ctx.lineTo(22+pl,44+b);ctx.closePath();ctx.fill();}
+// Sage Oriax — indigo/brass, a brass armillary orrery with 3 orbiting motes over an open palm.
+function drawOriax(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05)),pulse=Math.sin(f*0.1)*0.3+0.7;
+  ctx.fillStyle='#141033';ctx.beginPath();ctx.moveTo(10,16+b);ctx.lineTo(22,16+b);ctx.lineTo(27,44+b);ctx.lineTo(5,44+b);ctx.closePath();ctx.fill();
+  vg(ctx,8,17+b,16,27,'#3a3aa0','#241a70','#140c40');
+  ctx.fillStyle='#c79a3a';ctx.fillRect(15,20+b,2,23);[24,32,40].forEach(y=>pxl(ctx,15,y+b,'#ffe9a0'));
+  vg(ctx,4,22+b,5,11,'#2a2a8a','#1a1460','#120a40');
+  ctx.fillStyle='#0e0a2a';ctx.beginPath();ctx.arc(16,11+b,9,Math.PI,0);ctx.fill();rc(ctx,7,11+b,18,5,'#0e0a2a');
+  rc(ctx,11,9+b,10,9,'#b08a5e');ctx.fillStyle='rgba(10,8,40,0.5)';ctx.fillRect(11,9+b,10,5);
+  ctx.fillStyle='#c79a3a';ctx.fillRect(13,12+b,2,2);ctx.fillRect(17,12+b,2,2);
+  rc(ctx,22,28+b,4,3,'#b08a5e');const ox=24,oy=20+b;
+  ctx.save();ctx.globalAlpha=pulse*0.6;glow(ctx,ox,oy,9,'rgba(200,160,90,0.8)');ctx.restore();
+  ctx.strokeStyle='#c79a3a';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(ox,oy,7,3,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(ox,oy,4,6,0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#ffe9a0';ctx.beginPath();ctx.arc(ox,oy,2,0,Math.PI*2);ctx.fill();
+  [0,1,2].forEach(i=>{const a=f*0.1+i*2.1,mx=ox+Math.cos(a)*(i===1?4:7),my=oy+Math.sin(a)*(i===1?6:3);ctx.fillStyle=['#82b4ff','#af99ec','#ffd24a'][i];ctx.fillRect(mx|0,my|0,2,2);});}
+// Scholar Aldric — oxblood/parchment, armful of books, quill behind ear, a book floats and flips.
+function drawAldric(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05));
+  rc(ctx,11,37+b,4,8,'#2a1818');rc(ctx,17,37+b,4,8,'#2a1818');
+  vg(ctx,9,17+b,14,21,'#7a2430','#5a1824','#3a0e18');
+  ctx.fillStyle='#c9b58a';ctx.fillRect(14,18+b,4,19);ctx.fillStyle='#d0b884';ctx.fillRect(10,18+b,13,2);
+  rc(ctx,12,10+b,8,8,'#e8c090');rc(ctx,12,10+b,8,2,'#3a3a4a');pxl(ctx,14,13+b,'#2a2a3a');pxl(ctx,18,13+b,'#2a2a3a');rc(ctx,13,15+b,5,1,'#c08858');
+  ctx.strokeStyle='#e8e8f0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(20,11+b);ctx.lineTo(24,6+b);ctx.stroke();pxl(ctx,24,6+b,'#fff');
+  ['#3a6ad0','#c0242c','#2a8a4a'].forEach((c,i)=>{orc(ctx,6,26+b+i*4,13,4,c,'#1a1a20');ctx.fillStyle='#e8c060';ctx.fillRect(6,27+b+i*4,13,1);});
+  rc(ctx,4,28+b,3,8,'#e8c090');
+  const ph=f%80;if(ph<50){const fy=6+b+Math.round(-ph*0.12),flip=(ph%20<10)?4:0;ctx.save();ctx.globalAlpha=Math.max(0.2,1-ph/50);orc(ctx,22,fy,8,6,'#e4dcc4','#8a7a5a');ctx.fillStyle='#fff';ctx.fillRect(22+flip,fy+1,3,4);ctx.restore();}}
+// Envoy Sable — charcoal/ember, wide-brim traveller hat, courier satchel, wind-flicked cloak.
+function drawSable(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05));
+  const flick=Math.round(Math.sin(f*0.13)*3);
+  ctx.fillStyle='#1e1e24';ctx.beginPath();ctx.moveTo(9,17+b);ctx.lineTo(23,17+b);ctx.lineTo(27+flick,42+b);ctx.lineTo(4+flick,42+b);ctx.closePath();ctx.fill();
+  vg(ctx,9,18+b,14,20,'#3a3a44','#2a2a32','#1a1a20');
+  rc(ctx,11,37+b,4,8,'#232326');rc(ctx,17,37+b,4,8,'#232326');
+  ctx.fillStyle='#d86a24';ctx.fillRect(10,18+b,13,2);
+  ctx.strokeStyle='#8a5a2a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(10,19+b);ctx.lineTo(22,34+b);ctx.stroke();
+  orc(ctx,20,30+b,7,8,'#5a3a20','#2a1a0e');ctx.fillStyle='#d86a24';ctx.fillRect(22,32+b,3,2);
+  rc(ctx,12,11+b,8,7,'#d8a874');pxl(ctx,14,14+b,'#1a1a22');pxl(ctx,18,14+b,'#1a1a22');
+  ctx.fillStyle='#14141a';ctx.fillRect(6,10+b,20,2);ctx.fillStyle='#26262e';ctx.fillRect(6,10+b,20,1);
+  ctx.fillStyle='#1e1e26';ctx.beginPath();ctx.moveTo(11,10+b);ctx.lineTo(21,10+b);ctx.lineTo(19,3+b);ctx.lineTo(13,3+b);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#d86a24';ctx.fillRect(11,9+b,10,1);}
+// Seer Vesper — white/astral, blindfolded, levitating with a breathing shadow and drifting veil.
+function drawVesper(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05));
+  const y=b-2-Math.round(Math.abs(Math.sin(f*0.06))*2);
+  const sw=6+Math.sin(f*0.06)*2;ctx.fillStyle='rgba(120,160,255,0.25)';ctx.beginPath();ctx.ellipse(16,46,sw,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c8d4f0';ctx.beginPath();ctx.moveTo(10,16+y);ctx.lineTo(22,16+y);ctx.lineTo(20,42+y);ctx.lineTo(16,46+y);ctx.lineTo(12,42+y);ctx.closePath();ctx.fill();
+  vg(ctx,10,17+y,12,24,'#eef2ff','#c4d0f0','#8a9ad8');ctx.fillStyle='#6aa3ff';ctx.fillRect(15,18+y,2,22);
+  rc(ctx,11,9+y,10,9,'#e8eeff');ctx.fillStyle='#82b4ff';ctx.fillRect(11,12+y,10,2);
+  ctx.save();ctx.globalAlpha=0.6;glow(ctx,16,13+y,5,'rgba(130,180,255,0.7)');ctx.restore();
+  const vf=Math.round(Math.sin(f*0.1)*2);ctx.save();ctx.globalAlpha=0.4;ctx.fillStyle='#dfe8ff';ctx.beginPath();ctx.moveTo(9,7+y);ctx.lineTo(23,7+y);ctx.lineTo(25+vf,17+y);ctx.lineTo(7+vf,17+y);ctx.closePath();ctx.fill();ctx.restore();
+  pxl(ctx,16,4+y,'#dff0ff');}
+// Riftwarden Kael — void-red/gunmetal cracked half-armor leaking light, chained gauntlet, heartbeat pulse.
+function drawKael(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05)),beat=Math.pow(Math.max(0,Math.sin(f*0.13)),3);
+  rc(ctx,10,37+b,5,8,'#1e1e24');rc(ctx,18,37+b,5,8,'#1e1e24');
+  vg(ctx,8,17+b,16,21,'#3a3e46','#2a2e36','#181c22');
+  orc(ctx,7,16+b,16,14,'#454a54','#181c22');vg(ctx,8,17+b,14,12,'#565c68','#3a4048','#242830');
+  ctx.save();ctx.globalAlpha=0.5+beat*0.5;ctx.strokeStyle='#ff2d4a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(10,19+b);ctx.lineTo(14,24+b);ctx.lineTo(11,30+b);ctx.moveTo(20,18+b);ctx.lineTo(17,26+b);ctx.lineTo(21,34+b);ctx.stroke();glow(ctx,15,25+b,7,`rgba(255,45,74,${0.3+beat*0.4})`);ctx.restore();
+  ctx.fillStyle='#3a3e46';ctx.beginPath();ctx.arc(15,11+b,7,Math.PI,0);ctx.fill();rc(ctx,8,11+b,15,5,'#2e323a');rc(ctx,11,13+b,9,4,'#20242a');
+  ctx.save();ctx.globalAlpha=0.6+beat*0.4;pxl(ctx,13,14+b,'#ff5a6a');pxl(ctx,18,14+b,'#ff5a6a');ctx.restore();
+  rc(ctx,23,20+b,4,8,'#454a54');ctx.strokeStyle='#6a6a72';ctx.lineWidth=1;for(let i=0;i<4;i++)ctx.strokeRect(24,28+b+i*3,3,2);}
+// Chronicler Ily — sage/silver, hood, a levitating open tome and a floating quill that scribbles.
+function drawIly(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05));
+  rc(ctx,11,37+b,4,8,'#2a3a34');rc(ctx,17,37+b,4,8,'#2a3a34');
+  ctx.fillStyle='#183a30';ctx.beginPath();ctx.moveTo(10,16+b);ctx.lineTo(22,16+b);ctx.lineTo(26,44+b);ctx.lineTo(6,44+b);ctx.closePath();ctx.fill();
+  vg(ctx,9,17+b,14,27,'#3a7a5a','#2a5a44','#183a2c');
+  ctx.fillStyle='#c8d0d8';ctx.fillRect(15,19+b,2,24);[22,30,38].forEach(y=>pxl(ctx,15,y+b,'#fff'));
+  ctx.fillStyle='#123024';ctx.beginPath();ctx.arc(16,11+b,8,Math.PI,0);ctx.fill();rc(ctx,8,11+b,17,4,'#123024');
+  rc(ctx,11,10+b,10,8,'#c8a078');pxl(ctx,14,13+b,'#2a3a30');pxl(ctx,18,13+b,'#2a3a30');
+  const ty=26+b+Math.round(Math.sin(f*0.1)*1.5);
+  orc(ctx,3,ty,12,8,'#e4dcc4','#7a6a4a');ctx.fillStyle='#8a7a5a';ctx.fillRect(9,ty,1,8);
+  ctx.fillStyle='#b0a480';for(let r=0;r<3;r++){ctx.fillRect(4,ty+2+r*2,4,1);ctx.fillRect(10,ty+2+r*2,4,1);}
+  const qx=6+Math.sin(f*0.3)*2,qy=ty-2;ctx.strokeStyle='#c8d0d8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(qx,qy);ctx.lineTo(qx+3,qy-6);ctx.stroke();pxl(ctx,(qx|0)+3,qy-6,'#fff');
+  const ink=f%40;if(ink<20)pxl(ctx,7,(ty+8+ink*0.3)|0,'#3a5a7a');}
+// Astralwright Nyx — deep-space constellation cloak, two real arms + one astral arm tracing a sigil.
+function drawNyx(ctx,f){ctx.clearRect(0,0,SD,SDH);const b=Math.round(Math.sin(f*0.05)),pulse=Math.sin(f*0.09)*0.3+0.7;
+  rc(ctx,11,38+b,4,7,'#0a0a1a');rc(ctx,17,38+b,4,7,'#0a0a1a');
+  ctx.fillStyle='#0a0a1e';ctx.beginPath();ctx.moveTo(9,16+b);ctx.lineTo(23,16+b);ctx.lineTo(28,44+b);ctx.lineTo(4,44+b);ctx.closePath();ctx.fill();
+  vg(ctx,8,17+b,16,27,'#241a4a','#140c33','#0a0620');
+  for(let i=0;i<10;i++){const sx=(7+(i*5.3)%17)|0,sy=(19+((i*7.7)%22))+b,tw=Math.sin(f*0.1+i)*0.4+0.6;ctx.fillStyle=`rgba(220,230,255,${tw})`;pxl(ctx,sx,sy,'#fff');}
+  rc(ctx,5,22+b,4,10,'#1a1440');rc(ctx,23,22+b,4,10,'#1a1440');ctx.fillStyle='#8a7aff';ctx.fillRect(15,19+b,2,22);
+  ctx.fillStyle='#0a0620';ctx.beginPath();ctx.arc(16,11+b,9,Math.PI,0);ctx.fill();rc(ctx,7,11+b,18,5,'#0a0620');
+  rc(ctx,11,9+b,10,9,'#7a6ab0');ctx.fillStyle='rgba(8,4,24,0.5)';ctx.fillRect(11,9+b,10,5);ctx.fillStyle='#dff0ff';ctx.fillRect(13,12+b,2,2);ctx.fillRect(17,12+b,2,2);
+  ctx.save();ctx.globalAlpha=pulse*0.7;glow(ctx,14,13+b,3,'rgba(180,200,255,0.9)');glow(ctx,18,13+b,3,'rgba(180,200,255,0.9)');ctx.restore();
+  ctx.save();ctx.globalAlpha=0.4+pulse*0.3;const aa=f*0.06,hx=24+Math.cos(aa)*5,hy=26+b+Math.sin(aa)*5;
+  ctx.strokeStyle='rgba(150,170,255,0.8)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(20,22+b);ctx.lineTo(hx,hy);ctx.stroke();
+  ctx.fillStyle='rgba(200,215,255,0.9)';ctx.fillRect((hx|0)-1,(hy|0)-1,3,3);
+  ctx.strokeStyle=`rgba(180,160,255,${pulse*0.6})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(24,26+b,5,aa-1,aa);ctx.stroke();ctx.restore();}
 function drawSlime(ctx,f){ctx.clearRect(0,0,SD,SDH);
   const sq=Math.sin(f/30*Math.PI*2),w=Math.round(22+sq*3),h=Math.round(19-sq*3),x=(SD-w)/2,y=45-h;
   ctx.fillStyle='rgba(0,0,0,0.22)';ctx.beginPath();ctx.ellipse(16,45,w/2+1,3,0,0,Math.PI*2);ctx.fill();
@@ -1575,7 +1721,7 @@ function drawIdolArm(ctx,f){ctx.clearRect(0,0,SD,SDH);
   [0,1,2].forEach(i=>{const ph=(f*0.05+i*0.33)%1;ctx.fillStyle=`rgba(150,110,230,${1-ph})`;ctx.fillRect(13+i*3,41+ph*6,1.5,1.5);});}
 function mkSheet(fn,frames,w,h,...a){const s=mkC(w*frames,h),ctx=s.getContext('2d');ctx.imageSmoothingEnabled=false;for(let f=0;f<frames;f++){ctx.save();ctx.translate(f*w,0);fn(ctx,f,...a);ctx.restore();}return s;}
 const SHS={};
-function buildSheets(){SHS.mR=mkSheet((c,f)=>drawMage(c,f,true,false),8,SD,SDH);SHS.mL=mkSheet((c,f)=>drawMage(c,f,false,false),8,SD,SDH);SHS.mCR=mkSheet((c,f)=>drawMage(c,f,true,true),8,SD,SDH);SHS.mCL=mkSheet((c,f)=>drawMage(c,f,false,true),8,SD,SDH);SHS.elder=mkSheet(drawElder,60,SD,SDH);SHS.guard=mkSheet(drawGuard,60,SD,SDH);SHS.ranger=mkSheet(drawRanger,60,SD,SDH);SHS.sage=mkSheet(drawSage,60,SD,SDH);SHS.slime=mkSheet(drawSlime,30,SD,SDH);SHS.goblinR=mkSheet((c,f)=>drawGoblin(c,f,true),20,SD,SDH);SHS.goblinL=mkSheet((c,f)=>drawGoblin(c,f,false),20,SD,SDH);SHS.bat=mkSheet(drawBat,16,SD,SDH);SHS.golem=mkSheet(drawGolem,40,SD,SDH);const bc=mkC(8,8);drawBolt(bc.getContext('2d'));SHS.bolt=bc;const fc=mkC(10,10);drawFireball(fc.getContext('2d'));SHS.fireball=fc;const ic=mkC(10,10);drawIce(ic.getContext('2d'));SHS.ice=ic;SHS.slimeSov=mkSheet(drawSlimeSov,30,SD,SDH);SHS.goblinChiefR=mkSheet((c,f)=>drawGoblinChief(c,f,true),20,SD,SDH);SHS.goblinChiefL=mkSheet((c,f)=>drawGoblinChief(c,f,false),20,SD,SDH);SHS.crystalLich=mkSheet(drawCrystalLich,40,SD,SDH);const tc=mkC(12,12);drawToxicBall(tc.getContext('2d'));SHS.toxic=tc;const axc=mkC(10,10);drawAxeProj(axc.getContext('2d'));SHS.axe=axc;const dc=mkC(10,10);drawDrainProj(dc.getContext('2d'));SHS.drain=dc;SHS.skeletonR=mkSheet((c,f)=>drawSkeleton(c,f,true),20,SD,SDH);SHS.skeletonL=mkSheet((c,f)=>drawSkeleton(c,f,false),20,SD,SDH);SHS.wraith=mkSheet(drawWraith,30,SD,SDH);SHS.fallenOracle=mkSheet(drawFallenOracle,40,SD,SDH);const bac=mkC(10,6);drawBoneArrow(bac.getContext('2d'));SHS.boneArrow=bac;const coc=mkC(10,10);drawCurseOrb(coc.getContext('2d'));SHS.curseOrb=coc;SHS.board=mkSheet(drawBoard,2,SD,SDH);SHS.chest=mkSheet(drawChest,40,SD,SDH);SHS.magmite=mkSheet(drawMagmite,40,SD,SDH);SHS.ashwing=mkSheet(drawAshwing,16,SD,SDH);SHS.frostmaw=mkSheet(drawFrostmaw,40,SD,SDH);SHS.sleetwisp=mkSheet(drawSleetwisp,30,SD,SDH);SHS.emberTyrant=mkSheet(drawEmberTyrant,40,SD,SDH);SHS.frostMatriarch=mkSheet(drawFrostMatriarch,40,SD,SDH);SHS.ashSage=mkSheet(drawAshSage,40,SD,SDH);SHS.hollowIdol=mkSheet(drawHollowIdol,40,SD,SDH);SHS.idolArm=mkSheet(drawIdolArm,30,SD,SDH);}
+function buildSheets(){SHS.mR=mkSheet((c,f)=>drawMage(c,f,true,false),8,SD,SDH);SHS.mL=mkSheet((c,f)=>drawMage(c,f,false,false),8,SD,SDH);SHS.mCR=mkSheet((c,f)=>drawMage(c,f,true,true),8,SD,SDH);SHS.mCL=mkSheet((c,f)=>drawMage(c,f,false,true),8,SD,SDH);SHS.elder=mkSheet(drawElder,60,SD,SDH);SHS.guard=mkSheet(drawGuard,60,SD,SDH);SHS.ranger=mkSheet(drawRanger,60,SD,SDH);SHS.sage=mkSheet(drawSage,60,SD,SDH);SHS.tomlin=mkSheet(drawTomlin,60,SD,SDH);SHS.galen=mkSheet(drawGalen,60,SD,SDH);SHS.bren=mkSheet(drawBren,80,SD,SDH);SHS.sora=mkSheet(drawSora,120,SD,SDH);SHS.oriax=mkSheet(drawOriax,63,SD,SDH);SHS.aldric=mkSheet(drawAldric,80,SD,SDH);SHS.sable=mkSheet(drawSable,60,SD,SDH);SHS.vesper=mkSheet(drawVesper,60,SD,SDH);SHS.kael=mkSheet(drawKael,60,SD,SDH);SHS.ily=mkSheet(drawIly,60,SD,SDH);SHS.nyx=mkSheet(drawNyx,105,SD,SDH);SHS.slime=mkSheet(drawSlime,30,SD,SDH);SHS.goblinR=mkSheet((c,f)=>drawGoblin(c,f,true),20,SD,SDH);SHS.goblinL=mkSheet((c,f)=>drawGoblin(c,f,false),20,SD,SDH);SHS.bat=mkSheet(drawBat,16,SD,SDH);SHS.golem=mkSheet(drawGolem,40,SD,SDH);const bc=mkC(8,8);drawBolt(bc.getContext('2d'));SHS.bolt=bc;const fc=mkC(10,10);drawFireball(fc.getContext('2d'));SHS.fireball=fc;const ic=mkC(10,10);drawIce(ic.getContext('2d'));SHS.ice=ic;SHS.slimeSov=mkSheet(drawSlimeSov,30,SD,SDH);SHS.goblinChiefR=mkSheet((c,f)=>drawGoblinChief(c,f,true),20,SD,SDH);SHS.goblinChiefL=mkSheet((c,f)=>drawGoblinChief(c,f,false),20,SD,SDH);SHS.crystalLich=mkSheet(drawCrystalLich,40,SD,SDH);const tc=mkC(12,12);drawToxicBall(tc.getContext('2d'));SHS.toxic=tc;const axc=mkC(10,10);drawAxeProj(axc.getContext('2d'));SHS.axe=axc;const dc=mkC(10,10);drawDrainProj(dc.getContext('2d'));SHS.drain=dc;SHS.skeletonR=mkSheet((c,f)=>drawSkeleton(c,f,true),20,SD,SDH);SHS.skeletonL=mkSheet((c,f)=>drawSkeleton(c,f,false),20,SD,SDH);SHS.wraith=mkSheet(drawWraith,30,SD,SDH);SHS.fallenOracle=mkSheet(drawFallenOracle,40,SD,SDH);const bac=mkC(10,6);drawBoneArrow(bac.getContext('2d'));SHS.boneArrow=bac;const coc=mkC(10,10);drawCurseOrb(coc.getContext('2d'));SHS.curseOrb=coc;SHS.board=mkSheet(drawBoard,2,SD,SDH);SHS.chest=mkSheet(drawChest,40,SD,SDH);SHS.magmite=mkSheet(drawMagmite,40,SD,SDH);SHS.ashwing=mkSheet(drawAshwing,16,SD,SDH);SHS.frostmaw=mkSheet(drawFrostmaw,40,SD,SDH);SHS.sleetwisp=mkSheet(drawSleetwisp,30,SD,SDH);SHS.emberTyrant=mkSheet(drawEmberTyrant,40,SD,SDH);SHS.frostMatriarch=mkSheet(drawFrostMatriarch,40,SD,SDH);SHS.ashSage=mkSheet(drawAshSage,40,SD,SDH);SHS.hollowIdol=mkSheet(drawHollowIdol,40,SD,SDH);SHS.idolArm=mkSheet(drawIdolArm,30,SD,SDH);}
 let prevF=0,prevRAF=null;
 function previewAnim(){const cv=document.getElementById('preview-canvas');if(!cv)return;const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,64,64);ctx.drawImage(SHS.mR,Math.floor(prevF)%8*SD,0,SD,SDH,16,8,32,48);prevF+=0.08;if(document.getElementById('sc').classList.contains('active'))prevRAF=requestAnimationFrame(previewAnim);}
 function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)return;const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,30,30);ctx.drawImage(SHS.mR,0,0,SD,SDH,1,0,18,27);}
@@ -1586,7 +1732,7 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 const GRAV=900,JUMP=-390,SPD=175;
 const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null],relicPity:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0}};
 const ZD=[
-  {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'guard',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'guard',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'guard',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'sage',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'elder',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'ranger',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'sage',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'sage',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'guard',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'elder',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'sage',asc:true}],portals:[{toZone:7,x:40,y:388,dir:'left'},{toZone:1,x:1100,y:388,dir:'right'}]},
+  {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'galen',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'bren',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'tomlin',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'oriax',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'aldric',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'sable',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'vesper',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'kael',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'sora',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'ily',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'nyx',asc:true}],portals:[{toZone:7,x:40,y:388,dir:'left'},{toZone:1,x:1100,y:388,dir:'right'}]},
   {name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,plats:[{x:0,y:310,w:280,h:14,c:'#1e4a7a'},{x:320,y:278,w:200,h:14,c:'#1e4a7a'},{x:560,y:244,w:160,h:14,c:'#1e4a7a'},{x:760,y:278,w:180,h:14,c:'#1e4a7a'},{x:980,y:244,w:220,h:14,c:'#1e4a7a'},{x:140,y:218,w:140,h:14,c:'#2a5a8a'},{x:420,y:174,w:120,h:14,c:'#2a5a8a'},{x:660,y:154,w:130,h:14,c:'#2a5a8a'},{x:870,y:170,w:110,h:14,c:'#2a5a8a'},{x:480,y:104,w:140,h:14,c:'#3a6a9a'},{x:700,y:90,w:150,h:14,c:'#3a6a9a'},{x:0,y:388,w:1400,h:18,c:'#163052'}],mons:[{t:'slime',x:140,y:310},{t:'goblin',x:420,y:278},{t:'slime',x:850,y:278},{t:'goblin',x:1080,y:244},{t:'slime',x:210,y:218},{t:'goblin',x:480,y:174},{t:'goblin',x:720,y:154},{t:'slime',x:550,y:104},{t:'goblin',x:770,y:90}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:2,x:1250,y:388,dir:'right'}]},
   {name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,plats:[{x:0,y:310,w:240,h:14,c:'#2a5a30'},{x:280,y:274,w:180,h:14,c:'#2a5a30'},{x:510,y:238,w:200,h:14,c:'#2a5a30'},{x:760,y:278,w:180,h:14,c:'#2a5a30'},{x:990,y:244,w:220,h:14,c:'#2a5a30'},{x:110,y:208,w:130,h:14,c:'#3a7040'},{x:400,y:164,w:110,h:14,c:'#3a7040'},{x:620,y:144,w:130,h:14,c:'#3a7040'},{x:850,y:154,w:110,h:14,c:'#3a7040'},{x:440,y:94,w:130,h:14,c:'#4a8050'},{x:640,y:84,w:150,h:14,c:'#4a8050'},{x:0,y:388,w:1500,h:18,c:'#1a4020'}],mons:[{t:'goblin',x:120,y:310},{t:'goblin',x:360,y:274},{t:'bat',x:850,y:278},{t:'bat',x:1100,y:244},{t:'goblin',x:170,y:208},{t:'goblin',x:455,y:164},{t:'bat',x:685,y:144},{t:'goblin',x:505,y:94},{t:'bat',x:715,y:84}],npcs:[],portals:[{toZone:1,x:40,y:388,dir:'left'},{toZone:3,x:1360,y:388,dir:'right'}]},
   {name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,plats:[{x:0,y:310,w:200,h:14,c:'#3a2060'},{x:250,y:274,w:160,h:14,c:'#3a2060'},{x:460,y:238,w:180,h:14,c:'#3a2060'},{x:700,y:276,w:160,h:14,c:'#3a2060'},{x:920,y:238,w:200,h:14,c:'#3a2060'},{x:120,y:204,w:110,h:14,c:'#5a3090'},{x:370,y:158,w:120,h:14,c:'#5a3090'},{x:600,y:138,w:130,h:14,c:'#5a3090'},{x:820,y:154,w:110,h:14,c:'#5a3090'},{x:410,y:88,w:130,h:14,c:'#6a40a0'},{x:620,y:78,w:140,h:14,c:'#6a40a0'},{x:0,y:388,w:1300,h:18,c:'#1e0a3a'}],mons:[{t:'bat',x:100,y:310},{t:'golem',x:330,y:274},{t:'bat',x:780,y:276},{t:'golem',x:1010,y:238},{t:'bat',x:175,y:204},{t:'golem',x:430,y:158},{t:'bat',x:665,y:138},{t:'golem',x:475,y:88},{t:'bat',x:690,y:78}],npcs:[],portals:[{toZone:2,x:40,y:388,dir:'left'},{toZone:4,x:1250,y:388,dir:'right'}]},
@@ -1851,7 +1997,7 @@ function eqMag(){return(G.equipment.weapon&&G.equipment.weapon.mag||0)+runeSum('
 function eqDef(){return(G.equipment.armor&&G.equipment.armor.def||0)+runeSum('def');}
 function shieldFac(){return USK.has('bw')?0.1:0.2;}
 function addGear(g){if(g.rar===5){celebrateArtifact(g);META.flags.artifact=true;checkAchv();}else if(g.rar===4){celebrateLegendary(g);META.flags.legendary=true;checkAchv();}if(!G.equipment[g.slot]){G.equipment[g.slot]=g;if(g.hp){G.maxHp+=g.hp;G.hp+=g.hp;}log('Equipped: '+g.n+' ('+gearStats(g)+')','x');updateHUD();renderIP();return;}let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16){i=G.inventory.length;}if(i<0||i>=16){log('Bag full! '+g.n+' was lost...','d');return;}G.inventory[i]={g,qty:1};log('Loot: '+g.n+' ('+RARS[g.rar].n+')','x');renderIP();}
-function equipGear(i){const it=G.inventory[i];if(!it||!it.g)return;const g=it.g,old=G.equipment[g.slot];G.equipment[g.slot]=g;G.inventory[i]=old?{g:old,qty:1}:null;G.maxHp+=(g.hp||0)-(old&&old.hp||0);G.hp=Math.min(G.hp,G.maxHp);sfxLoot();log('Equipped: '+g.n,'q');updateHUD();renderIP();saveGame();}
+function equipGear(i){const it=G.inventory[i];if(!it||!it.g)return;const g=it.g,old=G.equipment[g.slot];G.equipment[g.slot]=g;G.inventory[i]=old?{g:old,qty:1}:null;G.maxHp+=(g.hp||0)-(old&&old.hp||0);G.hp=Math.min(G.hp,G.maxHp);sfxLoot();log('Equipped: '+g.n,'q');rebuildMage();updateHUD();renderIP();saveGame();}
 // ── Bounty board — repeatable hunts, re-rolled per turn-in ──
 const BOUNTY_POOLS={1:['slime','goblin'],2:['goblin','bat'],3:['bat','golem'],4:['skeleton','wraith'],7:['magmite','ashwing'],8:['frostmaw','sleetwisp']};
 let bountyOffer=null;
@@ -1893,7 +2039,7 @@ function renderForge(){const box=document.getElementById('dlg-txt');box.style.wh
     +'<div style="font-size:10px;color:#5dcaa5;margin:10px 0 2px;font-weight:600">Runes</div>'+shop
     +(craft?'<div style="font-size:10px;color:#c9a6ff;margin:10px 0 2px;font-weight:600">Craft Greater Runes <span style="color:#7878a0;font-weight:400">(western materials)</span></div>'+craft:'');
   dlgButtons([{l:'Leave Forge',fn:closeDlg}]);}
-function unequipGear(slot){const g=G.equipment[slot];if(!g)return;let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){log('Bag is full!','d');return;}G.inventory[i]={g,qty:1};G.equipment[slot]=null;G.maxHp-=g.hp||0;G.hp=Math.min(G.hp,G.maxHp);log('Unequipped: '+g.n,'q');updateHUD();renderIP();saveGame();}
+function unequipGear(slot){const g=G.equipment[slot];if(!g)return;let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){log('Bag is full!','d');return;}G.inventory[i]={g,qty:1};G.equipment[slot]=null;G.maxHp-=g.hp||0;G.hp=Math.min(G.hp,G.maxHp);log('Unequipped: '+g.n,'q');rebuildMage();updateHUD();renderIP();saveGame();}
 // ═══════════════════════════════════════════════════════
 // THE ENDLESS RIFT — infinite scaling wave-survival endgame
 // Entered from the hub (Riftwarden Kael) after the story is done. Each "descent" is a
@@ -2277,7 +2423,9 @@ const IDOL_ARM={t:'idol_arm',n:'Arm of the Hollow One',sheet:'idolArm',frames:30
 function isFinaleArena(z){return z===5||z===9||z===10;}
 let bossTimers=[0,0,0,0,0,0,0,0,0,0,0],bossAlertT=0,bossAlertName='';
 let cv,ctx2,camX=0,mons=[],npcs2=[],projs=[];
-let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[]};
+let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[],shHitT:0,shHitA:0};
+// record a shield impact so the bubble ripples toward the incoming hit (cosmetic, runtime-only)
+function shieldPop(sx,sy){PL.shHitT=0.35;PL.shHitA=Math.atan2(sy-(PL.y-SH*SCALE/2),sx-PL.x);}
 // Dodge dash — short burst of movement + invulnerability frames (Shift / touch dash button)
 const DASH_SPD=580,DASH_TIME=0.18,DASH_CD=1.1,DASH_IFRAME=0.28;
 const ZONE_PORTAL_COLORS=['#e8d5b7','#6aa3ff','#5dcaa5','#b050f0','#9040d0','#ff2d5d','#ff2d5d','#ff7a30','#7ad0ff','#ffb030','#b050f0'];
@@ -2360,6 +2508,7 @@ function applySave(d){
   // lifetime-kills / inventory counts (capped at the requirement) so in-flight quests
   // aren't wiped. From here on, counters reset to 0 on every accept.
   QUESTS.forEach(q=>{if(G.questStates[q.id]==='active'&&!G.questProg[q.id]){const p={kills:{},items:{}};q.tasks.forEach(t=>{if(t.type==='kill')p.kills[t.tgt]=Math.min(G.kills[t.tgt]||0,t.n);else if(t.type==='col'){const s=G.inventory.find(x=>x&&x.id===t.item);p.items[t.item]=Math.min(s?s.qty:0,t.n);}});G.questProg[q.id]=p;}});
+  rebuildMage(); // reflect restored equipment on the sprite
 }
 function startGame(){
   // In-page confirm: a native confirm() can be blocked in sandboxed embeds
@@ -2433,14 +2582,14 @@ function update(dt){
   plats.forEach(p=>{if(PL.x+10>p.x&&PL.x-10<p.x+p.w&&PL.vy>=0&&PL.y>p.y-2&&PL.y<p.y+p.h+Math.abs(PL.vy)*dt+6){PL.y=p.y;PL.vy=0;PL.gnd=true;}});
   if(PL.y>440){PL.y=260;PL.vy=0;G.hp=Math.max(1,G.hp-15);log('Fell! -15 HP','d');updateHUD();}
   PL.x=Math.max(10,Math.min(CZ.bound-10,PL.x));
-  if(PL.inv>0)PL.inv-=dt;if(PL.casting>0)PL.casting-=dt;
+  if(PL.inv>0)PL.inv-=dt;if(PL.casting>0)PL.casting-=dt;if(PL.shHitT>0)PL.shHitT-=dt;
   if(Math.abs(PL.vx)>10||!PL.gnd)PL.frame+=0.12;else PL.frame+=0.03;
   camX+=(PL.x-cv.width/2-camX)*10*dt;camX=Math.max(0,Math.min(CZ.bound-cv.width,camX));
   cds=cds.map(c=>Math.max(0,c-dt));cds.forEach((c,i)=>{const el=document.getElementById('cd'+i);if(el)el.textContent=c>0?c.toFixed(1):'';const sl=document.getElementById('hk'+i);if(sl)sl.classList.toggle('cd',c>0);});
   if(screenShake.t>0)screenShake.t=Math.max(0,screenShake.t-dt);
   if(G.shield){G.shieldT-=dt;if(G.shieldT<=0)G.shield=false;}
-  mons.forEach(m=>{if(m.burn>0){m.burn-=dt;m.burnAcc=(m.burnAcc||0)+dt;if(m.burnAcc>=0.5){m.burnAcc-=0.5;m.hp-=m.burnDmg||0;m.hit=Math.max(m.hit,0.1);spawnDN(m.x-camX,m.y,m.burnDmg||0,'#ff7a3a');if(m.hp<=0){killM(m);return;}}}if(m.st>0){m.st-=dt;return;}if(m.anchored){const dx=PL.x-m.x,adx=Math.abs(dx);m.right=dx>0;m.y=m.ay+(m.bobAmp?Math.sin(gTime*1.4+(m.armIdx||0)*1.3)*m.bobAmp:0);m.frame+=0.14;if(m.hit>0)m.hit-=dt;if(m.boss)updateBossAbilities(m,dt,dx,adx);return;}const dx=PL.x-m.x,adx=Math.abs(dx);if(adx<180){m.right=dx>0;m.vx=(dx>0?1:-1)*m.spd;if(m.fly){m.vy=(PL.y-m.y)*0.9;m.y+=m.vy*dt;}}else{if(Math.abs(m.x-m.bx)>m.pat)m.vx*=-1;m.right=m.vx>0;}m.x+=m.vx*dt;if(!m.fly){m.vy+=GRAV*0.4*dt;m.y+=m.vy*dt;plats.forEach(p=>{if(m.x+10>p.x&&m.x-10<p.x+p.w&&m.vy>=0&&m.y>p.y-2&&m.y<p.y+p.h+8){m.y=p.y;m.vy=0;}});if(m.y>430)m.y=230;}m.frame+=adx<180?0.18:0.1;if(m.hit>0)m.hit-=dt;if(adx<32&&Math.abs(PL.y-m.y)<36&&PL.inv<=0){m.at-=dt;if(m.at<=0){m.at=(m.affix==='frenzied'?0.9:1.5);let base=m.mn+Math.floor(Math.random()*(m.mx-m.mn));if(m.boss)base=Math.round(base*enrageMul(m));let dmg=Math.max(1,base-eqDef());if(G.shield){dmg=Math.max(1,Math.floor(dmg*shieldFac()));log('Shield absorbed!','h');}G.hp=Math.max(0,G.hp-dmg);PL.inv=0.6;sfxPlayerHit();if(m.affix==='vampiric'){m.hp=Math.min(m.mhp,m.hp+Math.max(1,Math.floor(dmg*0.5)));m.hit=0.1;}if(dmg>=12)shake(0.18,3);log(m.n+' hits you for '+dmg+'!','d');if(hasPow('thorns')&&!m.boss){const ref=Math.max(1,Math.floor(dmg*0.4));m.hp-=ref;m.hit=0.15;spawnDN(m.x-camX,m.y,ref,'#ff4d6d');if(m.hp<=0){killM(m);return;}}if(G.hp<=0)respawn();else updateHUD();}}else m.at=0;if(m.t==='skeleton'&&adx>50&&adx<300&&Math.abs(PL.y-m.y)<120&&PL.inv<=0){m.ranT=(m.ranT||0)-dt;if(m.ranT<=0){m.ranT=(m.affix==='frenzied'?1.3:2.2);const ddx2=PL.x-m.x,ddy2=PL.y-m.y,dd=Math.sqrt(ddx2*ddx2+ddy2*ddy2)||1;projs.push({x:m.x,y:m.y-18,vx:(ddx2/dd)*310,vy:(ddy2/dd)*310,dmg:m.mn+Math.floor(Math.random()*(m.mx-m.mn)),proj:'boneArrow',c:'#d8d8c8',slow:false,life:1.6,pw:10,ph:6,hostile:true,src:m.n});sfxBolt();}}if(m.boss)updateBossAbilities(m,dt,dx,adx);});
-  projs=projs.filter(p=>{if(p.grav)p.vy+=520*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)return false;if(p.hostile){if(Math.abs(p.x-PL.x)<24&&Math.abs(p.y-PL.y)<36&&PL.inv<=0){if(p.drain){const dr=Math.min(G.mp,p.drain);G.mp=Math.max(0,G.mp-dr);log('Mana drained! -'+Math.floor(dr)+' MP!','d');updateHUD();return false;}let dmg=Math.max(1,p.dmg-eqDef());if(G.shield){dmg=Math.max(1,Math.floor(dmg*shieldFac()));log('Shield absorbed!','h');}G.hp=Math.max(0,G.hp-dmg);PL.inv=0.6;if(p.playerSlow)PL.inv=1.4;sfxPlayerHit();shake(0.22,4);spawnDN(PL.x-camX,PL.y,dmg,'#ff6644');log((p.src||'Boss')+' hits for '+dmg+'!','d');if(p.playerSlow)log(p.slowMsg||'Toxic spit — movement slowed!','d');if(G.hp<=0)respawn();else updateHUD();return false;}return true;}let hit=false;mons.forEach(m=>{if(hit)return;const _hw=(m.bscale>=6)?SW*m.bscale/2:28,_inY=(m.bscale>=6)?(p.y>m.y-SH*m.bscale-12&&p.y<m.y+16):Math.abs(p.y-m.y)<36;if(Math.abs(p.x-m.x)<_hw&&_inY){hit=true;if(m.invuln){m.hit=0.12;sfxHit();spawnDN(m.x-camX,m.y-SH*(m.bscale||4)*0.6,'IMMUNE',p.c);return;}let dmg=p.dmg;if(USK.has('am'))dmg=Math.floor(dmg*1.2);const _cc=(USK.has('as')?0.2:0)+metaCrit()+runeCrit();if(_cc>0&&Math.random()<_cc){dmg*=2;sfxCritical();shake(0.15,3);log('CRITICAL!','x');}if(m.affix==='armored')dmg=Math.max(1,Math.ceil(dmg*0.6));m.hp-=dmg;m.hit=0.15;if(p.slow)m.st=USK.has('fr')?2.5:1.2;sfxHit();spawnDN(m.x-camX,m.y,dmg,p.c);log('Hit '+m.n+' for '+dmg+'!','');if(p.proj==='fireball'&&USK.has('inferno')){m.burn=3.5;m.burnAcc=0;m.burnDmg=Math.max(3,Math.round(dmg*0.2));}if(p.proj==='fireball'&&G.emberstorm){const dead=[];mons.forEach(o=>{if(o!==m&&!o.invuln&&o.hp>0&&Math.abs(o.x-m.x)<90&&Math.abs(o.y-m.y)<70){let sd=Math.max(1,Math.round(dmg*0.4));if(o.affix==='armored')sd=Math.max(1,Math.ceil(sd*0.6));o.hp-=sd;o.hit=0.12;spawnDN(o.x-camX,o.y,sd,'#ff9a40');if(USK.has('inferno')){o.burn=3.5;o.burnAcc=0;o.burnDmg=Math.max(3,Math.round(sd*0.2));}if(o.hp<=0)dead.push(o);}});burst(m.x,m.y-16,'#ff9a40',10,110);dead.forEach(o=>killM(o));}if(p.proj==='ice'&&USK.has('glacier')){m.st=Math.max(m.st,3.5);mons.forEach(o=>{if(o!==m&&Math.abs(o.x-m.x)<72&&Math.abs(o.y-m.y)<60){o.st=Math.max(o.st||0,2.2);o.hit=Math.max(o.hit,0.1);}});burst(m.x,m.y-18,'#85b7eb',10,90);}if(p.proj==='bolt'&&USK.has('chain')){let n2=null,md=170;mons.forEach(o=>{if(o!==m&&o.hp>0&&!o.invuln){const dd=Math.hypot(o.x-m.x,o.y-m.y);if(dd<md){md=dd;n2=o;}}});if(n2){let cd=Math.max(1,Math.round(dmg*0.5));if(n2.affix==='armored')cd=Math.max(1,Math.ceil(cd*0.6));n2.hp-=cd;n2.hit=0.15;spawnDN(n2.x-camX,n2.y,cd,'#82b4ff');burst((m.x+n2.x)/2,(m.y+n2.y)/2,'#82b4ff',6,80);if(n2.hp<=0)killM(n2);}}const _ls=(hasPow('lifesteal')?0.15:0)+runeSum('lifesteal');if(_ls>0&&G.hp<G.maxHp){const heal=Math.max(1,Math.floor(dmg*_ls));G.hp=Math.min(G.maxHp,G.hp+heal);spawnDN(PL.x-camX,PL.y-22,heal,'#5dcaa5');}if(m.hp<=0)killM(m);else updateHUD();}});return !hit;});
+  mons.forEach(m=>{if(m.burn>0){m.burn-=dt;m.burnAcc=(m.burnAcc||0)+dt;if(m.burnAcc>=0.5){m.burnAcc-=0.5;m.hp-=m.burnDmg||0;m.hit=Math.max(m.hit,0.1);spawnDN(m.x-camX,m.y,m.burnDmg||0,'#ff7a3a');if(m.hp<=0){killM(m);return;}}}if(m.st>0){m.st-=dt;return;}if(m.anchored){const dx=PL.x-m.x,adx=Math.abs(dx);m.right=dx>0;m.y=m.ay+(m.bobAmp?Math.sin(gTime*1.4+(m.armIdx||0)*1.3)*m.bobAmp:0);m.frame+=0.14;if(m.hit>0)m.hit-=dt;if(m.boss)updateBossAbilities(m,dt,dx,adx);return;}const dx=PL.x-m.x,adx=Math.abs(dx);if(adx<180){m.right=dx>0;m.vx=(dx>0?1:-1)*m.spd;if(m.fly){m.vy=(PL.y-m.y)*0.9;m.y+=m.vy*dt;}}else{if(Math.abs(m.x-m.bx)>m.pat)m.vx*=-1;m.right=m.vx>0;}m.x+=m.vx*dt;if(!m.fly){m.vy+=GRAV*0.4*dt;m.y+=m.vy*dt;plats.forEach(p=>{if(m.x+10>p.x&&m.x-10<p.x+p.w&&m.vy>=0&&m.y>p.y-2&&m.y<p.y+p.h+8){m.y=p.y;m.vy=0;}});if(m.y>430)m.y=230;}m.frame+=adx<180?0.18:0.1;if(m.hit>0)m.hit-=dt;if(adx<32&&Math.abs(PL.y-m.y)<36&&PL.inv<=0){m.at-=dt;if(m.at<=0){m.at=(m.affix==='frenzied'?0.9:1.5);let base=m.mn+Math.floor(Math.random()*(m.mx-m.mn));if(m.boss)base=Math.round(base*enrageMul(m));let dmg=Math.max(1,base-eqDef());if(G.shield){dmg=Math.max(1,Math.floor(dmg*shieldFac()));log('Shield absorbed!','h');shieldPop(m.x,m.y);}G.hp=Math.max(0,G.hp-dmg);PL.inv=0.6;sfxPlayerHit();if(m.affix==='vampiric'){m.hp=Math.min(m.mhp,m.hp+Math.max(1,Math.floor(dmg*0.5)));m.hit=0.1;}if(dmg>=12)shake(0.18,3);log(m.n+' hits you for '+dmg+'!','d');if(hasPow('thorns')&&!m.boss){const ref=Math.max(1,Math.floor(dmg*0.4));m.hp-=ref;m.hit=0.15;spawnDN(m.x-camX,m.y,ref,'#ff4d6d');if(m.hp<=0){killM(m);return;}}if(G.hp<=0)respawn();else updateHUD();}}else m.at=0;if(m.t==='skeleton'&&adx>50&&adx<300&&Math.abs(PL.y-m.y)<120&&PL.inv<=0){m.ranT=(m.ranT||0)-dt;if(m.ranT<=0){m.ranT=(m.affix==='frenzied'?1.3:2.2);const ddx2=PL.x-m.x,ddy2=PL.y-m.y,dd=Math.sqrt(ddx2*ddx2+ddy2*ddy2)||1;projs.push({x:m.x,y:m.y-18,vx:(ddx2/dd)*310,vy:(ddy2/dd)*310,dmg:m.mn+Math.floor(Math.random()*(m.mx-m.mn)),proj:'boneArrow',c:'#d8d8c8',slow:false,life:1.6,pw:10,ph:6,hostile:true,src:m.n});sfxBolt();}}if(m.boss)updateBossAbilities(m,dt,dx,adx);});
+  projs=projs.filter(p=>{if(p.grav)p.vy+=520*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)return false;if(p.hostile){if(Math.abs(p.x-PL.x)<24&&Math.abs(p.y-PL.y)<36&&PL.inv<=0){if(p.drain){const dr=Math.min(G.mp,p.drain);G.mp=Math.max(0,G.mp-dr);log('Mana drained! -'+Math.floor(dr)+' MP!','d');updateHUD();return false;}let dmg=Math.max(1,p.dmg-eqDef());if(G.shield){dmg=Math.max(1,Math.floor(dmg*shieldFac()));log('Shield absorbed!','h');shieldPop(p.x,p.y);}G.hp=Math.max(0,G.hp-dmg);PL.inv=0.6;if(p.playerSlow)PL.inv=1.4;sfxPlayerHit();shake(0.22,4);spawnDN(PL.x-camX,PL.y,dmg,'#ff6644');log((p.src||'Boss')+' hits for '+dmg+'!','d');if(p.playerSlow)log(p.slowMsg||'Toxic spit — movement slowed!','d');if(G.hp<=0)respawn();else updateHUD();return false;}return true;}let hit=false;mons.forEach(m=>{if(hit)return;const _hw=(m.bscale>=6)?SW*m.bscale/2:28,_inY=(m.bscale>=6)?(p.y>m.y-SH*m.bscale-12&&p.y<m.y+16):Math.abs(p.y-m.y)<36;if(Math.abs(p.x-m.x)<_hw&&_inY){hit=true;if(m.invuln){m.hit=0.12;sfxHit();spawnDN(m.x-camX,m.y-SH*(m.bscale||4)*0.6,'IMMUNE',p.c);return;}let dmg=p.dmg;if(USK.has('am'))dmg=Math.floor(dmg*1.2);const _cc=(USK.has('as')?0.2:0)+metaCrit()+runeCrit();if(_cc>0&&Math.random()<_cc){dmg*=2;sfxCritical();shake(0.15,3);log('CRITICAL!','x');}if(m.affix==='armored')dmg=Math.max(1,Math.ceil(dmg*0.6));m.hp-=dmg;m.hit=0.15;if(p.slow)m.st=USK.has('fr')?2.5:1.2;sfxHit();spawnDN(m.x-camX,m.y,dmg,p.c);log('Hit '+m.n+' for '+dmg+'!','');if(p.proj==='fireball'&&USK.has('inferno')){m.burn=3.5;m.burnAcc=0;m.burnDmg=Math.max(3,Math.round(dmg*0.2));}if(p.proj==='fireball'&&G.emberstorm){const dead=[];mons.forEach(o=>{if(o!==m&&!o.invuln&&o.hp>0&&Math.abs(o.x-m.x)<90&&Math.abs(o.y-m.y)<70){let sd=Math.max(1,Math.round(dmg*0.4));if(o.affix==='armored')sd=Math.max(1,Math.ceil(sd*0.6));o.hp-=sd;o.hit=0.12;spawnDN(o.x-camX,o.y,sd,'#ff9a40');if(USK.has('inferno')){o.burn=3.5;o.burnAcc=0;o.burnDmg=Math.max(3,Math.round(sd*0.2));}if(o.hp<=0)dead.push(o);}});burst(m.x,m.y-16,'#ff9a40',10,110);dead.forEach(o=>killM(o));}if(p.proj==='ice'&&USK.has('glacier')){m.st=Math.max(m.st,3.5);mons.forEach(o=>{if(o!==m&&Math.abs(o.x-m.x)<72&&Math.abs(o.y-m.y)<60){o.st=Math.max(o.st||0,2.2);o.hit=Math.max(o.hit,0.1);}});burst(m.x,m.y-18,'#85b7eb',10,90);}if(p.proj==='bolt'&&USK.has('chain')){let n2=null,md=170;mons.forEach(o=>{if(o!==m&&o.hp>0&&!o.invuln){const dd=Math.hypot(o.x-m.x,o.y-m.y);if(dd<md){md=dd;n2=o;}}});if(n2){let cd=Math.max(1,Math.round(dmg*0.5));if(n2.affix==='armored')cd=Math.max(1,Math.ceil(cd*0.6));n2.hp-=cd;n2.hit=0.15;spawnDN(n2.x-camX,n2.y,cd,'#82b4ff');burst((m.x+n2.x)/2,(m.y+n2.y)/2,'#82b4ff',6,80);if(n2.hp<=0)killM(n2);}}const _ls=(hasPow('lifesteal')?0.15:0)+runeSum('lifesteal');if(_ls>0&&G.hp<G.maxHp){const heal=Math.max(1,Math.floor(dmg*_ls));G.hp=Math.min(G.maxHp,G.hp+heal);spawnDN(PL.x-camX,PL.y-22,heal,'#5dcaa5');}if(m.hp<=0)killM(m);else updateHUD();}});return !hit;});
   parts=parts.filter(p=>{p.life-=dt;p.vy+=300*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;return p.life>0;});
   if(legendT>0){legendT-=dt;const lc=legendKind==='art'?ART_COLS:LEG_COLS;swirls.forEach(s=>{s.a+=s.w*dt;s.h+=s.vh*dt;if(s.h>95)s.h-=95;});fwT-=dt;if(fwT<=0&&legendT>0.7){fwT=0.42;const fx=PL.x+(Math.random()*140-70),fy=PL.y-40-Math.random()*70;burstRing(fx,fy,lc[Math.floor(Math.random()*4)],16,150);burst(fx,fy,lc[Math.floor(Math.random()*4)],8,90);sfxLoot();}if(legendT<=0)swirls=[];}
   if(G.mp<G.maxMp){G.mp=Math.min(G.maxMp,G.mp+(4+(hasPow('manaregen')?8:0)+runeSum('mpregen')+cityLvl('sanctum'))*dt);updateHUD();}
@@ -3216,6 +3365,14 @@ function drawPlat(p){
 }
 // reduced-motion is a Phase 5 setting; default off until then so behaviour is unchanged.
 function reducedMotion(){return !!(G&&G.reduceMotion);}
+// Phase 2 — Mana Shield as a hex-facet bubble that ripples at the impact point on absorb.
+function drawShield(cx,cy){const R=SW*SCALE/2+5,t=gTime;ctx2.save();ctx2.globalCompositeOperation='lighter';
+  const pulse=Math.sin(t*4)*0.1+0.5;
+  for(let ring=1;ring<=2;ring++){const rr=R*(ring/2);ctx2.strokeStyle=`rgba(175,153,236,${0.16*ring})`;ctx2.lineWidth=1;ctx2.beginPath();for(let i=0;i<=6;i++){const a=i/6*Math.PI*2+t*0.3*ring;const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;i?ctx2.lineTo(x,y):ctx2.moveTo(x,y);}ctx2.stroke();}
+  ctx2.strokeStyle=`rgba(190,175,255,${0.45+pulse*0.3})`;ctx2.lineWidth=1.5;ctx2.beginPath();ctx2.arc(cx,cy,R,0,Math.PI*2);ctx2.stroke();
+  ctx2.globalAlpha=0.08;ctx2.fillStyle='#af99ec';ctx2.beginPath();ctx2.arc(cx,cy,R,0,Math.PI*2);ctx2.fill();
+  if(PL.shHitT>0){const a=PL.shHitA,ix=cx+Math.cos(a)*R,iy=cy+Math.sin(a)*R,fr=PL.shHitT/0.35;ctx2.globalAlpha=fr*0.9;glow(ctx2,ix,iy,(1-fr)*14+6,'rgba(220,210,255,0.95)');ctx2.strokeStyle=`rgba(255,255,255,${fr})`;ctx2.lineWidth=2;ctx2.beginPath();ctx2.arc(ix,iy,(1-fr)*10+3,0,Math.PI*2);ctx2.stroke();}
+  ctx2.restore();}
 function draw(){
   ctx2.imageSmoothingEnabled=false;
   ctx2.save();
@@ -3231,7 +3388,7 @@ function draw(){
   if(PL.trail.length){ctx2.save();PL.trail.forEach((tr,i)=>{const a=((i+1)/PL.trail.length)*0.4,sk=tr.r?(tr.c?'mCR':'mR'):(tr.c?'mCL':'mL'),sh=SHS[sk];ctx2.globalAlpha=a;ctx2.drawImage(sh,0,0,SD,SDH,tr.x-camX-SW*SCALE/2,tr.y-SH*SCALE,SW*SCALE,SH*SCALE);});ctx2.restore();}
   const ppx=PL.x-camX-SW*SCALE/2,ppy=PL.y-SH*SCALE;
   if(PL.inv>0&&Math.floor(PL.inv*10)%2===0){}
-  else{if(G.shield){ctx2.strokeStyle='rgba(175,153,236,0.6)';ctx2.lineWidth=2;ctx2.beginPath();ctx2.arc(PL.x-camX,PL.y-SH*SCALE/2,SW*SCALE/2+4,0,Math.PI*2);ctx2.stroke();}const cast=PL.casting>0,sk=PL.right?(cast?'mCR':'mR'):(cast?'mCL':'mL'),sh=SHS[sk],f=Math.floor(PL.frame)%8;ctx2.drawImage(sh,f*SD,0,SD,SDH,ppx,ppy,SW*SCALE,SH*SCALE);ctx2.font='9px sans-serif';ctx2.fillStyle='#82b4ff';ctx2.textAlign='center';ctx2.fillText(G.name,PL.x-camX,PL.y+4);}
+  else{if(G.shield)drawShield(PL.x-camX,PL.y-SH*SCALE/2);const cast=PL.casting>0,sk=PL.right?(cast?'mCR':'mR'):(cast?'mCL':'mL'),sh=SHS[sk],f=Math.floor(PL.frame)%8;ctx2.drawImage(sh,f*SD,0,SD,SDH,ppx,ppy,SW*SCALE,SH*SCALE);ctx2.font='9px sans-serif';ctx2.fillStyle='#82b4ff';ctx2.textAlign='center';ctx2.fillText(G.name,PL.x-camX,PL.y+4);}
   drawForeground();
   drawLighting();
   if(legendT>0){
