@@ -109,6 +109,12 @@ canvas#gc{display:block;image-rendering:pixelated}
 .sn.child{margin-left:13px;position:relative}
 .sn.child::before{content:'';position:absolute;left:-9px;top:-4px;height:calc(50% + 4px);width:9px;border-left:1px solid rgba(255,255,255,0.22);border-bottom:1px solid rgba(255,255,255,0.22);border-bottom-left-radius:4px}
 .snreq{font-size:8px;color:#e2726a;margin-top:2px}
+/* D2 — codex grouped by zone: headers with per-zone counts; undiscovered rows show a
+   blacked-out silhouette + the zone where the creature lurks. */
+.cdxhdr{font-family:var(--font-pix);font-size:7px;color:#9ad0ff;letter-spacing:0.5px;margin:9px 0 3px;padding-bottom:3px;border-bottom:1px solid rgba(154,208,255,0.25);display:flex;justify-content:space-between}
+.cdxhdr span{color:#7878a0}
+.cdxrow{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.cdxsil{font-size:15px;filter:brightness(0);opacity:0.5}
 .hotbar{display:flex;justify-content:center;align-items:center;gap:5px;padding:6px 8px;background:rgba(0,0,0,0.75);border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
 .hk{display:flex;flex-direction:column;align-items:center;gap:1px}
 .hks{width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(199,154,58,0.28);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;position:relative;user-select:none;overflow:hidden}
@@ -288,6 +294,7 @@ canvas#gc{display:block;image-rendering:pixelated}
     <div class="hk"><div class="hks" id="hk3" onclick="castSpell(3)">🛡<span class="hkc" id="cd3"></span></div><div class="hkl">R — Shield</div></div>
     <div class="hk"><div class="hks" id="hb0" onclick="hotbarUse(0)"><span id="hbe0">＋</span><span class="hkc" id="hbq0"></span></div><div class="hkl" id="hbl0" style="cursor:pointer" onclick="openHotbarAssign(0)">T — Empty</div></div>
     <div class="hk"><div class="hks" id="hb1" onclick="hotbarUse(1)"><span id="hbe1">＋</span><span class="hkc" id="hbq1"></span></div><div class="hkl" id="hbl1" style="cursor:pointer" onclick="openHotbarAssign(1)">Y — Empty</div></div>
+    <div class="hk" id="hk2wrap" style="display:none"><div class="hks" id="hb2" onclick="hotbarUse(2)"><span id="hbe2">＋</span><span class="hkc" id="hbq2"></span></div><div class="hkl" id="hbl2" style="cursor:pointer" onclick="openHotbarAssign(2)">U — Empty</div></div>
     <div class="clog" id="clog"></div>
   </div>
 </div>
@@ -295,6 +302,21 @@ canvas#gc{display:block;image-rendering:pixelated}
 
 <div id="dlg-overlay"><div id="dlg-box"><div id="dlg-npc"></div><div id="dlg-txt"></div><div id="dlg-btns"></div></div></div>
 <div class="mov" id="mov"><div class="mbox"><div class="mhdr"><span>🗺 World Map — Aethoria</span><span class="mcls" onclick="toggleMap()">✕</span></div><div id="zthumbs"></div><div style="font-size:10px;color:#444;margin-top:8px">Click a zone to fast travel</div></div></div>
+<div class="mov" id="pause"><div class="mbox">
+  <div class="mhdr"><span>⏸ Paused</span><span class="mcls" onclick="togglePause()">✕</span></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="db primary" style="width:100%;text-align:center" onclick="togglePause()">▶ Resume</button>
+    <div id="pause-settings" style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px"></div>
+    <button class="db" style="width:100%;text-align:center" onclick="togglePauseHelp()">❔ How to Play</button>
+    <div id="pause-help" style="display:none;font-size:11px;color:#c8c8e0;line-height:1.7;background:rgba(0,0,0,0.32);border-radius:8px;padding:10px">
+      <b>Move</b> ← → &nbsp;·&nbsp; <b>Jump</b> ↑ / Space &nbsp;·&nbsp; <b>Dash</b> Shift (i-frames)<br>
+      <b>Spells</b> Q W E R &nbsp;·&nbsp; <b>Potions</b> T Y &nbsp;·&nbsp; <b>Talk / Portal</b> F<br>
+      <b>Map</b> M &nbsp;·&nbsp; <b>Pause</b> Esc &nbsp;·&nbsp; <b>Fullscreen</b> ⛶ (HUD)<br>
+      Click an enemy to cast at it. Hover bag items to inspect. Kite aura enemies, dodge leapers, and don't camp ledges — lobbers arc over.
+    </div>
+    <button class="db" style="width:100%;text-align:center;border-color:#e2726a;color:#e2726a" onclick="quitToTitle()">⏻ Quit to Title</button>
+  </div>
+</div></div>
 <div id="tip"></div>
 
 </div>
@@ -1803,7 +1825,7 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 // GAME ENGINE
 // ═══════════════════════════════════════════════════════
 const GRAV=900,JUMP=-390,SPD=175;
-const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null],relicPity:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0},reduceMotion:false};
+const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null,null],relicPity:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0},reduceMotion:false};
 function setReduceMotion(v){G.reduceMotion=!!v;const c=document.getElementById('rm-check');if(c)c.checked=!!v;saveGame();}
 const ZD=[
   {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'galen',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'bren',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'tomlin',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'oriax',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'aldric',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'sable',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'vesper',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'kael',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'sora',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'ily',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'nyx',asc:true}],portals:[{toZone:7,x:40,y:388,dir:'left'},{toZone:1,x:1100,y:388,dir:'right'}]},
@@ -2278,7 +2300,7 @@ function ascend(){
   G.level=1;G.xp=0;G.xpNext=100;G.maxHp=metaStartHp();G.hp=G.maxHp;G.maxMp=metaStartMp();G.mp=G.maxMp;
   G.gold=0;G.skillPoints=metaStartSP();G.zone=0;G.kills={};G.questStates={};G.questProg={};
   G.equipment={weapon:null,armor:null};G.inventory=[];G.spells=[true,false,false,true];
-  G.shield=false;G.shieldT=0;G.bounty=null;G.lastSold=null;G.hotbar=[null,null];
+  G.shield=false;G.shieldT=0;G.bounty=null;G.lastSold=null;G.hotbar=[null,null,null];
   G.attune=0;G.emberstorm=false;
   USK.clear();bossTimers=bossTimers.map(()=>0);
   closeDlg();loadZone(0);renderAll();updateHUD();
@@ -2363,7 +2385,7 @@ function cityTotal(){return CITY.reduce((a,c)=>a+cityLvl(c.id),0);}
 function forgeDiscount(){return Math.max(0.5,1-0.10*cityLvl('forge'));}
 function potionPotency(){return 1+0.08*cityLvl('apothecary');}
 function bountyMul(){return 1+0.12*cityLvl('guild');}
-function upgradeCity(id){const c=cityDef(id);if(!c)return;const lv=cityLvl(id);if(lv>=c.max){log('Already at maximum.','d');return;}const cost=cityCost(id);if(G.gold<cost){log('Not enough gold!','d');return;}G.gold-=cost;G.city[id]=lv+1;if(lv+1>=c.max){META.flags.builder=true;checkAchv();}sfxCityRaise();burst(PL.x,PL.y-40,'#ef9f27',18,140);log('🏛 '+c.n+' raised to level '+(lv+1)+'!','x');updateHUD();renderCity();saveGame();}
+function upgradeCity(id){const c=cityDef(id);if(!c)return;const lv=cityLvl(id);if(lv>=c.max){log('Already at maximum.','d');return;}const cost=cityCost(id);if(G.gold<cost){log('Not enough gold!','d');return;}G.gold-=cost;G.city[id]=lv+1;if(id==='apothecary'&&lv+1===3){renderHotbar();log('⚗ A third potion slot (U) opens on your hotbar!','q');}if(lv+1>=c.max){META.flags.builder=true;checkAchv();}sfxCityRaise();burst(PL.x,PL.y-40,'#ef9f27',18,140);log('🏛 '+c.n+' raised to level '+(lv+1)+'!','x');updateHUD();renderCity();saveGame();}
 function openCity(){dlgOpen=true;keys={};jp={};document.getElementById('dlg-npc').textContent='🏛 Master Builder Sora';const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';renderCity();document.getElementById('dlg-overlay').classList.add('open');}
 function renderCity(){
   const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';
@@ -2457,6 +2479,8 @@ const CODEX_LORE={
   idol_arm:'A severed will given a fist: six limbs of ash, ice and rift-stone that keep vigil over the sleeping core.'
 };
 function bestiaryList(){return Object.keys(MDEF).map(t=>({t,n:MDEF[t].n,boss:false,d:MDEF[t]})).concat(BOSS_DEFS.map(b=>({t:b.t,n:b.n,boss:true,d:b})));}
+// D2 — primary zone for each creature (lowest zone it appears in; bosses use their def zone).
+function monZoneMap(){const m={};ZD.forEach((z,zi)=>{(z.mons||[]).forEach(sp=>{if(m[sp.t]==null)m[sp.t]=zi;});});BOSS_DEFS.forEach(b=>{if(m[b.t]==null)m[b.t]=b.zone;});return m;}
 let codexView='bestiary';
 function openCodex(){dlgOpen=true;keys={};jp={};document.getElementById('dlg-npc').textContent='📖 Chronicler Ily';const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';codexView='bestiary';renderCodex();document.getElementById('dlg-overlay').classList.add('open');}
 function renderCodex(){
@@ -2467,11 +2491,14 @@ function renderCodex(){
     box.innerHTML='<div style="font-size:10px;color:#a89cc8;margin-bottom:6px">Achievements — <span style="color:#ffd24a">'+got+'/'+ACHV.length+'</span> unlocked</div>'+rows;
     dlgButtons([{l:'📚 Bestiary',fn:()=>{codexView='bestiary';renderCodex();}},{l:'Close',fn:closeDlg}]);return;
   }
-  const seen=bestiaryList().filter(b=>META.codex&&META.codex[b.t]).length,total=bestiaryList().length;
-  const rows=bestiaryList().map(b=>{const disc=!!(META.codex&&META.codex[b.t]),d=b.d;
-    if(!disc)return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);opacity:0.45"><span style="font-size:15px">❔</span><div style="flex:1"><div style="font-size:10px;color:#888">??? '+(b.boss?'(boss)':'')+'</div><div style="font-size:8px;color:#666">Undiscovered — slay one to record it.</div></div></div>';
+  const list=bestiaryList(),seen=list.filter(b=>META.codex&&META.codex[b.t]).length,total=list.length;
+  const zmap=monZoneMap();
+  const row=(b,zn)=>{const disc=!!(META.codex&&META.codex[b.t]),d=b.d;
+    if(!disc)return '<div class="cdxrow" style="opacity:0.5"><span class="cdxsil">'+(b.boss?'👑':'🐾')+'</span><div style="flex:1"><div style="font-size:10px;color:#888">??? '+(b.boss?'(boss)':'')+'</div><div style="font-size:8px;color:#666">Lurks in '+zn+' — slay one to record it.</div></div></div>';
     const stats=b.boss?('HP '+d.hp+' · DMG '+d.mn+'–'+d.mx):('HP '+d.hp+' · DMG '+d.mn+'–'+d.mx+' · '+d.xp+' XP');
-    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)"><span style="font-size:15px">'+(b.boss?'👑':'🐾')+'</span><div style="flex:1"><div style="font-size:10px;color:'+(b.boss?'#ff8aa0':'#9ad0ff')+'">'+b.n+' <span style="color:#7878a0;font-size:8px">'+stats+'</span></div><div style="font-size:8px;color:#9a9ac0;font-style:italic">'+(CODEX_LORE[b.t]||'')+'</div></div></div>';}).join('');
+    return '<div class="cdxrow"><span style="font-size:15px">'+(b.boss?'👑':'🐾')+'</span><div style="flex:1"><div style="font-size:10px;color:'+(b.boss?'#ff8aa0':'#9ad0ff')+'">'+b.n+' <span style="color:#7878a0;font-size:8px">'+stats+'</span></div><div style="font-size:8px;color:#9a9ac0;font-style:italic">'+(CODEX_LORE[b.t]||'')+'</div></div></div>';};
+  const byZone={};list.forEach(b=>{const z=zmap[b.t]!=null?zmap[b.t]:99;(byZone[z]=byZone[z]||[]).push(b);});
+  const rows=Object.keys(byZone).map(Number).sort((a,b)=>a-b).map(z=>{const es=byZone[z],zn=ZD[z]?ZD[z].name:'The Endless Rift',rec=es.filter(b=>META.codex&&META.codex[b.t]).length;return '<div class="cdxhdr">'+zn+' <span>'+rec+'/'+es.length+' recorded</span></div>'+es.map(b=>row(b,zn)).join('');}).join('');
   box.innerHTML='<div style="font-size:10px;color:#a89cc8;font-style:italic;margin-bottom:4px">“Every creature you fell, I record. Knowledge is its own kind of armor, mage.”</div><div style="font-size:10px;color:#9ad0ff;margin-bottom:6px">Bestiary — '+seen+'/'+total+' discovered</div>'+rows;
   dlgButtons([{l:'🏆 Achievements',fn:()=>{codexView='achv';renderCodex();}},{l:'Close',fn:closeDlg}]);
 }
@@ -2578,7 +2605,7 @@ function applySave(d){
   G.city=Object.assign({sanctum:0,forge:0,apothecary:0,guild:0,vault:0},(d.city&&typeof d.city==='object')?d.city:{});
   G.relicPity=(d.relicPity&&typeof d.relicPity==='object')?d.relicPity:{};
   G.attune=(typeof d.attune==='number'&&d.attune>0)?Math.floor(d.attune):0;G.emberstorm=!!d.emberstorm;
-  G.hotbar=Array.isArray(d.hotbar)?[0,1].map(i=>{const id=d.hotbar[i];return(id&&ITEMS[id]&&ITEMS[id].consumable)?id:null;}):[null,null];
+  G.hotbar=Array.isArray(d.hotbar)?[0,1,2].map(i=>{const id=d.hotbar[i];return(id&&ITEMS[id]&&ITEMS[id].consumable)?id:null;}):[null,null,null];
   G.spells=d.spells||[true,false,false,true];
   G.spells[3]=true; // Mana Shield is a base spell; older saves stored it locked
   G.bounty=(d.bounty&&MDEF[d.bounty.t])?d.bounty:null;
@@ -2662,7 +2689,7 @@ function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};tr
 function zoneSpawnPoint(){const ps=plats.filter(p=>p.w>=60);let best=null;for(let i=0;i<8;i++){const p=ps[Math.floor(Math.random()*ps.length)]||plats[0];const x=Math.max(30,Math.min(CZ.bound-30,p.x+20+Math.random()*Math.max(1,p.w-40)));best={x,y:p.y-2};if(Math.abs(x-PL.x)>220)return best;}return best||{x:CZ.bound/2,y:300};}
 // 0.5s name-card wipe on zone entry (skipped during boot so it can't fight the #fade overlay)
 function triggerZoneCard(name){if(!window.worldStarted)return;const el=document.getElementById('ztrans');if(!el)return;const nm=document.getElementById('ztrans-name');if(nm)nm.textContent='— '+name+' —';el.classList.add('show');zoneCardT=0.62;}
-function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(portalFlashT>0)portalFlashT=Math.max(0,portalFlashT-dt);if(deathFlashT>0)deathFlashT=Math.max(0,deathFlashT-dt);if(enrageFlashT>0)enrageFlashT=Math.max(0,enrageFlashT-dt);if(auraT>0)auraT=Math.max(0,auraT-dt);if(zoneCardT>0){zoneCardT-=dt;if(zoneCardT<=0){const el=document.getElementById('ztrans');if(el)el.classList.remove('show');}}updateDying(dt);let udt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);udt=dt*0.12;}if(!dlgOpen&&!mapOpen)update(udt);renderOrbs();jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();saveMeta();checkAchv();}draw();raf=requestAnimationFrame(tick);}
+function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(portalFlashT>0)portalFlashT=Math.max(0,portalFlashT-dt);if(deathFlashT>0)deathFlashT=Math.max(0,deathFlashT-dt);if(enrageFlashT>0)enrageFlashT=Math.max(0,enrageFlashT-dt);if(auraT>0)auraT=Math.max(0,auraT-dt);if(zoneCardT>0){zoneCardT-=dt;if(zoneCardT<=0){const el=document.getElementById('ztrans');if(el)el.classList.remove('show');}}updateDying(dt);let udt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);udt=dt*0.12;}if(!dlgOpen&&!mapOpen&&!paused)update(udt);renderOrbs();jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();saveMeta();checkAchv();}draw();raf=requestAnimationFrame(tick);}
 function update(dt){
   if(RIFT.ending){endRift(false);return;}
   const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
@@ -3775,8 +3802,8 @@ function draw(){
   ctx2.restore();
 }
 
-function onCC(e){if(dlgOpen||mapOpen)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(cv.width/r.width)+camX,my=(e.clientY-r.top)*(cv.height/r.height);let cn=null;npcs2.forEach(n=>{if(Math.abs(mx-n.x)<28&&Math.abs(my-n.y)<30)cn=n;});if(cn){openDlg(cn);return;}let cm=null,md=100;mons.forEach(m=>{const d=Math.sqrt((mx-m.x)**2+(my-m.y)**2);if(d<md){md=d;cm=m;}});if(cm)fireAt(cm,0);}
-function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true;if(!dlgOpen&&!mapOpen){if(k==='q')castSpell(0);if(k==='w')castSpell(1);if(k==='e')castSpell(2);if(k==='r')castSpell(3);if(k==='t')hotbarUse(0);if(k==='y')hotbarUse(1);if(k==='f'&&nearNPC)openDlg(nearNPC);else if(k==='f'&&nearPortal)enterPortal(nearPortal);}if(k==='escape'){if(dlgOpen)closeDlg();else if(mapOpen)toggleMap();}if(k==='m'&&!dlgOpen)toggleMap();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key))e.preventDefault();}
+function onCC(e){if(dlgOpen||mapOpen||paused)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(cv.width/r.width)+camX,my=(e.clientY-r.top)*(cv.height/r.height);let cn=null;npcs2.forEach(n=>{if(Math.abs(mx-n.x)<28&&Math.abs(my-n.y)<30)cn=n;});if(cn){openDlg(cn);return;}let cm=null,md=100;mons.forEach(m=>{const d=Math.sqrt((mx-m.x)**2+(my-m.y)**2);if(d<md){md=d;cm=m;}});if(cm)fireAt(cm,0);}
+function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true;if(!dlgOpen&&!mapOpen&&!paused){if(k==='q')castSpell(0);if(k==='w')castSpell(1);if(k==='e')castSpell(2);if(k==='r')castSpell(3);if(k==='t')hotbarUse(0);if(k==='y')hotbarUse(1);if(k==='u')hotbarUse(2);if(k==='f'&&nearNPC)openDlg(nearNPC);else if(k==='f'&&nearPortal)enterPortal(nearPortal);}if(k==='escape'){if(dlgOpen)closeDlg();else if(mapOpen)toggleMap();else togglePause();}if(k==='m'&&!dlgOpen&&!paused)toggleMap();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key))e.preventDefault();}
 function spellCd(b){return hasPow('haste')?+(b*0.7).toFixed(2):b;}
 function castSpell(i){if(!G.spells[i]){log('Learn this spell first!','d');return;}if(cds[i]>0)return;const sp=SPELLS[i];if(sp.shield){if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[i]=spellCd(sp.cd);G.shield=true;G.shieldT=USK.has('bw')?8:5;sp.sfx();log('Mana Shield active '+G.shieldT+'s!','h');updateHUD();return;}const tgt=closest(sp.r);if(!tgt){log('No enemy in range!','d');return;}fireAt(tgt,i);}
 function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}combatStarted=true;G.mp-=sp.mp;cds[si]=spellCd(sp.cd);PL.casting=0.4;PL.right=tgt.x>PL.x;const dx=tgt.x-PL.x,dy=tgt.y-PL.y,dist=Math.sqrt(dx*dx+dy*dy)||1;let dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn))+eqMag();if(si===1&&USK.has('py'))dmg=Math.floor(dmg*1.5);if(si===2&&USK.has('fr'))dmg=Math.floor(dmg*1.3);if(metaRank('might'))dmg=Math.floor(dmg*metaDmgMul());if(G.attune)dmg=Math.floor(dmg*attuneMul());projs.push({x:PL.x,y:PL.y-SH*SCALE*0.4,vx:(dx/dist)*440,vy:(dy/dist)*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});if(!reducedMotion()){const mx=PL.x+(PL.right?1:-1)*10,my=PL.y-SH*SCALE*0.4;rings.push({x:mx,y:my,r0:3,r1:16,c:sp.c||'#9fd0ff',t:0,dur:0.18});for(let i=0;i<4;i++)parts.push({x:mx,y:my,vx:(dx/dist)*120+Math.random()*40-20,vy:(dy/dist)*120+Math.random()*40-20,life:0.2,c:sp.c||'#9fd0ff',r:1+Math.random(),trail:1});}auraCol=sp.c||null;auraT=2;sp.sfx();updateHUD();}
@@ -3958,16 +3985,19 @@ function qProg(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.map(t=>{if(t
 function renderAll(){renderQP();renderIP();renderSP();renderHotbar();}
 // ── Potion hotbar: two consumable slots bound to T / Y ──
 let hbAssign=0;
-function renderHotbar(){[0,1].forEach(i=>{const id=G.hotbar[i],key=i===0?'T':'Y',e=document.getElementById('hbe'+i),q=document.getElementById('hbq'+i),l=document.getElementById('hbl'+i),s=document.getElementById('hb'+i);if(!e||!q||!l||!s)return;if(id&&ITEMS[id]){const n=countItem(id);e.textContent=ITEMS[id].e;q.textContent=n>0?n:'';l.textContent=key+' — '+ITEMS[id].n;s.classList.toggle('cd',n<=0);}else{e.textContent='＋';q.textContent='';l.textContent=key+' — Empty';s.classList.remove('cd');}});}
-function hotbarUse(i){const id=G.hotbar[i];if(!id){openHotbarAssign(i);return;}if(countItem(id)<1){log('No '+ITEMS[id].n+' left! Click the label to reassign.','d');return;}useItem(id);}
-function openHotbarAssign(i){dlgOpen=true;keys={};jp={};hbAssign=i;const key=i===0?'T':'Y';document.getElementById('dlg-npc').textContent='🎒 Assign '+key+' slot';const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';
+// D4 — a third potion slot (U) unlocks once the Apothecary district reaches level 3.
+function hotbarSlots(){return cityLvl('apothecary')>=3?3:2;}
+const HOTKEYS=['T','Y','U'];
+function renderHotbar(){const slots=hotbarSlots(),w2=document.getElementById('hk2wrap');if(w2)w2.style.display=slots>=3?'':'none';for(let i=0;i<3;i++){if(i>=slots)continue;const id=G.hotbar[i],key=HOTKEYS[i],e=document.getElementById('hbe'+i),q=document.getElementById('hbq'+i),l=document.getElementById('hbl'+i),s=document.getElementById('hb'+i);if(!e||!q||!l||!s)continue;if(id&&ITEMS[id]){const n=countItem(id);e.textContent=ITEMS[id].e;q.textContent=n>0?n:'';l.textContent=key+' — '+ITEMS[id].n;s.classList.toggle('cd',n<=0);}else{e.textContent='＋';q.textContent='';l.textContent=key+' — Empty';s.classList.remove('cd');}}}
+function hotbarUse(i){if(i>=hotbarSlots())return;const id=G.hotbar[i];if(!id){openHotbarAssign(i);return;}if(countItem(id)<1){log('No '+ITEMS[id].n+' left! Click the label to reassign.','d');return;}useItem(id);}
+function openHotbarAssign(i){dlgOpen=true;keys={};jp={};hbAssign=i;const key=HOTKEYS[i];document.getElementById('dlg-npc').textContent='🎒 Assign '+key+' slot';const box=document.getElementById('dlg-txt');box.style.whiteSpace='normal';
   const rows=Object.keys(ITEMS).filter(id=>ITEMS[id].consumable).map(id=>{const it=ITEMS[id],have=countItem(id),on=G.hotbar[i]===id;return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span style="font-size:18px">'+it.e+'</span><div style="flex:1"><div style="font-size:11px;color:#e8d5b7">'+it.n+'</div><div style="font-size:9px;color:#7878a0">'+(it.desc||'')+' · You have '+have+'</div></div><button class="db'+(on?' primary':'')+'" onclick="assignHotbar('+i+',\''+id+'\')">'+(on?'✓ Assigned':'Assign')+'</button></div>';}).join('');
   box.innerHTML='<div style="font-size:10px;color:#a89cc8;margin-bottom:8px">Pick a potion for the <b>'+key+'</b> key — press it for instant use in battle.</div>'+rows;
   const btns=[{l:'Done',fn:closeDlg}];if(G.hotbar[i])btns.unshift({l:'Clear slot',fn:()=>{G.hotbar[i]=null;renderHotbar();saveGame();closeDlg();}});dlgButtons(btns);
   document.getElementById('dlg-overlay').classList.add('open');}
 function assignHotbar(i,id){G.hotbar[i]=id;sfxLoot();log(ITEMS[id].n+' assigned to '+(i===0?'T':'Y')+' slot.','q');renderHotbar();saveGame();closeDlg();}
 // Auto-bind a newly acquired consumable to the first empty hotbar slot (if not already slotted).
-function autofillHotbar(id){if(!id||!ITEMS[id]||!ITEMS[id].consumable||G.hotbar.includes(id))return;const slot=G.hotbar.indexOf(null);if(slot<0)return;G.hotbar[slot]=id;log(ITEMS[id].n+' added to '+(slot===0?'T':'Y')+' slot.','q');}
+function autofillHotbar(id){if(!id||!ITEMS[id]||!ITEMS[id].consumable||G.hotbar.includes(id))return;const slots=hotbarSlots();let slot=-1;for(let i=0;i<slots;i++)if(!G.hotbar[i]){slot=i;break;}if(slot<0)return;G.hotbar[slot]=id;log(ITEMS[id].n+' added to '+HOTKEYS[slot]+' slot.','q');}
 // B2 — quest tracker hierarchy: the active story quest is pinned on top with live
 // progress; other active threads sit below; all available-but-unaccepted quests collapse
 // into one "N new quests in Aethon City" line so the town's ! markers never pile up here;
@@ -3999,6 +4029,12 @@ function log(msg,type=''){if(type==='q'){toast(msg,'q');return;}const cl=documen
 function actTwoOpen(){return G.questStates['q15']==='done';}
 function buildMap(){const bgs={0:'#141228',1:'#0d1830',2:'#0a1a0e',3:'#0e0a1e',4:'#0a0812',7:'#1a0a06',8:'#081018'},icons={0:'🏰',1:'🏡',2:'🌿',3:'💎',4:'🏛',7:'🌋',8:'🏔️'};const idx=[0,1,2,3,4].concat(actTwoOpen()?[7,8]:[]);document.getElementById('zthumbs').innerHTML=idx.map(i=>{const z=ZD[i];return`<div class="zth ${G.zone===i?'cur':''}" style="background:${bgs[i]}" onclick="travelTo(${i})"><div style="font-size:28px">${icons[i]}</div><div><div class="ztn">${z.name}</div><div class="zts">Lv.${z.req}+</div>${G.level<z.req?`<div class="ztl">Requires Lv.${z.req}</div>`:''}</div></div>`;}).join('');}
 function toggleMap(){mapOpen=!mapOpen;keys={};jp={};document.getElementById('mov').classList.toggle('open',mapOpen);}
+// B3 — Esc pause menu. Freezes the update loop (draw still runs so the scene shows behind),
+// and relocates the music/SFX/reduced-motion controls out of the HUD into its Settings panel.
+let paused=false;
+function togglePause(){paused=!paused;keys={};jp={};if(paused){const ps=document.getElementById('pause-settings'),vr=document.querySelector('.vol-row');if(vr&&ps&&vr.parentNode!==ps){ps.innerHTML='<div style="font-size:8px;color:#8a8aa0;margin-bottom:8px;font-family:var(--font-pix);letter-spacing:0.5px">SETTINGS</div>';ps.appendChild(vr);}}document.getElementById('pause').classList.toggle('open',paused);}
+function togglePauseHelp(){const h=document.getElementById('pause-help');h.style.display=h.style.display==='none'?'block':'none';}
+function quitToTitle(){try{saveGame();saveMeta();}catch(e){}location.reload();}
   
 // ── Touch controls ──
 let touchMode=false,talkVis=false;
