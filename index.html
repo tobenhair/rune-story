@@ -84,6 +84,15 @@ canvas#gc{display:block;image-rendering:pixelated}
 .qit{font-size:11px;font-weight:500;color:#e8d5b7;margin-bottom:2px}
 .qip{font-size:10px;color:#5dcaa5;margin-top:3px}
 .ig{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:8px}
+/* B5 — item inspection tooltip card (name / stats / sockets / power / compare / sell) */
+#tip{position:absolute;z-index:10001;max-width:220px;background:linear-gradient(180deg,#12162a,#0a0c18);border:1px solid var(--gold);border-radius:8px;padding:9px 11px;box-shadow:0 6px 22px rgba(0,0,0,0.72);pointer-events:none;display:none;font-family:var(--font-sans)}
+#tip.on{display:block}
+#tip .tn{font-size:11px;font-weight:600;margin-bottom:4px}
+#tip .tl{font-size:10px;color:#cfcfe4;line-height:1.5}
+#tip .tsub{font-size:9px;color:#8a8aa0;margin-top:3px;line-height:1.5}
+#tip .tcmp{font-size:9px;margin-top:5px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.12);color:#9a9ab0}
+#tip .up{color:#5dcaa5}#tip .dn{color:#e2726a}
+#tip .tsell{font-size:9px;color:#e8c877;margin-top:5px}
 .is{aspect-ratio:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative}
 .iq{position:absolute;bottom:1px;right:2px;font-size:8px;color:#fff}
 .er{display:flex;align-items:center;gap:6px;margin-bottom:4px}
@@ -94,6 +103,12 @@ canvas#gc{display:block;image-rendering:pixelated}
 .si2{width:26px;height:26px;background:#111828;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .snm{font-size:10px;font-weight:500;color:#e8d5b7}.snd{font-size:9px;color:#7878a0}.snc{font-size:9px;color:#6aa3ff}
 .spr{font-size:10px;color:#a0a0c0;margin-bottom:6px}
+/* B4 — schooled skill tree: colour-coded section headers, connector-indented sub-skills,
+   and a spelled-out requirement on locked nodes. */
+.skhdr{font-family:var(--font-pix);font-size:7px;letter-spacing:0.5px;margin:9px 0 5px;padding-bottom:3px;border-bottom:1px solid;text-transform:uppercase}
+.sn.child{margin-left:13px;position:relative}
+.sn.child::before{content:'';position:absolute;left:-9px;top:-4px;height:calc(50% + 4px);width:9px;border-left:1px solid rgba(255,255,255,0.22);border-bottom:1px solid rgba(255,255,255,0.22);border-bottom-left-radius:4px}
+.snreq{font-size:8px;color:#e2726a;margin-top:2px}
 .hotbar{display:flex;justify-content:center;align-items:center;gap:5px;padding:6px 8px;background:rgba(0,0,0,0.75);border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
 .hk{display:flex;flex-direction:column;align-items:center;gap:1px}
 .hks{width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(199,154,58,0.28);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;position:relative;user-select:none;overflow:hidden}
@@ -104,8 +119,16 @@ canvas#gc{display:block;image-rendering:pixelated}
 @keyframes rdyflash{0%{box-shadow:0 0 0 0 rgba(240,207,122,0.9)}100%{box-shadow:0 0 0 5px rgba(240,207,122,0)}}
 .hkl{font-family:var(--font-pix);font-size:6px;letter-spacing:0.3px;color:#7a7a92}
 .hkc{position:absolute;top:1px;right:2px;font-family:var(--font-pix);font-size:7px;color:#fff;z-index:2}
-.clog{flex:1;max-width:260px;background:rgba(0,0,0,0.3);border-radius:5px;padding:5px 7px;height:54px;overflow-y:auto}
-.cl{font-size:9px;line-height:1.5;color:#9090b0}
+.clog{flex:1;max-width:260px;background:rgba(0,0,0,0.3);border-radius:5px;padding:5px 7px;height:54px;overflow-y:auto;transition:height 0.15s}
+.clog:hover{height:150px}
+.cl{font-size:9px;line-height:1.5;color:#9090b0;word-break:break-word}
+/* B6 — transient top-right toasts for quest-state changes & achievements (out of the combat log) */
+#toasts{position:absolute;top:8px;right:8px;z-index:70;display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none;max-width:62%}
+.toast{background:linear-gradient(180deg,rgba(18,22,42,0.96),rgba(10,12,24,0.96));border:1px solid var(--gold);border-left-width:3px;border-radius:7px;padding:6px 11px;font-size:10px;color:#e8e8f4;box-shadow:0 4px 16px rgba(0,0,0,0.6);animation:toastIn 0.28s ease-out,toastOut 0.5s ease-in forwards;animation-delay:0s,3.6s;max-width:100%}
+.toast.achv{border-color:#ffd24a;border-left-color:#ffd24a;color:#ffe9a0}
+.toast.q{border-color:#6aa3ff;border-left-color:#6aa3ff}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(30px)}}
 .cl.d{color:#f09595}.cl.h{color:#5dcaa5}.cl.x{color:#ef9f27}.cl.q{color:#6aa3ff}
 #dlg-overlay{display:none;position:absolute;inset:0;z-index:9999;align-items:flex-end;justify-content:center;padding-bottom:70px;background:rgba(0,0,0,0.45)}
 #dlg-overlay.open{display:flex}
@@ -226,6 +249,7 @@ canvas#gc{display:block;image-rendering:pixelated}
     <div class="cw" id="cw">
       <canvas id="gc"></canvas>
       <div id="ztrans"><span id="ztrans-name"></span></div>
+      <div id="toasts"></div>
       <div class="lvf"><div class="lvt" id="lvt">⬆ LEVEL UP ⬆</div></div>
       <div class="ch">← → move &nbsp;|&nbsp; ↑/Space jump &nbsp;|&nbsp; Shift dash &nbsp;|&nbsp; Q W E R spells &nbsp;|&nbsp; F talk/portal &nbsp;|&nbsp; M map</div>
       <div id="tc" style="display:none">
@@ -271,6 +295,7 @@ canvas#gc{display:block;image-rendering:pixelated}
 
 <div id="dlg-overlay"><div id="dlg-box"><div id="dlg-npc"></div><div id="dlg-txt"></div><div id="dlg-btns"></div></div></div>
 <div class="mov" id="mov"><div class="mbox"><div class="mhdr"><span>🗺 World Map — Aethoria</span><span class="mcls" onclick="toggleMap()">✕</span></div><div id="zthumbs"></div><div style="font-size:10px;color:#444;margin-top:8px">Click a zone to fast travel</div></div></div>
+<div id="tip"></div>
 
 </div>
 
@@ -2019,11 +2044,11 @@ const QUESTS=[
  after:'Nyx tells me the spiral remembers every step you take. I sleep better knowing it remembers yours.',
  tasks:[{type:'talk',tgt:'Astralwright Nyx',n:1}],rew:{xp:3000,gold:500}}];
 const SHOP=[{id:'health_potion',price:40},{id:'mana_potion',price:30},{id:'ward_scroll',price:35}];
-const SKN=[{id:'am',n:'Arcane Mastery',d:'+20% spell dmg',e:'⚡',cost:1,req:null},{id:'mf',n:'Mana Flow',d:'+30 max MP',e:'💧',cost:1,req:null},{id:'vt',n:'Vitality',d:'+60 max HP',e:'❤️',cost:1,req:null},{id:'gs',n:'Gold Sense',d:'+40% gold from kills',e:'💰',cost:1,req:null},{id:'fb',n:'Fireball',d:'Unlock Fireball',e:'🔥',cost:2,req:'am'},{id:'is',n:'Ice Shard',d:'Unlock Ice Shard',e:'❄️',cost:2,req:'mf'},{id:'as',n:'Arcane Surge',d:'20% crit 2× dmg',e:'✨',cost:3,req:'fb'},{id:'py',n:'Pyromancy',d:'+50% Fireball dmg',e:'☄️',cost:2,req:'fb'},{id:'fr',n:'Deep Frost',d:'Ice +30% dmg, 2.5s slow',e:'🧊',cost:2,req:'is'},{id:'bw',n:'Greater Ward',d:'Shield lasts 8s, absorbs 90%',e:'🔰',cost:2,req:'mf'},
+const SKN=[{id:'am',sch:'arcane',n:'Arcane Mastery',d:'+20% spell dmg',e:'⚡',cost:1,req:null},{id:'mf',sch:'arcane',n:'Mana Flow',d:'+30 max MP',e:'💧',cost:1,req:null},{id:'vt',sch:'arcane',n:'Vitality',d:'+60 max HP',e:'❤️',cost:1,req:null},{id:'gs',sch:'arcane',n:'Gold Sense',d:'+40% gold from kills',e:'💰',cost:1,req:null},{id:'fb',sch:'fire',n:'Fireball',d:'Unlock Fireball',e:'🔥',cost:2,req:'am'},{id:'is',sch:'frost',n:'Ice Shard',d:'Unlock Ice Shard',e:'❄️',cost:2,req:'mf'},{id:'as',sch:'arcane',n:'Arcane Surge',d:'20% crit 2× dmg',e:'✨',cost:3,req:'fb'},{id:'py',sch:'fire',n:'Pyromancy',d:'+50% Fireball dmg',e:'☄️',cost:2,req:'fb'},{id:'fr',sch:'frost',n:'Deep Frost',d:'Ice +30% dmg, 2.5s slow',e:'🧊',cost:2,req:'is'},{id:'bw',sch:'arcane',n:'Greater Ward',d:'Shield lasts 8s, absorbs 90%',e:'🔰',cost:2,req:'mf'},
 // ── School capstones (build-defining spell mutators) ──
-{id:'inferno',n:'Inferno',d:'Fireball sets enemies ablaze (burn)',e:'☄️',cost:3,req:'py'},
-{id:'chain',n:'Chain Surge',d:'Arcane Bolt arcs to a 2nd enemy',e:'⚡',cost:3,req:'as'},
-{id:'glacier',n:'Glacial Shatter',d:'Ice Shard deep-freezes nearby foes',e:'🧊',cost:3,req:'fr'}];
+{id:'inferno',sch:'fire',n:'Inferno',d:'Fireball sets enemies ablaze (burn)',e:'☄️',cost:3,req:'py'},
+{id:'chain',sch:'arcane',n:'Chain Surge',d:'Arcane Bolt arcs to a 2nd enemy',e:'⚡',cost:3,req:'as'},
+{id:'glacier',sch:'frost',n:'Glacial Shatter',d:'Ice Shard deep-freezes nearby foes',e:'🧊',cost:3,req:'fr'}];
 const USK=new Set();
 // ── Equipment / loot ──
 const RARS=[{n:'Common',c:'#a8a8b8',m:1},{n:'Uncommon',c:'#5dcaa5',m:1.35},{n:'Rare',c:'#6aa3ff',m:1.8},{n:'Epic',c:'#b050f0',m:2.4},{n:'Legendary',c:'#ef9f27',m:3.2},{n:'Artifact',c:'#ff4d6d',m:4.2}];
@@ -2407,7 +2432,7 @@ const ACHV=[
   {id:'collector',n:'Bestiary Complete',e:'📖',d:'Discover every creature',r:20,c:()=>bestiaryList().every(b=>!!(META.codex&&META.codex[b.t]))}
 ];
 function achvDone(id){return!!(META.achievements&&META.achievements[id]);}
-function checkAchv(){let any=false;ACHV.forEach(a=>{if(!achvDone(a.id)&&a.c()){META.achievements[a.id]=true;G.riftShards+=a.r;any=true;log('🏆 Achievement unlocked: '+a.n+' (+'+a.r+' ◈)','x');sfxFanfare();burst(PL.x,PL.y-40,'#ffd24a',16,140);}});if(any){updateHUD();saveMeta();saveGame();}}
+function checkAchv(){let any=false;ACHV.forEach(a=>{if(!achvDone(a.id)&&a.c()){META.achievements[a.id]=true;G.riftShards+=a.r;any=true;toast('🏆 '+a.n+'  (+'+a.r+' ◈)','achv');sfxFanfare();burst(PL.x,PL.y-40,'#ffd24a',16,140);}});if(any){updateHUD();saveMeta();saveGame();}}
 // ── Codex / Bestiary: a collectible record that fills in as creatures are slain. ──
 const CODEX_LORE={
   slime:'Born of rift-tainted dew, these gelatinous wanderers pulse with a faint, wrong heartbeat.',
@@ -3948,12 +3973,29 @@ function autofillHotbar(id){if(!id||!ITEMS[id]||!ITEMS[id].consumable||G.hotbar.
 // into one "N new quests in Aethon City" line so the town's ! markers never pile up here;
 // finished quests collapse to a single count.
 function renderQP(){const el=document.getElementById('ql');const av=QUESTS.filter(q=>!G.questStates[q.id]&&G.level>=q.rlvl&&(!q.prev||G.questStates[q.prev]==='done')),ac=QUESTS.filter(q=>G.questStates[q.id]==='active'),dn=QUESTS.filter(q=>G.questStates[q.id]==='done');const tracked=ac.find(q=>!q.side)||ac[0]||null;let h='';if(tracked)h+=`<div class="qi qtrack"><div class="qtk-h">◈ TRACKED</div><div class="qit">${tracked.title}</div><div class="qip">${qProg(tracked.id).replace(/\n/g,'<br>')}</div></div>`;if(G.bounty){const d=MDEF[G.bounty.t];h+=`<div class="qi" style="border-left-color:#ef9f27"><div class="qit">📋 Bounty: ${d.n}</div><div class="qip">${Math.min(G.bounty.p,G.bounty.n)}/${G.bounty.n}${G.bounty.p>=G.bounty.n?' — return to board!':''}</div></div>`;}ac.filter(q=>q!==tracked).forEach(q=>{h+=`<div class="qi"><div class="qit">${q.title}</div><div class="qip">${qProg(q.id).replace(/\n/g,'<br>')}</div></div>`;});if(av.length)h+=`<div class="qi qavail"><div class="qit">✦ ${av.length} new quest${av.length>1?'s':''} in Aethon City</div><div class="qsub">Seek the townsfolk marked with !</div></div>`;if(dn.length)h+=`<div class="qi done"><div class="qit">✓ ${dn.length} quest${dn.length>1?'s':''} completed</div></div>`;if(!h)h='<div style="font-size:10px;color:#555;padding:6px">Find NPCs with ! to get quests!</div>';el.innerHTML=h;}
-function renderIP(){let sl='';for(let i=0;i<16;i++){const it=G.inventory[i];if(it&&it.g){const g=it.g;sl+=`<div class="is" onclick="equipGear(${i})" style="cursor:pointer;border-color:${RARS[g.rar].c}" title="${g.n} — ${gearStats(g)} (click to equip)">${g.e}</div>`;}else if(it){const d=ITEMS[it.id];const oc=d.consumable?` onclick="useItem('${it.id}')" style="cursor:pointer" title="${d.n} — click to use"`:` title="${d.n}"`;sl+=`<div class="is"${oc}>${d.e}<span class="iq">${it.qty>1?it.qty:''}</span></div>`;}else sl+='<div class="is"></div>';}document.getElementById('ig').innerHTML=sl;const w=G.equipment.weapon,a=G.equipment.armor;const er=(g,slot,emptyE,emptyN)=>g?`<div class="er" onclick="unequipGear('${slot}')" style="cursor:pointer" title="Click to unequip"><div class="ei" style="border-color:${RARS[g.rar].c}">${g.e}</div><div><div class="en" style="color:${RARS[g.rar].c}">${g.n}</div><div class="es2">${gearStats(g)}</div></div></div>`:`<div class="er"><div class="ei">${emptyE}</div><div><div class="en">${emptyN}</div><div class="es2"></div></div></div>`;document.getElementById('esl').innerHTML=er(w,'weapon','🪄','No weapon')+er(a,'armor','👘','No armor');renderHotbar();}
-function renderSP(){document.getElementById('spr').textContent='Skill Points: '+G.skillPoints;const head=[...USK].length?`<div style="text-align:right;margin-bottom:4px"><button class="db" style="padding:3px 9px;font-size:9px" onclick="respec()">↺ Respec — refund all</button></div>`:'';document.getElementById('str').innerHTML=head+SKN.map(n=>{const ul=USK.has(n.id),can=!ul&&G.skillPoints>=n.cost&&(!n.req||USK.has(n.req));return`<div class="sn ${ul?'ul':can?'':'lk'}" onclick="learnSk('${n.id}')"><div class="si2">${n.e}</div><div style="flex:1"><div class="snm">${n.n}</div><div class="snd">${n.d}</div></div><div class="snc">${ul?'✓':n.cost+' SP'}</div></div>`;}).join('')
-  +`<div class="sn ${G.skillPoints>=attuneCost()?'':'lk'}" onclick="buyAttune()"><div class="si2">🌌</div><div style="flex:1"><div class="snm">Astral Attunement ${G.attune>0?'— Rank '+G.attune:''}</div><div class="snd">+4% spell damage per rank, repeatable${G.attune>0?' (now +'+(G.attune*4)+'%)':''}</div></div><div class="snc">${attuneCost()+' SP'}</div></div>`;}
+// B5 — a rich inspection card built for any bag/equip entry: name, stats, sockets,
+// artifact power, a Δ compare vs the item currently equipped in that slot, and sell value.
+function gearTipHTML(g,cmp){const c=RARS[g.rar].c;let h=`<div class="tn" style="color:${c}">${g.e} ${g.n}</div>`;if(g.slot==='weapon')h+=`<div class="tl">+${g.mag} Magic Damage</div>`;else h+=`<div class="tl">+${g.def} Defense<br>+${g.hp||0} Max HP</div>`;if(g.sockets&&g.sockets.length)h+=`<div class="tsub">Sockets: ${g.sockets.map(r=>r&&RUNES[r]?'◈ '+RUNES[r].n:'○ empty').join(' · ')}</div>`;if(g.pow)h+=`<div class="tl" style="color:#ffd0db;margin-top:3px">✦ ${POW[g.pow]}</div>`;if(cmp&&cmp!==g){if(g.slot==='weapon'){const d=g.mag-(cmp.mag||0);h+=`<div class="tcmp">vs equipped: <span class="${d>=0?'up':'dn'}">${d>=0?'+':''}${d} Magic</span></div>`;}else{const dd=g.def-(cmp.def||0),dh=(g.hp||0)-(cmp.hp||0);h+=`<div class="tcmp">vs equipped: <span class="${dd>=0?'up':'dn'}">${dd>=0?'+':''}${dd} DEF</span>, <span class="${dh>=0?'up':'dn'}">${dh>=0?'+':''}${dh} HP</span></div>`;}}h+=`<div class="tsell">Sell: ${sellValue({g})}g</div>`;return h;}
+function itemTipHTML(entry){if(entry.g)return gearTipHTML(entry.g,G.equipment[entry.g.slot]);const d=ITEMS[entry.id]||{};let h=`<div class="tn" style="color:${d.relic?'#c9a6ff':'#e8d5b7'}">${d.e||''} ${d.n||entry.id}</div>`;if(d.desc)h+=`<div class="tl">${d.desc}</div>`;else if(RUNES[entry.id])h+=`<div class="tl">Socket rune — set it into gear at the Forge.</div>`;if(d.consumable)h+=`<div class="tsub">Click to use.</div>`;h+=`<div class="tsell">Sell: ${sellValue(entry)}g${entry.qty>1?' each':''}</div>`;return h;}
+function positionTip(e){const t=document.getElementById('tip'),gr=document.getElementById('gr'),r=gr.getBoundingClientRect();const tw=t.offsetWidth,th=t.offsetHeight;let x=e.clientX-r.left+14,y=e.clientY-r.top+14;if(x+tw>r.width-6)x=e.clientX-r.left-tw-14;if(y+th>r.height-6)y=r.height-th-6;t.style.left=Math.max(6,x)+'px';t.style.top=Math.max(6,y)+'px';}
+function showTip(e,html){const t=document.getElementById('tip');t.innerHTML=html;t.classList.add('on');positionTip(e);}
+function hideTip(){const t=document.getElementById('tip');if(t)t.classList.remove('on');}
+function bagTip(e,i){const it=G.inventory[i];if(!it)return hideTip();showTip(e,itemTipHTML(it));}
+function eqTip(e,slot){const g=G.equipment[slot];if(!g)return hideTip();showTip(e,gearTipHTML(g,null));}
+function renderIP(){let sl='';for(let i=0;i<16;i++){const it=G.inventory[i];const hov=` onmousemove="bagTip(event,${i})" onmouseleave="hideTip()"`;if(it&&it.g){const g=it.g;sl+=`<div class="is" onclick="equipGear(${i})"${hov} style="cursor:pointer;border-color:${RARS[g.rar].c}">${g.e}</div>`;}else if(it){const d=ITEMS[it.id];const oc=d.consumable?` onclick="useItem('${it.id}')" style="cursor:pointer"`:'';sl+=`<div class="is"${oc}${hov}>${d.e}<span class="iq">${it.qty>1?it.qty:''}</span></div>`;}else sl+='<div class="is"></div>';}document.getElementById('ig').innerHTML=sl;const w=G.equipment.weapon,a=G.equipment.armor;const er=(g,slot,emptyE,emptyN)=>g?`<div class="er" onclick="unequipGear('${slot}')" onmousemove="eqTip(event,'${slot}')" onmouseleave="hideTip()" style="cursor:pointer"><div class="ei" style="border-color:${RARS[g.rar].c}">${g.e}</div><div><div class="en" style="color:${RARS[g.rar].c}">${g.n}</div><div class="es2">${gearStats(g)}</div></div></div>`:`<div class="er"><div class="ei">${emptyE}</div><div><div class="en">${emptyN}</div><div class="es2"></div></div></div>`;document.getElementById('esl').innerHTML=er(w,'weapon','🪄','No weapon')+er(a,'armor','👘','No armor');renderHotbar();}
+function renderSP(){document.getElementById('spr').textContent='Skill Points: '+G.skillPoints;const head=[...USK].length?`<div style="text-align:right;margin-bottom:4px"><button class="db" style="padding:3px 9px;font-size:9px" onclick="respec()">↺ Respec — refund all</button></div>`:'';
+  const skName=id=>{const n=SKN.find(x=>x.id===id);return n?n.n:id;};
+  const nodeHTML=n=>{const ul=USK.has(n.id),can=!ul&&G.skillPoints>=n.cost&&(!n.req||USK.has(n.req)),reqUnmet=n.req&&!USK.has(n.req),parent=n.req?SKN.find(x=>x.id===n.req):null,child=(parent&&parent.sch===n.sch)?' child':'';return`<div class="sn${child} ${ul?'ul':can?'':'lk'}" onclick="learnSk('${n.id}')"><div class="si2">${n.e}</div><div style="flex:1"><div class="snm">${n.n}</div><div class="snd">${n.d}</div>${reqUnmet?`<div class="snreq">↳ Requires ${skName(n.req)}</div>`:''}</div><div class="snc">${ul?'✓':n.cost+' SP'}</div></div>`;};
+  let h=head;
+  [['arcane','✦ Arcane','#8a7ad0'],['fire','🔥 Fire','#ff7a3a'],['frost','❄ Frost','#5aa8e0']].forEach(([sk,label,col])=>{const nodes=SKN.filter(n=>(n.sch||'arcane')===sk);if(!nodes.length)return;h+=`<div class="skhdr" style="color:${col};border-color:${col}">${label}</div>`+nodes.map(nodeHTML).join('');});
+  h+=`<div class="skhdr" style="color:#c9a6ff;border-color:#c9a6ff">🌌 Astral</div><div class="sn ${G.skillPoints>=attuneCost()?'':'lk'}" onclick="buyAttune()"><div class="si2">🌌</div><div style="flex:1"><div class="snm">Astral Attunement ${G.attune>0?'— Rank '+G.attune:''}</div><div class="snd">+4% spell damage per rank, repeatable${G.attune>0?' (now +'+(G.attune*4)+'%)':''}</div></div><div class="snc">${attuneCost()+' SP'}</div></div>`;
+  document.getElementById('str').innerHTML=h;}
 function learnSk(id){const n=SKN.find(x=>x.id===id);if(!n||USK.has(id))return;if(G.skillPoints<n.cost){log('Not enough Skill Points!','d');return;}if(n.req&&!USK.has(n.req)){log('Requires: '+SKN.find(x=>x.id===n.req).n,'d');return;}G.skillPoints-=n.cost;USK.add(id);if(id==='fb'){G.spells[1]=true;log('Fireball unlocked! Press W.','q');}if(id==='is'){G.spells[2]=true;log('Ice Shard unlocked! Press E.','q');}if(id==='mf'){G.maxMp+=30;G.mp+=30;updateHUD();}if(id==='vt'){G.maxHp+=60;G.hp+=60;updateHUD();}sfxQuestAccept();log('Learned: '+n.n,'x');renderSP();saveGame();}
 function swP(k,el){document.querySelectorAll('.pt').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.ps').forEach(s=>s.classList.remove('active'));el.classList.add('active');document.getElementById('ps-'+k).classList.add('active');if(k==='i')renderIP();if(k==='s')renderSP();if(k==='q')renderQP();}
-function log(msg,type=''){const cl=document.getElementById('clog');const d=document.createElement('div');d.className='cl '+type;d.textContent=msg;cl.appendChild(d);cl.scrollTop=cl.scrollHeight;if(cl.children.length>40)cl.removeChild(cl.firstChild);}
+// B6 — the combat log keeps combat/loot ('', d, h, x); quest-state & notification lines
+// (type 'q') and achievements surface as transient top-right toasts instead.
+function toast(msg,cls){const c=document.getElementById('toasts');if(!c)return;const d=document.createElement('div');d.className='toast '+(cls||'');d.textContent=msg;c.appendChild(d);while(c.children.length>4)c.removeChild(c.firstChild);setTimeout(()=>{if(d.parentNode)d.remove();},4200);}
+function log(msg,type=''){if(type==='q'){toast(msg,'q');return;}const cl=document.getElementById('clog');if(!cl)return;const d=document.createElement('div');d.className='cl '+type;d.textContent=msg;cl.appendChild(d);cl.scrollTop=cl.scrollHeight;if(cl.children.length>40)cl.removeChild(cl.firstChild);}
 function actTwoOpen(){return G.questStates['q15']==='done';}
 function buildMap(){const bgs={0:'#141228',1:'#0d1830',2:'#0a1a0e',3:'#0e0a1e',4:'#0a0812',7:'#1a0a06',8:'#081018'},icons={0:'🏰',1:'🏡',2:'🌿',3:'💎',4:'🏛',7:'🌋',8:'🏔️'};const idx=[0,1,2,3,4].concat(actTwoOpen()?[7,8]:[]);document.getElementById('zthumbs').innerHTML=idx.map(i=>{const z=ZD[i];return`<div class="zth ${G.zone===i?'cur':''}" style="background:${bgs[i]}" onclick="travelTo(${i})"><div style="font-size:28px">${icons[i]}</div><div><div class="ztn">${z.name}</div><div class="zts">Lv.${z.req}+</div>${G.level<z.req?`<div class="ztl">Requires Lv.${z.req}</div>`:''}</div></div>`;}).join('');}
 function toggleMap(){mapOpen=!mapOpen;keys={};jp={};document.getElementById('mov').classList.toggle('open',mapOpen);}
