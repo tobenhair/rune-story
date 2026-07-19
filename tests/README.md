@@ -26,8 +26,8 @@ npx playwright test tests/quests.spec.js
   combat & spells, skills, gear/loot/forge, quests, economy (shop/storage/hotbar),
   bosses & enrage, movement (dash/i-frames), `display` (responsive canvas fit +
   fullscreen, world-space label pills / NPC role glyphs, quest-tracker hierarchy), and
-  `coreloop` (movement-demanding enemy behaviors, safe portal entrances + boss dormancy,
-  relic-hunt pity rework).
+  `coreloop` (movement-demanding enemy behaviors + shielded/bomber archetypes, safe portal
+  entrances + boss dormancy, relic-hunt pity rework, per-zone exploration caches).
 
 ## Adding tests
 
