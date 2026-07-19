@@ -327,7 +327,13 @@ canvas#gc{display:block;image-rendering:pixelated}
 // AUDIO ENGINE
 // ═══════════════════════════════════════════════════════
 let AC=null,musicGain=null,sfxGain=null,musicNodes=[],curZoneMusic=-1,introMusicActive=false;
-function initAudio(){if(AC)return;AC=new(window.AudioContext||window.webkitAudioContext)();musicGain=AC.createGain();musicGain.gain.value=0.4;musicGain.connect(AC.destination);sfxGain=AC.createGain();sfxGain.gain.value=0.7;sfxGain.connect(AC.destination);}
+let combatGain=null,combatFilt=null;
+function initAudio(){if(AC)return;AC=new(window.AudioContext||window.webkitAudioContext)();musicGain=AC.createGain();musicGain.gain.value=0.4;musicGain.connect(AC.destination);sfxGain=AC.createGain();sfxGain.gain.value=0.7;sfxGain.connect(AC.destination);
+  // F1 — a persistent combat-intensity bass layer that swells with nearby threat (updateCombatMusic),
+  // plus a slow ~90s filter sweep for long-cycle variation. Needs a human listening check to tune.
+  try{combatGain=AC.createGain();combatGain.gain.value=0;combatFilt=AC.createBiquadFilter();combatFilt.type='lowpass';combatFilt.frequency.value=240;combatGain.connect(musicGain);combatFilt.connect(combatGain);
+    const o1=AC.createOscillator();o1.type='sawtooth';o1.frequency.value=55;const o2=AC.createOscillator();o2.type='triangle';o2.frequency.value=110;o1.connect(combatFilt);o2.connect(combatFilt);o1.start();o2.start();}catch(e){}}
+function updateCombatMusic(dt){if(!combatGain||!AC)return;let threat=0;for(const m of mons){if(m.boss){threat+=1.4;continue;}const d=Math.hypot(m.x-PL.x,m.y-PL.y);if(d<360)threat+=Math.max(0,1-d/360);}const target=Math.min(0.06,threat*0.02);combatGain.gain.value+=(target-combatGain.gain.value)*Math.min(1,dt*2.2);if(combatFilt)combatFilt.frequency.value=220+140*(0.5+0.5*Math.sin(gTime*2*Math.PI/90));}
 function setMusicVol(v){if(musicGain)musicGain.gain.value=v/100;}
 function setSfxVol(v){if(sfxGain)sfxGain.gain.value=v/100;}
 function osc(f,type,t,dur,g0,g1,dst){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(g0,t);g.gain.exponentialRampToValueAtTime(Math.max(0.001,g1),t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+0.01);return o;}
@@ -1912,12 +1918,12 @@ Object.keys(RUNES).forEach(id=>{const r=RUNES[id];ITEMS[id]={n:r.n,e:r.e,val:r.g
 // Craft recipes: 2× the base rune + 4× an Act 2 material + gold (see craftRune / renderForge).
 const GREATER_CRAFT={rune_ruby2:{base:'rune_ruby',mat:'ember_chunk'},rune_emerald2:{base:'rune_emerald',mat:'rime_fang'},rune_topaz2:{base:'rune_topaz',mat:'ash_feather'},rune_amethyst2:{base:'rune_amethyst',mat:'glacial_dew'},rune_citrine2:{base:'rune_citrine',mat:'ember_chunk'},rune_onyx2:{base:'rune_onyx',mat:'glacial_dew'}};
 const GREATER_GOLD=1500;
-const MDEF={slime:{n:'Slime',sheet:'slime',frames:30,hp:30,mn:4,mx:9,xp:12,gold:1,loot:[['slime_goo',0.75],['rift_seed',0.01]],spd:28,pat:60,fly:false},goblin:{n:'Goblin',sheet:'goblin',frames:20,hp:50,mn:8,mx:15,xp:20,gold:2,loot:[['goblin_ear',0.55]],spd:42,pat:80,fly:false,beh:'leap'},bat:{n:'Cave Bat',sheet:'bat',frames:16,hp:40,mn:10,mx:19,xp:48,gold:1,loot:[['bat_wing',0.65],['wither_heart',0.01]],spd:55,pat:100,fly:true},golem:{n:'Crystal Golem',sheet:'golem',frames:40,hp:120,mn:23,mx:38,xp:200,gold:5,loot:[['crystal_shard',0.8],['resonant_core',0.01]],spd:18,pat:50,fly:false,beh:'aura',auraR:82,auraC:'#b06cff'},skeleton:{n:'Skeleton Archer',sheet:'skeleton',frames:20,hp:65,mn:13,mx:23,xp:150,gold:2,loot:[['bone_shard',0.70],['rift_sigil',0.01]],spd:35,pat:70,fly:false,beh:'lob'},wraith:{n:'Shadow Wraith',sheet:'wraith',frames:30,hp:80,mn:18,mx:28,xp:190,gold:3,loot:[['shadow_essence',0.65]],spd:50,pat:90,fly:true,beh:'shield'},
+const MDEF={slime:{n:'Slime',sheet:'slime',frames:30,hp:30,mn:4,mx:9,xp:12,gold:1,loot:[['slime_goo',0.75],['rift_seed',0.01]],spd:28,pat:60,fly:false},goblin:{n:'Goblin',sheet:'goblin',frames:20,hp:50,mn:8,mx:15,xp:20,gold:2,loot:[['goblin_ear',0.55]],spd:42,pat:80,fly:false,beh:'leap'},bat:{n:'Cave Bat',sheet:'bat',frames:16,hp:40,mn:10,mx:19,xp:48,gold:1,loot:[['bat_wing',0.65],['wither_heart',0.01]],spd:55,pat:100,fly:true},golem:{n:'Crystal Golem',sheet:'golem',frames:40,hp:120,mn:23,mx:38,xp:200,gold:5,loot:[['crystal_shard',0.8],['resonant_core',0.01]],spd:18,pat:50,fly:false,beh:'aura',auraR:82,auraC:'#b06cff'},skeleton:{n:'Skeleton Archer',sheet:'skeleton',frames:20,hp:65,mn:20,mx:32,xp:150,gold:2,loot:[['bone_shard',0.70],['rift_sigil',0.01]],spd:35,pat:70,fly:false,beh:'lob'},wraith:{n:'Shadow Wraith',sheet:'wraith',frames:30,hp:80,mn:22,mx:34,xp:190,gold:3,loot:[['shadow_essence',0.65]],spd:50,pat:90,fly:true,beh:'shield'},
 // ── Act 2 monsters (zones 7–8). Kill XP is in the thousands to match the flattened post-20 level curve.
 magmite:{n:'Magmite',sheet:'magmite',frames:40,hp:480,mn:34,mx:52,xp:1600,gold:12,loot:[['ember_chunk',0.7],['ember_heart',0.01]],spd:30,pat:70,fly:false,beh:'aura',auraR:84,auraC:'#ff7a30'},
 ashwing:{n:'Ashwing',sheet:'ashwing',frames:16,hp:380,mn:40,mx:60,xp:1900,gold:10,loot:[['ash_feather',0.65]],spd:60,pat:100,fly:true,beh:'bomb'},
-frostmaw:{n:'Frostmaw',sheet:'frostmaw',frames:40,hp:700,mn:48,mx:72,xp:2600,gold:16,loot:[['rime_fang',0.7],['frozen_tear',0.01]],spd:34,pat:70,fly:false,beh:'leap'},
-sleetwisp:{n:'Sleet Wisp',sheet:'sleetwisp',frames:30,hp:560,mn:55,mx:80,xp:3000,gold:14,loot:[['glacial_dew',0.65]],spd:58,pat:100,fly:true,beh:'lob',lobC:'#bfe8ff'}};
+frostmaw:{n:'Frostmaw',sheet:'frostmaw',frames:40,hp:700,mn:44,mx:64,xp:2600,gold:16,loot:[['rime_fang',0.7],['frozen_tear',0.01]],spd:34,pat:70,fly:false,beh:'leap'},
+sleetwisp:{n:'Sleet Wisp',sheet:'sleetwisp',frames:30,hp:560,mn:50,mx:70,xp:3000,gold:14,loot:[['glacial_dew',0.65]],spd:58,pat:100,fly:true,beh:'lob',lobC:'#bfe8ff'}};
 // Quest chain tells the story of the Hollow Rift: each giver adds a piece (txt = offer, done = turn-in reveal, after = post-quest line, lock = shown until prev quest is done)
 // Quest chain follows a zone-by-zone progression: all of Zone 1 (story → rift-relic hunt → boss),
 // then Zone 2, Zone 3, Zone 4, and finally the Hollow Rift. The prev field gates each on the prior step;
@@ -2755,7 +2761,7 @@ function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};tr
 function zoneSpawnPoint(){const ps=plats.filter(p=>p.w>=60);let best=null;for(let i=0;i<8;i++){const p=ps[Math.floor(Math.random()*ps.length)]||plats[0];const x=Math.max(30,Math.min(CZ.bound-30,p.x+20+Math.random()*Math.max(1,p.w-40)));best={x,y:p.y-2};if(Math.abs(x-PL.x)>220)return best;}return best||{x:CZ.bound/2,y:300};}
 // 0.5s name-card wipe on zone entry (skipped during boot so it can't fight the #fade overlay)
 function triggerZoneCard(name){if(!window.worldStarted)return;const el=document.getElementById('ztrans');if(!el)return;const nm=document.getElementById('ztrans-name');if(nm)nm.textContent='— '+name+' —';el.classList.add('show');zoneCardT=0.62;}
-function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(portalFlashT>0)portalFlashT=Math.max(0,portalFlashT-dt);if(deathFlashT>0)deathFlashT=Math.max(0,deathFlashT-dt);if(enrageFlashT>0)enrageFlashT=Math.max(0,enrageFlashT-dt);if(auraT>0)auraT=Math.max(0,auraT-dt);if(zoneCardT>0){zoneCardT-=dt;if(zoneCardT<=0){const el=document.getElementById('ztrans');if(el)el.classList.remove('show');}}updateDying(dt);let udt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);udt=dt*0.12;}if(!dlgOpen&&!mapOpen&&!paused)update(udt);renderOrbs();jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();saveMeta();checkAchv();}draw();raf=requestAnimationFrame(tick);}
+function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(portalFlashT>0)portalFlashT=Math.max(0,portalFlashT-dt);if(deathFlashT>0)deathFlashT=Math.max(0,deathFlashT-dt);if(enrageFlashT>0)enrageFlashT=Math.max(0,enrageFlashT-dt);if(auraT>0)auraT=Math.max(0,auraT-dt);if(zoneCardT>0){zoneCardT-=dt;if(zoneCardT<=0){const el=document.getElementById('ztrans');if(el)el.classList.remove('show');}}updateDying(dt);let udt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);udt=dt*0.12;}if(!dlgOpen&&!mapOpen&&!paused)update(udt);updateCombatMusic(dt);renderOrbs();jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();saveMeta();checkAchv();}draw();raf=requestAnimationFrame(tick);}
 function update(dt){
   if(RIFT.ending){endRift(false);return;}
   const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
@@ -3427,7 +3433,9 @@ function drawRuinsBG(){
 // ═══════════════════════════════════════════════════════
 function zoneTheme(z){if(z===RIFT_ZONE&&RIFT.active)return riftTheme();return z===0?'city':z===1?'village':z===2?'forest':z===3?'cavern':z===4?'ruins':z===7?'ember':z===8?'glacier':z===9?'ashen':'rift';}
 // per-zone colour grade + vignette strength
-const ZGRADE={city:{tint:'rgba(80,55,150,0.16)',vig:'rgba(8,4,22,0.5)'},village:{tint:'rgba(50,80,150,0.14)',vig:'rgba(6,12,32,0.46)'},forest:{tint:'rgba(40,110,55,0.16)',vig:'rgba(4,18,8,0.5)'},cavern:{tint:'rgba(95,50,165,0.18)',vig:'rgba(10,4,28,0.56)'},ruins:{tint:'rgba(70,55,110,0.15)',vig:'rgba(6,4,18,0.58)'},rift:{tint:'rgba(180,30,80,0.18)',vig:'rgba(20,2,12,0.58)'},ember:{tint:'rgba(200,90,30,0.16)',vig:'rgba(24,8,2,0.56)'},glacier:{tint:'rgba(70,130,200,0.16)',vig:'rgba(4,12,26,0.52)'},ashen:{tint:'rgba(190,120,40,0.17)',vig:'rgba(18,10,2,0.6)'}};
+// A4 — a couple of zones are lit deliberately against the signature darkness for contrast:
+// Village Outskirts reads as warm dawn (lighter vignette); Frostveil Glacier gets an aurora tint.
+const ZGRADE={city:{tint:'rgba(80,55,150,0.16)',vig:'rgba(8,4,22,0.5)'},village:{tint:'rgba(255,158,96,0.13)',vig:'rgba(34,16,22,0.32)'},forest:{tint:'rgba(40,110,55,0.16)',vig:'rgba(4,18,8,0.5)'},cavern:{tint:'rgba(95,50,165,0.18)',vig:'rgba(10,4,28,0.56)'},ruins:{tint:'rgba(70,55,110,0.15)',vig:'rgba(6,4,18,0.58)'},rift:{tint:'rgba(180,30,80,0.18)',vig:'rgba(20,2,12,0.58)'},ember:{tint:'rgba(210,96,30,0.18)',vig:'rgba(24,8,2,0.54)'},glacier:{tint:'rgba(90,205,180,0.16)',vig:'rgba(4,14,26,0.4)'},ashen:{tint:'rgba(190,120,40,0.17)',vig:'rgba(18,10,2,0.6)'}};
 // World-space decorations sitting on the ground line (parallax 1.0, behind characters)
 // Phase 6 — one hero landmark per combat/arena zone (world-anchored, behind characters):
 // a memory anchor that speaks the story the quests tell.
@@ -3452,7 +3460,10 @@ function drawLandmarks(){const th=platTheme(),gy=390,ctx=ctx2,W=cv.width,fl=0.6+
     ctx.fillStyle='#2e2246';ctx.beginPath();ctx.arc(sx,gy-166,26,0,Math.PI*2);ctx.fill();ctx.fillStyle='#0a0618';ctx.beginPath();ctx.arc(sx-9,gy-170,6,0,Math.PI*2);ctx.arc(sx+9,gy-170,6,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='#3a2a52';ctx.lineWidth=5;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(sx-28+i*4,gy-96);ctx.lineTo(sx-34+i*14,gy);ctx.stroke();}
     const cp=0.4+Math.sin(gTime*1.8)*0.25;ctx.save();ctx.globalAlpha=cp;glow(ctx,sx,gy-124,30,'rgba(160,110,240,0.7)');ctx.restore();
-    ctx.fillStyle='#c090f0';[[sx-14,gy-108],[sx+12,gy-116],[sx,gy-92]].forEach(([x,y])=>{ctx.beginPath();ctx.moveTo(x-4,y);ctx.lineTo(x+4,y);ctx.lineTo(x,y-12);ctx.closePath();ctx.fill();});return;}
+    ctx.fillStyle='#c090f0';[[sx-14,gy-108],[sx+12,gy-116],[sx,gy-92]].forEach(([x,y])=>{ctx.beginPath();ctx.moveTo(x-4,y);ctx.lineTo(x+4,y);ctx.lineTo(x,y-12);ctx.closePath();ctx.fill();});
+    // A5 — glowing crystal veins + a pulsing chest core give the guardian interior life
+    ctx.save();ctx.globalAlpha=0.3+Math.sin(gTime*2.2)*0.2;ctx.strokeStyle='#c9a6ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(sx-18,gy-18);ctx.lineTo(sx-9,gy-64);ctx.lineTo(sx-14,gy-104);ctx.moveTo(sx+18,gy-18);ctx.lineTo(sx+9,gy-64);ctx.lineTo(sx+12,gy-104);ctx.stroke();ctx.restore();
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=0.5+Math.sin(gTime*3)*0.25;glow(ctx,sx,gy-72,13,'rgba(190,140,255,0.9)');ctx.restore();return;}
   if(th==='ruins'){const sx=at(1080);if(sx<-200||sx>W+200)return;
     ctx.fillStyle='#211b34';ctx.fillRect(sx-48,gy-176,96,176);ctx.fillStyle='#2a2340';ctx.fillRect(sx-48,gy-176,96,8);
     ctx.fillStyle='#171226';ctx.fillRect(sx-38,gy-160,76,160);
