@@ -211,17 +211,18 @@ canvas#gc{display:block;image-rendering:pixelated}
 <div id="screens" style="position:absolute;inset:0;z-index:1">
 <div id="sc" class="screen">
   <div class="ctitle">✦ AstralBound ✦</div>
-  <div class="csub">Choose your destiny in the world of Aethoria</div>
+  <div class="csub">Name your mage and step into the world of Aethoria</div>
   <div class="ccard">
     <canvas id="preview-canvas" width="64" height="64" style="image-rendering:pixelated;width:64px;height:64px"></canvas>
+    <div style="font-size:8px;color:#6a6a86;letter-spacing:2px;margin-top:6px">✦ YOUR CALLING ✦</div>
     <div class="cname2">Mage</div>
-    <div class="cdesc">Master of arcane arts. Cast devastating spells across the platforms of Aethoria.</div>
-    <div style="font-size:10px;color:#6aa3ff;margin-top:10px">✦ INT / MAGIC DAMAGE ✦</div>
+    <div class="cdesc">Master of the arcane. You will shape your path through the skill tree — fire, frost or pure arcane — as you grow.</div>
+    <div style="font-size:10px;color:#6aa3ff;margin-top:10px">INT · MAGIC DAMAGE</div>
   </div>
   <button class="bstart bcont" id="bcont" style="display:none" onclick="continueGame()">⟳ Continue: <span id="cont-info"></span></button>
   <div class="cor" id="cor" style="display:none">— or start a new adventure —</div>
-  <input class="ninput" id="cin" placeholder="Enter your character name..." maxlength="16"/>
-  <button class="bstart" id="bstart" onclick="startGame()">Enter World ➤</button>
+  <input class="ninput" id="cin" placeholder="Enter your character name..." maxlength="16" onkeydown="if(event.key==='Enter')beginNewGame()"/>
+  <button class="bstart" id="bstart" onclick="beginNewGame()">Enter World ➤</button>
 </div>
 
 <div id="sg" class="screen">
@@ -470,8 +471,8 @@ const BEATS=[
   {draw:drawS1,lbl:'The Shattering',spk:'Narrator',txt:'Then came the Shattering. A dark force tore through the sky, corrupting creatures across the land and scattering the Sages to the far corners of the realm.'},
   {draw:drawS1,lbl:'The Shattering',spk:'Narrator',txt:'Among the lost was the Council\'s own Oracle — she who gazed too long into the rift, seeking its heart. Some say she did not die that night. Some say she listened.'},
   {draw:drawS1,lbl:'The Shattering',spk:'Elder Mira',txt:'"The monsters grow bolder every day. Our village is barely holding. We need someone brave enough to push back the darkness..."'},
-  {draw:drawS2,lbl:'A Hero Awakens',spk:'Narrator',txt:'You are one of the few who still carries the gift of magic. Untrained, but burning with potential that could change everything.'},
-  {draw:drawS2,lbl:'A Hero Awakens',spk:'Elder Mira',txt:'"Adventurer — Aethoria needs you. The fate of this world rests on your shoulders. Will you answer the call?"'}
+  {draw:drawS2,lbl:'A Hero Awakens',spk:'Narrator',txt:'You are {name} — one of the few who still carries the gift of magic. Untrained, but burning with potential that could change everything.'},
+  {draw:drawS2,lbl:'A Hero Awakens',spk:'Elder Mira',txt:'"{name} — Aethoria needs you. The fate of this world rests on your shoulders. Will you answer the call?"'}
 ];
 
 function resizeSCV(){sCV.width=sCV.parentElement.clientWidth||640;sCV.height=sCV.parentElement.clientHeight||440;}
@@ -952,7 +953,7 @@ function showBeat(i){
     resizeSCV();
     document.getElementById('slbl').textContent=b.lbl;
     document.getElementById('cut-spk').textContent=b.spk;
-    startType(b.txt);
+    startType((b.txt||'').replace(/\{name\}/g,(G&&G.name)||'Aethar'));
     fade.style.opacity='0';
   },500);
 }
@@ -971,12 +972,17 @@ function endCut(){
     document.getElementById('cut').style.display='none';
     document.getElementById('screens').style.position='relative';
     if(window.worldStarted)return; // game already running — don't resurface the title screen
+    // A3 — after the intro (now shown *after* naming), drop straight into the world.
+    if(pendingEnter){pendingEnter=false;if(cutAnimRAF){cancelAnimationFrame(cutAnimRAF);cutAnimRAF=null;}enterWorld();log('Welcome, '+G.name+'! Arrows to move, ↑/Space to jump.','q');log('Q W E R to cast spells. Press F near an NPC to talk.','q');log('Potions auto-fill the T and Y hotbar slots — press T/Y to use them.','q');log('Take quests in Aethon City, then exit through the east portal to hunt.','q');saveGame();return;}
     document.getElementById('sc').classList.add('active');
     if(cutAnimRAF){cancelAnimationFrame(cutAnimRAF);cutAnimRAF=null;}
     previewAnim();
   },600);
 }
+let pendingEnter=false;
 
+// A3 — Enter skips the whole intro; clicking anywhere on the scene advances a beat.
+document.addEventListener('keydown',e=>{const cut=document.getElementById('cut');if(cut&&cut.style.display!=='none'&&!window.worldStarted){if(e.key==='Enter'){e.preventDefault();skipCut();}}});
 document.getElementById('cut').addEventListener('click',e=>{if(e.target.classList.contains('cut-btn'))return;
   // Initialize audio on first click (browser requirement)
   if(!AC){initAudio();playIntroMusic();}
@@ -1945,7 +1951,7 @@ const QUESTS=[
 {id:'q12',title:'The Crystal Lich',giver:'Sage Oriax',rlvl:16,prev:'q11',
  lock:'The Core first. I will not loose you on the Lich half-ready.',
  txt:'The thing that wears the crown is a Crystal Lich — a Council mage who came down to study the rift and never climbed back out, now a husk of singing crystal and stolen mana. It is Veyra’s jailer and her battery both.\n\nDescend into the Caverns and shatter it, {name}. Spill the mana it hoards before she drinks the last of it.',
- done:'The Lich is shattered. I felt the caverns fall silent for the first time in years.\n\nBut silence is not safety. With its battery broken, Veyra will reach for whatever power remains — and the deepest reservoir of all lies beneath the Ancient Ruins. Scholar Aldric must be warned at once.',
+ done:'The Lich is shattered. As it broke it laughed and rasped a name — "Zal\'Guroth" — and swore the Hollow Voice would drink us all. I felt the caverns fall silent for the first time in years.\n\nBut silence is not safety. With its battery broken, Veyra will reach for whatever power remains — and the deepest reservoir of all lies beneath the Ancient Ruins. Scholar Aldric must be warned at once.',
  after:'The crystal no longer sings. I have begun, at last, to sleep again.',
  tasks:[{type:'kill',tgt:'crystal_lich',n:1}],rew:{xp:1500,gold:200}},
 // ── Zone 4: Ancient Ruins ──
@@ -2025,7 +2031,7 @@ const QUESTS=[
 {id:'q22',title:'The Second Shattering',giver:'Seer Vesper',rlvl:28,prev:'q21',tp:9,
  lock:'Not yet, {name}. While the Matriarch flies, his sanctum has a shield of ice and wing — and the threads say you are not yet equal to what waits inside it. Grow stronger. Then come.',
  txt:'I have found him. Between the wastes and the glacier, in a sanctum built of fused ash, Malachar kneels over his harvest of ember-hearts and works them into a single burning seed — a SECOND SHATTERING, {name}. Veyra opened a door that was already there. He means to tear a new one, and to stand in it as a god.\n\nThe threads end at his threshold; I cannot see past it. Only this is certain: the moment you agree, I will fold the world and set you inside his sanctum, and one of you will not walk out.\n\nYou closed the sky once. Are you ready to keep it closed?',
- done:'The seed is cold. The sanctum is falling. Malachar... is ash among ash, {name}.\n\nTwice now you have carried the whole sky on your shoulders — once at the door, once at the forge that would have re-made it. Aethoria has no title high enough for you. So I will use the only one that matters: my friend.',
+ done:'The seed is cold. The sanctum is falling. Malachar... is ash among ash, {name}.\n\nBut at the end he was not praying to himself. He wept and called the seed an offering — "for Zal\'Guroth, the Hollow One, who spoke first and will speak last." Veyra, the Lich, Malachar: none of them led. They listened. Something beneath the rifts has been giving the orders all along.\n\nTwice now you have carried the whole sky on your shoulders. Aethoria has no title high enough for you. So I will use the only one that matters: my friend. Rest — then we find the Voice itself.',
  after:'The western horizon is clean. Sable rebuilds her villages; Oriax sleeps whole nights again. You did this.',
  tasks:[{type:'kill',tgt:'ash_sage',n:1}],rew:{xp:250000,gold:5000,teach:'emberstorm'}},
 // ── True finale: The Riftheart — the master revealed ──
@@ -2637,6 +2643,19 @@ function startGame(){
   log('Take quests in Aethon City, then exit through the east portal to hunt.','q');
   saveGame();
 }
+// A3 — the "Enter World" button: name first, then play the intro cutscene (which now
+// personalises with {name}); endCut drops into the world. startGame() stays a direct
+// world-entry path (used by the test harness, which skips the cutscene).
+function beginNewGame(){
+  if(loadSave()&&!overwriteArmed){overwriteArmed=true;document.getElementById('bstart').textContent='⚠ Overwrite save? Click again';return;}
+  G.name=document.getElementById('cin').value.trim()||'Aethar';
+  pendingEnter=true;window.worldStarted=false;
+  document.getElementById('sc').classList.remove('active');
+  document.getElementById('screens').style.position='relative';
+  document.getElementById('cut').style.display='flex';
+  if(!AC){initAudio();playIntroMusic();}
+  beat=0;resizeSCV();showBeat(0);cutAnim();
+}
 function continueGame(){
   const d=loadSave();if(!d)return;
   applySave(d);
@@ -2654,7 +2673,7 @@ function enterWorld(){
   document.getElementById('hname').textContent=G.name;
   document.getElementById('hlvl').textContent=lvlLabel();
   drawHudSprite();
-  setupCV();loadZone(G.zone);renderAll();updateHUD();
+  setupCV();loadZone(G.zone);renderAll();updateHUD();movePauseSettings();
   document.addEventListener('keydown',onKD);
   document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
   raf=requestAnimationFrame(tick);
@@ -4032,7 +4051,8 @@ function toggleMap(){mapOpen=!mapOpen;keys={};jp={};document.getElementById('mov
 // B3 — Esc pause menu. Freezes the update loop (draw still runs so the scene shows behind),
 // and relocates the music/SFX/reduced-motion controls out of the HUD into its Settings panel.
 let paused=false;
-function togglePause(){paused=!paused;keys={};jp={};if(paused){const ps=document.getElementById('pause-settings'),vr=document.querySelector('.vol-row');if(vr&&ps&&vr.parentNode!==ps){ps.innerHTML='<div style="font-size:8px;color:#8a8aa0;margin-bottom:8px;font-family:var(--font-pix);letter-spacing:0.5px">SETTINGS</div>';ps.appendChild(vr);}}document.getElementById('pause').classList.toggle('open',paused);}
+function movePauseSettings(){const ps=document.getElementById('pause-settings'),vr=document.querySelector('.vol-row');if(vr&&ps&&vr.parentNode!==ps){ps.innerHTML='<div style="font-size:8px;color:#8a8aa0;margin-bottom:8px;font-family:var(--font-pix);letter-spacing:0.5px">SETTINGS</div>';ps.appendChild(vr);}}
+function togglePause(){paused=!paused;keys={};jp={};if(paused)movePauseSettings();document.getElementById('pause').classList.toggle('open',paused);}
 function togglePauseHelp(){const h=document.getElementById('pause-help');h.style.display=h.style.display==='none'?'block':'none';}
 function quitToTitle(){try{saveGame();saveMeta();}catch(e){}location.reload();}
   
@@ -4057,7 +4077,13 @@ function initTouch(){
   window.addEventListener('touchstart',enableTouch,{passive:true,once:true});
 }
 function travelTo(i){if(G.level<ZD[i].req){log(ZD[i].name+' requires Level '+ZD[i].req+'!','d');toggleMap();return;}toggleMap();loadZone(i);renderAll();updateHUD();log('Traveled to '+ZD[i].name+'!','q');saveGame();}
-function enterPortal(p){if(RIFT.active){endRift(true);return;}if((p.toZone===7||p.toZone===8)&&!actTwoOpen()){log('A wall of ashen wind seals the western road. Close the Hollow Rift first.','d');return;}if(G.level<ZD[p.toZone].req){log(ZD[p.toZone].name+' requires Level '+ZD[p.toZone].req+'!','d');return;}portalFlashT=0.4;burstRing(p.x,p.y-42,ZONE_PORTAL_COLORS[p.toZone]||'#9fd0ff',18,150);const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
+function finaleSealed(){return isFinaleArena(G.zone)&&mons.some(m=>m.boss&&!m.part);}
+function portalTravel(p){portalFlashT=0.4;burstRing(p.x,p.y-42,ZONE_PORTAL_COLORS[p.toZone]||'#9fd0ff',18,150);const sx=p.dir==='right'?100:ZD[p.toZone].bound-120;sfxQuestAccept();loadZone(p.toZone,sx);renderAll();updateHUD();log('Stepped through portal → '+ZD[p.toZone].name,'q');saveGame();}
+function enterPortal(p){if(RIFT.active){endRift(true);return;}
+  // E2 — the finale arena's exit is sealed while the boss lives; retreating is a confirmed
+  // choice that resets the attempt (the boss respawns at full strength on re-entry).
+  if(finaleSealed()){const bn=(mons.find(m=>m.boss&&!m.part)||{}).n||'the foe';dlgOpen=true;keys={};jp={};document.getElementById('dlg-npc').textContent='⚔ The battle is not won';const box=document.getElementById('dlg-txt');box.style.whiteSpace='pre-wrap';box.textContent=bn+' still stands. Flee now and the trial resets — it will be whole again when you return. Retreat to Aethon City?';dlgButtons([{l:'⮈ Retreat (resets the fight)',fn:()=>{closeDlg();portalTravel(p);}},{l:'⚔ Stand and fight',fn:closeDlg,p:true}]);document.getElementById('dlg-overlay').classList.add('open');return;}
+  if((p.toZone===7||p.toZone===8)&&!actTwoOpen()){log('A wall of ashen wind seals the western road. Close the Hollow Rift first.','d');return;}if(G.level<ZD[p.toZone].req){log(ZD[p.toZone].name+' requires Level '+ZD[p.toZone].req+'!','d');return;}portalTravel(p);}
 function drawPortals(){
   portals2.forEach(p=>{
     const sx=p.x-camX;if(sx<-100||sx>cv.width+100)return;
@@ -4065,7 +4091,8 @@ function drawPortals(){
     const h=80,r=18,by=p.y-2,ty=by-h;
     const pulse=Math.sin(gTime*2.5)*0.25+0.75;
     const sealed=(p.toZone===7||p.toZone===8)&&!actTwoOpen();
-    const locked=sealed||G.level<ZD[p.toZone].req;
+    const arenaSeal=finaleSealed();
+    const locked=sealed||arenaSeal||G.level<ZD[p.toZone].req;
     const dc=locked?'#778':col;
     ctx2.save();
     // Standing-stone gate: two mirrored carved pillars framing the energy film
@@ -4117,9 +4144,9 @@ function drawPortals(){
     // Label — pilled zone name (navigation-critical, must read against the gate glow)
     const ly=ty-r-12,pname=(p.dir==='right'?'→ ':'← ')+ZD[p.toZone].name;
     labelPill(pname,sx,ly,{size:7,color:locked?'#9aa0b4':'#dfe6ff',border:locked?null:`rgba(${hexRGB(col).join(',')},0.5)`});
-    if(locked){ctx2.save();ctx2.font='7px "Press Start 2P",monospace';ctx2.textAlign='center';ctx2.fillStyle='#e26a6a';ctx2.fillText(sealed?'Sealed by ash':'Lv.'+ZD[p.toZone].req+' req.',sx,ly-16);ctx2.restore();}
+    if(locked){ctx2.save();ctx2.font='7px "Press Start 2P",monospace';ctx2.textAlign='center';ctx2.fillStyle='#e26a6a';ctx2.fillText(arenaSeal?'Defeat the boss to leave':sealed?'Sealed by ash':'Lv.'+ZD[p.toZone].req+' req.',sx,ly-16);ctx2.restore();}
     // [F] Enter / locked prompt when nearby
-    if(nearPortal===p)labelPill(locked?'Not yet':'[F] Enter',sx,ly-20,{size:7,color:'#fff',bg:locked?'rgba(200,70,70,0.92)':'rgba(106,163,255,0.92)'});
+    if(nearPortal===p)labelPill(arenaSeal?'[F] Retreat?':locked?'Not yet':'[F] Enter',sx,ly-20,{size:7,color:'#fff',bg:locked?'rgba(200,70,70,0.92)':'rgba(106,163,255,0.92)'});
   });
 }
 
@@ -4141,6 +4168,10 @@ if(bootSave){
   document.getElementById('sc').classList.add('active');
   previewAnim();
 }else{
-  setTimeout(()=>{resizeSCV();showBeat(0);cutAnim();},200);
+  // A3 — new game: show the naming screen first; the intro plays after Enter World.
+  document.getElementById('cut').style.display='none';
+  document.getElementById('screens').style.position='relative';
+  document.getElementById('sc').classList.add('active');
+  previewAnim();
 }
 </script>
