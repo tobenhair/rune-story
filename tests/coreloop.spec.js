@@ -56,6 +56,27 @@ test.describe('C1 — movement-demanding enemy behaviors', () => {
   });
 });
 
+test.describe('C3 — exploration content', () => {
+  test('a zone cache grants a one-time guaranteed reward and persists through save/load', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      loadZone(1); G.treasures = {}; G.gold = 0; G.inventory = []; G.equipment = { weapon: null, armor: null };
+      const t = ZONE_TREASURE[1]; PL.x = t.x; PL.y = t.y; PL.vx = 0; PL.vy = 0;
+      update(0.02); // walking onto the cache opens it
+      const gearCount = () => [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean).length;
+      const gold1 = G.gold, gc = gearCount(), collected = !!G.treasures[1];
+      PL.x = t.x; PL.y = t.y; update(0.02);        // re-touch → no second reward
+      const doubled = G.gold > gold1;
+      saveGame(); const d = loadSave(); G.treasures = {}; applySave(d); // persistence
+      return { gold1, gc, collected, doubled, persisted: !!G.treasures[1] };
+    });
+    expect(r.collected).toBe(true);
+    expect(r.gold1).toBeGreaterThan(0);
+    expect(r.gc).toBeGreaterThan(0);
+    expect(r.doubled).toBe(false);
+    expect(r.persisted).toBe(true);
+  });
+});
+
 test.describe('C4 — new enemy archetypes', () => {
   test('a shielded enemy shrugs off spells unless you dash through its ward', async ({ game }) => {
     const r = await game.evaluate(() => {

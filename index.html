@@ -1853,7 +1853,7 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 // GAME ENGINE
 // ═══════════════════════════════════════════════════════
 const GRAV=900,JUMP=-390,SPD=175;
-const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null,null],relicPity:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0},reduceMotion:false};
+const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null,null],relicPity:{},treasures:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0},reduceMotion:false};
 function setReduceMotion(v){G.reduceMotion=!!v;const c=document.getElementById('rm-check');if(c)c.checked=!!v;saveGame();}
 const ZD=[
   {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'galen',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'bren',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'tomlin',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'oriax',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'aldric',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'sable',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'vesper',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'kael',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'sora',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'ily',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'nyx',asc:true}],portals:[{toZone:7,x:40,y:388,dir:'left'},{toZone:1,x:1100,y:388,dir:'right'}]},
@@ -2616,7 +2616,7 @@ function saveGame(){
       riftBest:G.riftBest,riftShards:G.riftShards,
       kills:G.kills,questStates:G.questStates,questProg:G.questProg,equipment:G.equipment,
       inventory:G.inventory.filter(x=>x&&x.qty>0),spells:G.spells,
-      storage:G.storage.filter(x=>x&&x.qty>0),storageMax:G.storageMax,hotbar:G.hotbar,city:G.city,relicPity:G.relicPity,attune:G.attune,emberstorm:G.emberstorm,
+      storage:G.storage.filter(x=>x&&x.qty>0),storageMax:G.storageMax,hotbar:G.hotbar,city:G.city,relicPity:G.relicPity,treasures:G.treasures,attune:G.attune,emberstorm:G.emberstorm,
       bounty:G.bounty,lastSold:G.lastSold,skills:[...USK],bossTimers,
       mv:+document.getElementById('vol-music').value,
       sv:+document.getElementById('vol-sfx').value,
@@ -2649,7 +2649,7 @@ function applySave(d){
   G.storage=(d.storage||[]).map(x=>{if(!x)return null;if(x.g)return x;return ITEMS[x.id]?x:null;}).filter(x=>x);
   G.storageMax=(typeof d.storageMax==='number'&&d.storageMax>=10)?d.storageMax:10;
   G.city=Object.assign({sanctum:0,forge:0,apothecary:0,guild:0,vault:0},(d.city&&typeof d.city==='object')?d.city:{});
-  G.relicPity=(d.relicPity&&typeof d.relicPity==='object')?d.relicPity:{};
+  G.relicPity=(d.relicPity&&typeof d.relicPity==='object')?d.relicPity:{};G.treasures=(d.treasures&&typeof d.treasures==='object')?d.treasures:{};
   G.attune=(typeof d.attune==='number'&&d.attune>0)?Math.floor(d.attune):0;G.emberstorm=!!d.emberstorm;
   G.hotbar=Array.isArray(d.hotbar)?[0,1,2].map(i=>{const id=d.hotbar[i];return(id&&ITEMS[id]&&ITEMS[id].consumable)?id:null;}):[null,null,null];
   G.spells=d.spells||[true,false,false,true];
@@ -2737,12 +2737,19 @@ const AFFIXES=[
 const ENRAGE_AFTER=35,ENRAGE_RATE=0.015,ENRAGE_MAX=2.6;
 function enrageMul(m){if(!m||!m.boss||!m.fightT)return 1;const over=m.fightT-(m.enrageAfter||ENRAGE_AFTER);return over<=0?1:Math.min(ENRAGE_MAX,1+over*ENRAGE_RATE);}
 function mkMon(t,x,y,forceElite){const d=MDEF[t],elite=forceElite||Math.random()<0.1,af=elite?AFFIXES[Math.floor(Math.random()*AFFIXES.length)]:null,hm=elite?3:1,dm=elite?1.5:1,sm=(af&&af.id==='frenzied')?1.5:1,em=ascEnemyMul(),rm=metaRewardMul();return{id:Math.random(),t,n:(elite?'★ '+(af?af.n+' ':''):'')+d.n,elite,affix:af?af.id:null,affixC:af?af.c:null,sheet:d.sheet,frames:d.frames,hp:Math.round(d.hp*hm*em),mhp:Math.round(d.hp*hm*em),mn:Math.round(d.mn*dm*em),mx:Math.round(d.mx*dm*em),xp:Math.round(d.xp*(elite?2.5:1)*rm),gold:Math.round((d.gold||0)*(elite?3:1)*rm),loot:d.loot,spd:d.spd*sm,pat:d.pat,fly:d.fly,beh:d.beh,auraR:d.auraR,auraC:d.auraC,lobProj:d.lobProj,lobC:d.lobC,x,y,bx:x,vx:d.spd*sm*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0};}
+// C3 — one hidden treasure cache per combat zone, perched on its hardest-to-reach top
+// platform (the platforming challenge); a guaranteed rare+ gear drop + gold, once ever.
+const ZONE_TREASURE={1:{x:775,y:88},2:{x:710,y:82},3:{x:685,y:76},4:{x:685,y:80},7:{x:720,y:80},8:{x:700,y:78}};
+function openTreasure(z){if(G.treasures[z])return;G.treasures[z]=true;const g=rollGear(z,true);G.gold+=(60+z*40+G.level*6);sfxLoot();burst(PL.x,PL.y-30,'#ffd24a',24,160);if(!reducedMotion())rings.push({x:PL.x,y:PL.y-16,r0:6,r1:70,c:'#ffd24a',t:0,dur:0.32});log('🎁 Hidden cache! +'+(60+z*40+G.level*6)+' gold — '+g.n+'!','x');addGear(g);updateHUD();renderIP();saveGame();}
 function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};triggerZoneCard(CZ.name);
   // B7 — clear any lingering boss/rift banner so it can't bleed into the next zone.
   bossAlertT=0;riftMsgT=0;
   // B8 — hide the top-left control hints while in the rift, where the depth HUD sits.
   {const sg=document.getElementById('sg');if(sg)sg.classList.toggle('in-rift',i===RIFT_ZONE);}
-  mons=[];npcs2=[];projs=[];dying=[];rings=[];arcs=[];parts=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];nearNPC=null;nearPortal=null;PL.inv=Math.max(PL.inv||0,1.0);combatStarted=false;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,rift:n.rift,asc:n.asc,town:n.town,codex:n.codex,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if(isFinaleArena(i)&&!mons.some(m=>m.boss))spawnBoss(i);}
+  mons=[];npcs2=[];projs=[];dying=[];rings=[];arcs=[];parts=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];nearNPC=null;nearPortal=null;PL.inv=Math.max(PL.inv||0,1.0);combatStarted=false;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});
+  // C3 — a rare wandering elite sometimes prowls a combat zone (extra ★ foe, extra loot).
+  if(((i>=1&&i<=4)||i===7||i===8)&&CZ.mons.length&&Math.random()<0.3){const t=CZ.mons[Math.floor(Math.random()*CZ.mons.length)].t,sp=zoneSpawnPoint();mons.push(mkMon(t,sp.x,sp.y,true));log('A powerful presence stalks these grounds…','q');}
+  CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,rift:n.rift,asc:n.asc,town:n.town,codex:n.codex,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if(isFinaleArena(i)&&!mons.some(m=>m.boss))spawnBoss(i);}
 // Pick a fresh respawn spot somewhere in the current zone, biased away from the player so
 // monsters don't always reappear in the exact same place — keeps the maps feeling alive.
 function zoneSpawnPoint(){const ps=plats.filter(p=>p.w>=60);let best=null;for(let i=0;i<8;i++){const p=ps[Math.floor(Math.random()*ps.length)]||plats[0];const x=Math.max(30,Math.min(CZ.bound-30,p.x+20+Math.random()*Math.max(1,p.w-40)));best={x,y:p.y-2};if(Math.abs(x-PL.x)>220)return best;}return best||{x:CZ.bound/2,y:300};}
@@ -2769,6 +2776,7 @@ function update(dt){
   if(!wasGnd&&PL.gnd&&fallV>150){PL.landT=0.14;if(!reducedMotion()){footRing(PL.x,PL.y);shake(0.05,1.4);}}
   if(PL.y>440){PL.y=260;PL.vy=0;G.hp=Math.max(1,G.hp-15);log('Fell! -15 HP','d');updateHUD();}
   PL.x=Math.max(10,Math.min(CZ.bound-10,PL.x));
+  {const t=ZONE_TREASURE[G.zone];if(t&&!G.treasures[G.zone]&&Math.abs(PL.x-t.x)<30&&Math.abs(PL.y-t.y)<34)openTreasure(G.zone);}
   if(PL.inv>0)PL.inv-=dt;if(PL.casting>0)PL.casting-=dt;if(PL.shHitT>0)PL.shHitT-=dt;if(PL.landT>0)PL.landT-=dt;if(PL.hurtT>0)PL.hurtT-=dt;
   if(Math.abs(PL.vx)>10||!PL.gnd)PL.frame+=0.12;else PL.frame+=0.03;
   if(PL.gnd&&Math.abs(PL.vx)>50&&!reducedMotion()&&Math.random()<0.22)footMote(PL.x-(PL.right?6:-6),PL.y);
@@ -3714,6 +3722,8 @@ function draw(){
   plats.forEach(drawPlat);
   drawPortals();
   drawProps();
+  // C3 — the zone's hidden cache (faint glow always; name pill only up close so it stays a find).
+  {const t=ZONE_TREASURE[G.zone];if(t&&!G.treasures[G.zone]){const sx=t.x-camX;if(sx>-40&&sx<cv.width+40){const sh=SHS['chest'];if(!reducedMotion()){ctx2.save();ctx2.globalCompositeOperation='lighter';ctx2.globalAlpha=0.22+Math.sin(gTime*3)*0.12;glow(ctx2,sx,t.y-14,18,'#ffd24a');ctx2.restore();}if(sh)ctx2.drawImage(sh,0,0,SD,SDH,sx-SW*SCALE/2,t.y-SH*SCALE,SW*SCALE,SH*SCALE);if(Math.abs(PL.x-t.x)<120)labelPill('✦ Cache',sx,t.y-SH*SCALE-4,{size:6,color:'#ffe9a0'});}}}
   npcs2.forEach(n=>{const sx=n.x-camX-SW*SCALE/2;if(sx+SW*SCALE<0||sx>cv.width)return;const sh=SHS[n.sheet],tf=sh.width/SD,f=Math.floor(n.frame)%tf;ctx2.drawImage(sh,f*SD,0,SD,SDH,sx,n.y-SH*SCALE,SW*SCALE,SH*SCALE);
     const cx=n.x-camX,topY=n.y-SH*SCALE,near=Math.abs(n.x-PL.x)<150;
     // name — pill when the player is close enough to care, faded plate otherwise
