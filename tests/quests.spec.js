@@ -43,8 +43,8 @@ test.describe('Quests', () => {
     expect(r.problems).toEqual([]);
     // One introduction per service NPC the story never sends you to.
     expect(r.targets).toEqual(['Forgemaster Bren', 'Chronicler Ily', 'Master Builder Sora', 'Riftwarden Kael', 'Astralwright Nyx']);
-    // Early intros gate on level only; the endgame pair also waits for the Act 1 finale.
-    expect(r.gates).toEqual([[3, null], [5, null], [8, null], [18, 'q15'], [18, 'q15']]);
+    // Early intros gate on level only (staggered ~3/6/9 per E4); the endgame pair also waits for the Act 1 finale.
+    expect(r.gates).toEqual([[3, null], [6, null], [9, null], [12, 'q15'], [16, 'q15']]);
   });
 
   test('talking to the target NPC credits and completes an introduction quest', async ({ game }) => {

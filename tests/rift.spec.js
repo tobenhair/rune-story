@@ -252,4 +252,30 @@ test.describe('The Endless Rift', () => {
     expect(r.gearCount).toBeGreaterThan(0);
     expect(r.tooPoor).toBe(true); // can't afford → no change
   });
+
+  test('D1 — the arena rotates palette and platform layout per 5-depth band', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      RIFT.active = true;
+      const themes = [1, 6, 11, 16, 21, 26].map(d => { RIFT.depth = d; return riftTheme(); });
+      startRift(1); const l1 = plats; startDepth(6); const l6 = plats; startDepth(11); const l11 = plats;
+      return { themes, l1IsBase: l1 === RIFT_LAYOUTS[0], swap6: l6 !== l1, swap11: l11 !== l6 };
+    });
+    expect(r.themes).toEqual(['rift', 'cavern', 'ember', 'glacier', 'ruins', 'forest']);
+    expect(r.l1IsBase).toBe(true);   // depth 1 keeps the base arena (no needless swap)
+    expect(r.swap6).toBe(true);      // band 2 reshapes the platforms
+    expect(r.swap11).toBe(true);     // band 3 reshapes again
+  });
+
+  test('D1 — deep boss Echoes (depth 10+) gain an extra ability rider', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      startRift(1); mons.length = 0; spawnRiftBoss(10); const b = mons.find(m => m.boss);
+      const rider = b.affix === 'armored' || b.beh === 'aura' || b.enrageAfter === 12;
+      // a shallow Echo (depth 5) stays plain
+      mons.length = 0; spawnRiftBoss(5); const s = mons.find(m => m.boss);
+      return { name: b.n, rider, shallowPlain: !/, (Frenzied|Warded|Searing)/.test(s.n) };
+    });
+    expect(r.name).toMatch(/,\s(Frenzied|Warded|Searing)/);
+    expect(r.rider).toBe(true);
+    expect(r.shallowPlain).toBe(true);
+  });
 });

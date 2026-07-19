@@ -56,6 +56,58 @@ test.describe('C1 — movement-demanding enemy behaviors', () => {
   });
 });
 
+test.describe('C3 — exploration content', () => {
+  test('a zone cache grants a one-time guaranteed reward and persists through save/load', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      loadZone(1); G.treasures = {}; G.gold = 0; G.inventory = []; G.equipment = { weapon: null, armor: null };
+      const t = ZONE_TREASURE[1]; PL.x = t.x; PL.y = t.y; PL.vx = 0; PL.vy = 0;
+      update(0.02); // walking onto the cache opens it
+      const gearCount = () => [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean).length;
+      const gold1 = G.gold, gc = gearCount(), collected = !!G.treasures[1];
+      PL.x = t.x; PL.y = t.y; update(0.02);        // re-touch → no second reward
+      const doubled = G.gold > gold1;
+      saveGame(); const d = loadSave(); G.treasures = {}; applySave(d); // persistence
+      return { gold1, gc, collected, doubled, persisted: !!G.treasures[1] };
+    });
+    expect(r.collected).toBe(true);
+    expect(r.gold1).toBeGreaterThan(0);
+    expect(r.gc).toBeGreaterThan(0);
+    expect(r.doubled).toBe(false);
+    expect(r.persisted).toBe(true);
+  });
+});
+
+test.describe('C4 — new enemy archetypes', () => {
+  test('a shielded enemy shrugs off spells unless you dash through its ward', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      loadZone(1); T.clear(); keys = {}; jp = {}; PL.x = 300; PL.y = 260;
+      const mk = () => { const m = T.mon('wraith', 500, 260, null); m.hp = m.mhp = 5000; return m; };
+      const hit = (dashing) => { const m = mk(); mons.length = 0; mons.push(m); PL.dashT = dashing ? 0.2 : 0; projs.length = 0;
+        projs.push({ x: m.x, y: m.y, vx: 120, vy: 0, dmg: 100, proj: 'bolt', c: '#fff', life: 1, pw: 8, ph: 8 });
+        update(0.02); return m.mhp - m.hp; };
+      return { beh: mk().beh, warded: hit(false), dashed: hit(true) };
+    });
+    expect(r.beh).toBe('shield');
+    expect(r.warded).toBeLessThan(40);      // ~0.18× while the ward holds
+    expect(r.dashed).toBeGreaterThanOrEqual(90); // dashing through breaks it → full hit
+  });
+
+  test('a bomber lights a fuse and detonates, dying and damaging a close player', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      loadZone(1); T.clear(); keys = {}; jp = {}; G.hp = 4000; G.maxHp = 4000;
+      G.level = 50; G.xpNext = 1e9; // stop the kill's XP from leveling up + full-healing, which would mask the blast
+      const a = T.mon('ashwing', 430, 300, null); a.spd = 0; a.vx = 0; mons.push(a);
+      const before = G.hp; let gone = false;
+      // pin the player next to the bomber so the blast-radius check is deterministic
+      for (let i = 0; i < 90; i++) { PL.x = 400; PL.y = 300; PL.vx = 0; PL.vy = 0; PL.inv = 0; update(0.03); if (!mons.includes(a)) { gone = true; break; } }
+      return { beh: a.beh, gone, took: before - G.hp };
+    });
+    expect(r.beh).toBe('bomb');
+    expect(r.gone).toBe(true);          // detonated & removed itself
+    expect(r.took).toBeGreaterThan(0);  // caught the blast standing next to it
+  });
+});
+
 test.describe('C2 — safe zone entrances', () => {
   test('entering a zone grants ~1s i-frames and resets combat to not-started', async ({ game }) => {
     const r = await game.evaluate(() => { PL.inv = 0; combatStarted = true; loadZone(2); return { inv: PL.inv, started: combatStarted }; });
