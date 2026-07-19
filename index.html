@@ -474,6 +474,22 @@ const BEATS=[
   {draw:drawS2,lbl:'A Hero Awakens',spk:'Narrator',txt:'You are {name} — one of the few who still carries the gift of magic. Untrained, but burning with potential that could change everything.'},
   {draw:drawS2,lbl:'A Hero Awakens',spk:'Elder Mira',txt:'"{name} — Aethoria needs you. The fate of this world rests on your shoulders. Will you answer the call?"'}
 ];
+// E1 — three short finale scenes on the same engine, reusing the intro's scene art.
+const SCENE_Q15=[
+  {draw:drawS1,lbl:'The Hollow Rift',spk:'Narrator',txt:'The Oracle who listened is silent at last. Where Veyra stood, the tear in the sky folds shut like a closing eye.'},
+  {draw:drawS1,lbl:'The Door Closes',spk:'Seer Vesper',txt:'"The door is sealed, {name}. For the first time in a hundred nights, the threads run quiet.\n\nAnd yet... something on the far side pulled the string. We have cut the hand, not the will."'}
+];
+const SCENE_Q22=[
+  {draw:drawS1,lbl:'The Ashen Sanctum',spk:'Narrator',txt:'Malachar\'s second sun gutters and dies in your hands. The forge of a new Shattering cools to grey ash.'},
+  {draw:drawS2,lbl:'A Name in the Ash',spk:'Narrator',txt:'But the Ash Sage did not lead — he knelt. His last breath named an offering to Zal\'Guroth, the Hollow One, the Voice beneath every rift.'},
+  {draw:drawS2,lbl:'The True Enemy',spk:'Seer Vesper',txt:'"Now we see it whole, {name}. Veyra, the Lich, Malachar — all of them listeners. The Voice itself waits below. Rest. Then we end it."'}
+];
+const SCENE_END=[
+  {draw:drawS1,lbl:'The Riftheart',spk:'Narrator',txt:'The third eye closes. Zal\'Guroth, the Hollow One who spoke first, is unmade — and its silence spreads outward through every rift in Aethoria.'},
+  {draw:drawS2,lbl:'Dawn Over Aethoria',spk:'Narrator',txt:'The floating isles drift calm beneath a clean sky. The forests breathe. The caverns sing no more of hunger. The Voice will not speak again.'},
+  {draw:drawS0,lbl:'The Astral-Bound',spk:'Elder Mira',txt:'"You carried the whole sky, {name}, and set it down whole. Aethoria will tell your story until its stars burn out.\n\n— The End —"'}
+];
+let curBeats=BEATS,cutOnDone=null;
 
 function resizeSCV(){sCV.width=sCV.parentElement.clientWidth||640;sCV.height=sCV.parentElement.clientHeight||440;}
 
@@ -946,8 +962,8 @@ function startType(txt){
 }
 
 function showBeat(i){
-  if(i>=BEATS.length){endCut();return;}
-  const b=BEATS[i];
+  if(i>=curBeats.length){endCut();return;}
+  const b=curBeats[i];
   const fade=document.getElementById('fade');fade.style.opacity='1';
   setTimeout(()=>{
     resizeSCV();
@@ -971,6 +987,9 @@ function endCut(){
   setTimeout(()=>{
     document.getElementById('cut').style.display='none';
     document.getElementById('screens').style.position='relative';
+    if(cutAnimRAF){cancelAnimationFrame(cutAnimRAF);cutAnimRAF=null;}
+    // E1 — a mid-game finale scene: restore normal beats and hand control back to the world.
+    if(cutOnDone){const cb=cutOnDone;cutOnDone=null;curBeats=BEATS;paused=false;cb();return;}
     if(window.worldStarted)return; // game already running — don't resurface the title screen
     // A3 — after the intro (now shown *after* naming), drop straight into the world.
     if(pendingEnter){pendingEnter=false;if(cutAnimRAF){cancelAnimationFrame(cutAnimRAF);cutAnimRAF=null;}enterWorld();log('Welcome, '+G.name+'! Arrows to move, ↑/Space to jump.','q');log('Q W E R to cast spells. Press F near an NPC to talk.','q');log('Potions auto-fill the T and Y hotbar slots — press T/Y to use them.','q');log('Take quests in Aethon City, then exit through the east portal to hunt.','q');saveGame();return;}
@@ -980,6 +999,9 @@ function endCut(){
   },600);
 }
 let pendingEnter=false;
+// E1 — play an arbitrary short scene over the running game, then run onDone. Freezes the
+// world (paused) behind the #cut overlay; endCut restores beats/pause and calls onDone.
+function playScene(beats,onDone){curBeats=beats;cutOnDone=onDone||function(){};dlgOpen=false;paused=true;keys={};jp={};beat=0;const cut=document.getElementById('cut');cut.style.display='flex';document.getElementById('screens').style.position='absolute';document.getElementById('fade').style.opacity='1';resizeSCV();showBeat(0);cutAnim();}
 
 // A3 — Enter skips the whole intro; clicking anywhere on the scene advances a beat.
 document.addEventListener('keydown',e=>{const cut=document.getElementById('cut');if(cut&&cut.style.display!=='none'&&!window.worldStarted){if(e.key==='Enter'){e.preventDefault();skipCut();}}});
@@ -992,9 +1014,9 @@ document.getElementById('cut').addEventListener('click',e=>{if(e.target.classLis
 // Animate scene continuously
 function cutAnim(){
   cutTime=performance.now();
-  if(beat<BEATS.length){
+  if(beat<curBeats.length){
     resizeSCV();
-    BEATS[beat].draw(sCV,sCX);
+    curBeats[beat].draw(sCV,sCX);
   }
   cutAnimRAF=requestAnimationFrame(cutAnim);
 }
@@ -3995,7 +4017,9 @@ function qCount(id,t){const p=G.questProg[id];if(!p)return 0;return t.type==='co
 // Credit a kill / loot / NPC conversation toward every active quest that wants it.
 // 'talk' progress shares the kills map, keyed by NPC name (never collides with monster ids).
 function questCredit(kind,key){QUESTS.forEach(q=>{if(G.questStates[q.id]!=='active')return;const p=G.questProg[q.id];if(!p)return;q.tasks.forEach(t=>{if(kind==='kill'&&t.type==='kill'&&t.tgt===key)p.kills[key]=(p.kills[key]||0)+1;else if(kind==='col'&&t.type==='col'&&t.item===key)p.items[key]=(p.items[key]||0)+1;else if(kind==='talk'&&t.type==='talk'&&t.tgt===key)p.kills[key]=(p.kills[key]||0)+1;});});}
-function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}if(q.rew.teach==='emberstorm'&&!G.emberstorm){G.emberstorm=true;sfxFanfare();burst(PL.x,PL.y-36,'#ff9a40',22,150);log('✦ EMBERSTORM learned — your Fireballs now erupt, splashing 40% damage to nearby foes!','x');}closeDlg();renderQP();renderIP();checkAchv();saveGame();}
+function turnInQ(id){const q=QUESTS.find(x=>x.id===id);G.questStates[id]='done';gainXP(q.rew.xp);G.gold+=q.rew.gold;sfxQuestComplete();log('Quest complete! +'+q.rew.xp+' XP, +'+q.rew.gold+' gold','x');if(q.rew.item){addItem(q.rew.item);log('Received: '+ITEMS[q.rew.item].n,'q');}if(q.rew.teach==='emberstorm'&&!G.emberstorm){G.emberstorm=true;sfxFanfare();burst(PL.x,PL.y-36,'#ff9a40',22,150);log('✦ EMBERSTORM learned — your Fireballs now erupt, splashing 40% damage to nearby foes!','x');}closeDlg();renderQP();renderIP();checkAchv();saveGame();
+  // E1 — story finale scenes on the milestone turn-ins.
+  const scene=id==='q15'?SCENE_Q15:id==='q22'?SCENE_Q22:id==='q23'?SCENE_END:null;if(scene)setTimeout(()=>playScene(scene),200);}
 function isQDone(id){const q=QUESTS.find(x=>x.id===id);return q.tasks.every(t=>qCount(id,t)>=t.n);}
 function monName(t){return (MDEF[t]&&MDEF[t].n)||(BOSS_DEFS.find(b=>b.t===t)||{}).n||t;}
 // Which monster drops a collectible item (first MDEF entry whose loot table lists it).
