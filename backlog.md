@@ -29,18 +29,26 @@ Ordered by the critique's suggested priority. Severity: 🔴 High · 🟡 Medium
 
 ## Priority 2 — core loop friction
 
-- [ ] **C1 🔴 Combat that demands movement**: add enemy behaviors that punish
+- [x] **C1 🔴 Combat that demands movement**: add enemy behaviors that punish
       standing still (leapers, lobbers, aura enemies that must be kited) and/or a
       manual-aim damage bonus, so optimal play is no longer ledge-camping with
       Arcane Bolt on cooldown. Pull raid-arm-style patterns into regular zones.
-- [ ] **C2 🔴 Safe zone entrances**: no-spawn/no-aggro radius (~150px) around
+      _Done: `beh` archetypes on `MDEF` — `leap` (goblin/frostmaw, telegraphed
+      ballistic spring), `aura` (golem/magmite, kite-or-take-DoT field with a ground
+      ring), `lob` (skeleton/sleetwisp, gravity-arced shot that reaches ledge-campers)._
+- [x] **C2 🔴 Safe zone entrances**: no-spawn/no-aggro radius (~150px) around
       portals, ~1s of entry i-frames, and arena bosses anchored to arena center
       until the player first moves/casts (prevents boss spawn-camping — reproduced
       with Veyra at the Hollow Rift entrance).
-- [ ] **C5 🟡 Rework relic-hunt delivery**: keep the 1%-relic fantasy but remove
+      _Done: `loadZone` grants 1s entry i-frames; a `pSafe` 150px portal radius
+      suppresses trash aggro/melee/lob/leap; `combatStarted` freezes a non-anchored
+      arena boss at spawn until the first move/cast._
+- [x] **C5 🟡 Rework relic-hunt delivery**: keep the 1%-relic fantasy but remove
       the dead grind — spawn a visible ★ rare carrier with a guaranteed drop every
       ~20 kills, or start bad-luck pity at 25 kills (was 75) with visible progress
       ("the rift-song grows louder…"). Test halving the 15–25 story-quest kill counts.
+      _Done: relic pity ramps from 25 dry kills at +2%/kill (guaranteed by ~75) with
+      "rift-song grows louder" hints; regular kill-quest counts halved._
 
 ## Priority 3 — payoffs that land
 
