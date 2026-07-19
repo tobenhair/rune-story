@@ -1875,6 +1875,15 @@ const ZD=[
   // The Riftheart — the true-final raid arena (q23 tp:10): Zal'Guroth, the Hollow One, waits here. Teleport-only.
   {name:'The Riftheart',sky:'#0a0212',bound:1250,req:30,plats:[{x:0,y:388,w:1250,h:18,c:'#1c0a2e'},{x:100,y:302,w:180,h:14,c:'#31135a'},{x:340,y:238,w:150,h:14,c:'#31135a'},{x:90,y:158,w:150,h:14,c:'#3f1a70'},{x:330,y:104,w:150,h:14,c:'#3f1a70'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]}
 ];
+// D1 — the Endless Rift rotates through alternate platform layouts every 5-depth band
+// (selected in startDepth). Layout 0 mirrors the base rift arena; the rest reshape the fight.
+const _rg={x:0,y:388,w:1400,h:18,c:'#2a0a1e'};
+const RIFT_LAYOUTS=[
+  [_rg,{x:120,y:312,w:220,h:14,c:'#4a1030'},{x:430,y:300,w:200,h:14,c:'#4a1030'},{x:740,y:312,w:220,h:14,c:'#4a1030'},{x:1040,y:300,w:220,h:14,c:'#4a1030'},{x:280,y:226,w:180,h:14,c:'#6a1840'},{x:620,y:214,w:200,h:14,c:'#6a1840'},{x:960,y:226,w:180,h:14,c:'#6a1840'},{x:470,y:140,w:240,h:14,c:'#8a2050'}],
+  [_rg,{x:200,y:302,w:280,h:14,c:'#4a1030'},{x:560,y:302,w:300,h:14,c:'#4a1030'},{x:940,y:302,w:280,h:14,c:'#4a1030'},{x:380,y:196,w:250,h:14,c:'#6a1840'},{x:770,y:196,w:270,h:14,c:'#6a1840'}],
+  [_rg,{x:110,y:322,w:170,h:14,c:'#4a1030'},{x:360,y:272,w:160,h:14,c:'#4a1030'},{x:600,y:230,w:170,h:14,c:'#6a1840'},{x:850,y:272,w:160,h:14,c:'#4a1030'},{x:1090,y:322,w:170,h:14,c:'#4a1030'},{x:520,y:150,w:220,h:14,c:'#8a2050'}],
+  [_rg,{x:100,y:300,w:210,h:14,c:'#4a1030'},{x:430,y:288,w:200,h:14,c:'#4a1030'},{x:760,y:300,w:210,h:14,c:'#4a1030'},{x:1080,y:288,w:210,h:14,c:'#4a1030'},{x:300,y:206,w:210,h:14,c:'#6a1840'},{x:700,y:206,w:230,h:14,c:'#6a1840'},{x:500,y:128,w:230,h:14,c:'#8a2050'}]
+];
 const SPELLS=[{n:'Arcane Bolt',e:'🔵',mn:12,mx:20,mp:7,cd:0.7,c:'#82b4ff',r:320,proj:'bolt',pw:8,ph:8,sfx:()=>sfxBolt()},{n:'Fireball',e:'🔥',mn:25,mx:42,mp:24,cd:2.5,c:'#f09575',r:360,proj:'fireball',pw:10,ph:10,sfx:()=>sfxFireball()},{n:'Ice Shard',e:'❄️',mn:18,mx:28,mp:16,cd:1.5,c:'#85b7eb',r:340,slow:true,proj:'ice',pw:10,ph:10,sfx:()=>sfxIce()},{n:'Mana Shield',e:'🛡',mn:0,mx:0,mp:27,cd:8,c:'#af99ec',shield:true,sfx:()=>sfxShield()}];
 const ITEMS={slime_goo:{n:'Slime Goo',e:'🟢',val:2},goblin_ear:{n:'Goblin Ear',e:'👂',val:3},bat_wing:{n:'Bat Wing',e:'🦇',val:4},crystal_shard:{n:'Crystal Shard',e:'💎',val:8},bone_shard:{n:'Bone Shard',e:'🦴',val:5},shadow_essence:{n:'Shadow Essence',e:'🌑',val:9},apprentice_robe:{n:'Apprentice Robe',e:'👘',slot:'armor',s:'+5 INT'},wand_of_sparks:{n:'Wand of Sparks',e:'🪄',slot:'weapon',s:'+8 Magic'},forest_staff:{n:'Forest Staff',e:'🌿',slot:'weapon',s:'+15 Magic'},crystal_staff:{n:'Crystal Staff',e:'🔮',slot:'weapon',s:'+22 Magic'},runic_robe:{n:'Runic Robe',e:'✨',slot:'armor',s:'+12 INT'},health_potion:{n:'Health Potion',e:'🧪',consumable:true,desc:'Restores 35% max HP (min 50)'},mana_potion:{n:'Mana Potion',e:'💧',consumable:true,desc:'Restores 35% max MP (min 40)'},ward_scroll:{n:'Scroll of Warding',e:'📜',consumable:true,desc:'Grants 10s Mana Shield'},rift_seed:{n:'Pulsing Rift Seed',e:'🌱',val:30,relic:true,desc:'Rare — 1% drop from Slimes'},wither_heart:{n:'Withered Heart',e:'🫀',val:40,relic:true,desc:'Rare — 1% drop from Cave Bats'},resonant_core:{n:'Resonant Core',e:'🔷',val:55,relic:true,desc:'Rare — 1% drop from Crystal Golems'},rift_sigil:{n:'Rift Sigil',e:'🜨',val:70,relic:true,desc:'Rare — 1% drop from Skeleton Archers'},oracle_staff:{n:'Staff of the Sealed Door',e:'🗝️',slot:'weapon',s:'+30 Magic'},
 // ── Act 2 materials, relics & quest gear ──
@@ -2171,6 +2180,9 @@ function unequipGear(slot){const g=G.equipment[slot];if(!g)return;let i=G.invent
 // (more danger, more reward) before going deeper. Death ends the run but keeps banked shards.
 // ═══════════════════════════════════════════════════════
 const RIFT_ZONE=6;
+ZD[RIFT_ZONE].plats=RIFT_LAYOUTS[0]; // base layout shares the array so depth-1 needs no swap
+// D1 — the rift borrows a real zone's palette/props/grade per 5-depth band for variety.
+function riftTheme(){const bands=['rift','cavern','ember','glacier','ruins','forest'];return bands[Math.floor((Math.max(1,RIFT.depth)-1)/5)%bands.length];}
 const RIFT_POOL=['slime','goblin','bat','golem','skeleton','wraith','magmite','ashwing','frostmaw','sleetwisp'];
 // Descent modifiers — drafted one-of-three between depths; all ramp danger for a shard multiplier.
 const RIFT_MODS=[
@@ -2220,10 +2232,16 @@ function spawnRiftWave(){
 // A boss "Echo" reappears every 5th depth — a depth-scaled reuse of an existing boss.
 function spawnRiftBoss(d){
   const _echoes=BOSS_DEFS.filter(b=>!b.noEcho),bd=_echoes[Math.max(0,Math.min(_echoes.length-1,Math.floor(d/5)-1))],rf=(1+d*0.12)*modProd('hp')*ascEnemyMul(),df=(1+d*0.1)*modProd('dmg')*ascEnemyMul(),rm=metaRewardMul(),hp=Math.round(bd.hp*rf);
-  mons.push({id:Math.random(),boss:true,rift:true,t:bd.t,n:'Echo of '+bd.n,sheet:bd.sheet,frames:bd.frames,hp,mhp:hp,mn:Math.round(bd.mn*df),mx:Math.round(bd.mx*df),xp:Math.round(bd.xp*(1+d*0.05)*rm),gold:Math.round(bd.gold*(1+d*0.05)*rm),loot:[],spd:bd.spd,pat:bd.pat,fly:bd.fly,x:Math.min(bd.sx,CZ.bound-120),y:bd.sy,bx:bd.sx,vx:bd.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0,bossColor:bd.bossColor,bscale:Math.min(bd.scale||4,4.2),a1T:0,a2T:0,splitDone:false,fightT:0,enraged:false});
-  bossAlertT=3;bossAlertName='Echo of '+bd.n;shake(0.4,7);sfxDeath();
+  const b={id:Math.random(),boss:true,rift:true,t:bd.t,n:'Echo of '+bd.n,sheet:bd.sheet,frames:bd.frames,hp,mhp:hp,mn:Math.round(bd.mn*df),mx:Math.round(bd.mx*df),xp:Math.round(bd.xp*(1+d*0.05)*rm),gold:Math.round(bd.gold*(1+d*0.05)*rm),loot:[],spd:bd.spd,pat:bd.pat,fly:bd.fly,x:Math.min(bd.sx,CZ.bound-120),y:bd.sy,bx:bd.sx,vx:bd.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0,bossColor:bd.bossColor,bscale:Math.min(bd.scale||4,4.2),a1T:0,a2T:0,splitDone:false,fightT:0,enraged:false};
+  // D1 — deep Echoes (depth 10+) gain one extra ability rider that changes how they fight.
+  if(d>=10){const riders=[['Frenzied',m=>{m.enrageAfter=12;m.spd*=1.35;}],['Warded',m=>{m.affix='armored';m.affixC='#7ad0ff';}],['Searing',m=>{m.beh='aura';m.auraR=94;m.auraC='#ff7a30';}]],[rn,rf]=riders[(Math.floor(d/5)-2)%riders.length];rf(b);b.n=b.n+', '+rn;}
+  mons.push(b);
+  bossAlertT=3;bossAlertName=b.n;shake(0.4,7);sfxDeath();
 }
-function startDepth(d){RIFT.depth=d;RIFT.boss=(d%5===0);RIFT.waves=riftWaveCount(d);RIFT.wave=0;RIFT.spawned=false;RIFT.intermission=1.6;riftBanner('▼ DESCENDING — DEPTH '+d,'#ff4d6d');}
+function startDepth(d){RIFT.depth=d;RIFT.boss=(d%5===0);RIFT.waves=riftWaveCount(d);RIFT.wave=0;RIFT.spawned=false;RIFT.intermission=1.6;
+  // D1 — swap the arena's platform layout when the depth band changes.
+  const layout=RIFT_LAYOUTS[Math.floor((Math.max(1,d)-1)/5)%RIFT_LAYOUTS.length];if(plats!==layout){plats=layout;platSkinCache={};}
+  riftBanner('▼ DESCENDING — DEPTH '+d,'#ff4d6d');}
 function startRift(d){RIFT.active=true;RIFT.ending=false;RIFT.daily=false;RIFT.mods=[];RIFT.shardMul=1;RIFT.banked=0;closeDlg();loadZone(RIFT_ZONE,130);renderAll();updateHUD();startDepth(d);log('You step through the Riftwarden\'s gate into the Endless Rift — Depth '+d+'!','q');}
 function updateRift(dt){
   if(riftMsgT>0)riftMsgT-=dt;
@@ -2817,6 +2835,7 @@ function drawZoneBG(){
   else if(z===8)drawGlacierBG();
   else if(z===9)drawAshenBG();
   else if(z===10)drawRiftheartBG();
+  else if(z===RIFT_ZONE&&RIFT.active){({rift:drawRiftBG,cavern:drawCavernBG,ember:drawEmberBG,glacier:drawGlacierBG,ruins:drawRuinsBG,forest:drawForestBG}[riftTheme()]||drawRiftBG)();}
   else drawRiftBG();
 }
 // Phase 6 — the inside of a dead god's chamber: concentric void-marble ribs vanishing toward a
@@ -3398,7 +3417,7 @@ function drawRuinsBG(){
 // ENVIRONMENT POLISH — world props, animated ambience, foreground depth & lighting.
 // All purely cosmetic, layered over the existing per-zone parallax backgrounds.
 // ═══════════════════════════════════════════════════════
-function zoneTheme(z){return z===0?'city':z===1?'village':z===2?'forest':z===3?'cavern':z===4?'ruins':z===7?'ember':z===8?'glacier':z===9?'ashen':'rift';}
+function zoneTheme(z){if(z===RIFT_ZONE&&RIFT.active)return riftTheme();return z===0?'city':z===1?'village':z===2?'forest':z===3?'cavern':z===4?'ruins':z===7?'ember':z===8?'glacier':z===9?'ashen':'rift';}
 // per-zone colour grade + vignette strength
 const ZGRADE={city:{tint:'rgba(80,55,150,0.16)',vig:'rgba(8,4,22,0.5)'},village:{tint:'rgba(50,80,150,0.14)',vig:'rgba(6,12,32,0.46)'},forest:{tint:'rgba(40,110,55,0.16)',vig:'rgba(4,18,8,0.5)'},cavern:{tint:'rgba(95,50,165,0.18)',vig:'rgba(10,4,28,0.56)'},ruins:{tint:'rgba(70,55,110,0.15)',vig:'rgba(6,4,18,0.58)'},rift:{tint:'rgba(180,30,80,0.18)',vig:'rgba(20,2,12,0.58)'},ember:{tint:'rgba(200,90,30,0.16)',vig:'rgba(24,8,2,0.56)'},glacier:{tint:'rgba(70,130,200,0.16)',vig:'rgba(4,12,26,0.52)'},ashen:{tint:'rgba(190,120,40,0.17)',vig:'rgba(18,10,2,0.6)'}};
 // World-space decorations sitting on the ground line (parallax 1.0, behind characters)
