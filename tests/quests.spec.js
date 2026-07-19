@@ -148,7 +148,7 @@ test.describe('Quests', () => {
       return { progAtAccept, doneAtAccept, killAfter: G.questProg.q1.kills.slime, itemAfter: G.questProg.q1.items.slime_goo };
     });
     expect(r.doneAtAccept).toBe(false);     // 99 lifetime kills / 50 goo are ignored
-    expect(r.progAtAccept).toContain('0/15');
+    expect(r.progAtAccept).toContain('0/8');
     expect(r.progAtAccept).toContain('0/2');
     expect(r.killAfter).toBe(1);
     expect(r.itemAfter).toBe(1);
@@ -168,9 +168,11 @@ test.describe('Quests', () => {
     expect(r.lootCredit).toBe(1);
   });
 
-  test('regular-monster kill quests demand 5× kills for 2× XP', async ({ game }) => {
+  test('regular-monster kill quests were trimmed to cut grind, keeping the 2× XP reward (C5)', async ({ game }) => {
     const r = await game.evaluate(() => {
-      const expectKills = { q1: 15, q2: 20, q3: 25, q4: 15, q5: 25, q6: 20 };
+      // C5 halved the kill counts (was 15/20/25/15/25/20) to remove the dead grind; the
+      // 2× XP payout on q.rew.xp is unchanged.
+      const expectKills = { q1: 8, q2: 10, q3: 13, q4: 8, q5: 13, q6: 10 };
       const expectXp = { q1: 120, q2: 180, q3: 300, q4: 600, q5: 900, q6: 1100 };
       const out = {};
       for (const id in expectKills) { const q = QUESTS.find(x => x.id === id), k = q.tasks.find(t => t.type === 'kill'); out[id] = { n: k.n, xp: q.rew.xp }; }
