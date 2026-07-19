@@ -24,7 +24,8 @@ npx playwright test tests/quests.spec.js
   (`withRandom`, `clear`, `resetPlayer`, `mon`). Fails a test on any uncaught page error.
 - `*.spec.js` — one file per domain: boot/persistence, zones, monsters & affixes,
   combat & spells, skills, gear/loot/forge, quests, economy (shop/storage/hotbar),
-  bosses & enrage, movement (dash/i-frames).
+  bosses & enrage, movement (dash/i-frames), and `display` (responsive canvas fit +
+  fullscreen, world-space label pills / NPC role glyphs, quest-tracker hierarchy).
 
 ## Adding tests
 

@@ -8,16 +8,24 @@ Ordered by the critique's suggested priority. Severity: 🔴 High · 🟡 Medium
 
 ## Priority 1 — first five minutes, every session
 
-- [ ] **A1 🔴 Responsive display**: scale the game canvas to fill the viewport
+- [x] **A1 🔴 Responsive display**: scale the game canvas to fill the viewport
       (integer pixel scale or CSS transform), anchor HUD/hotbar/log to the canvas
       edges instead of the page, and add a fullscreen toggle. Kills the dead-black
       letterboxing that covers ~40% of a desktop window.
-- [ ] **B1 🔴 Readable world-space labels**: larger monster/NPC/portal labels with
+      _Done: fixed 16:9 internal resolution (`VIEW_W`/`VIEW_H`) + `fitCanvas()` scales
+      the element to fill the play area; the shell fills the viewport (`100dvh`);
+      `⛶` HUD button → `toggleFullscreen()`._
+- [x] **B1 🔴 Readable world-space labels**: larger monster/NPC/portal labels with
       a dark backing pill shown on proximity; always-visible per-role icons above
       hub NPC heads (anvil = forge, bag = shop, book = codex, etc.).
-- [ ] **B2 🔴 Quest tracker hierarchy**: pin the tracked active story quest on top
+      _Done: `labelPill()` backing-pill helper on NPC/monster/portal names (pill on
+      proximity; bosses/elites/portals always); `npcRoleIcon()` glyph above each
+      service NPC._
+- [x] **B2 🔴 Quest tracker hierarchy**: pin the tracked active story quest on top
       with progress; collapse available-but-unaccepted quests into a single
       "N new quests in Aethon City" line.
+      _Done: `renderQP()` pins the active story quest (`.qtrack`), folds available
+      quests into one `.qavail` line, and collapses completed ones to a count._
 
 ## Priority 2 — core loop friction
 
