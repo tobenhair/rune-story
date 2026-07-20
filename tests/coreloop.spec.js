@@ -119,12 +119,12 @@ test.describe('C2 — safe zone entrances', () => {
     const r = await game.evaluate(() => {
       loadZone(1); T.clear(); keys = {}; jp = {}; PL.inv = 0; G.hp = 300; G.maxHp = 300;
       const px = portals2[0].x;                     // zone-1 entrance portal
-      PL.x = px; PL.y = 388; PL.vx = 0; PL.vy = 0;
-      const m = mkMon('slime', px + 18, 388); m.spd = 0; m.vx = 0; mons.push(m); // in melee range
+      PL.x = px; PL.y = zGround; PL.vx = 0; PL.vy = 0; // ground sits low in the tall zone
+      const m = mkMon('slime', px + 18, zGround); m.spd = 0; m.vx = 0; mons.push(m); // in melee range
       const safeBefore = G.hp; for (let i = 0; i < 20; i++) { PL.inv = 0; update(0.08); }
       const safeDmg = safeBefore - G.hp;
       // walk out of the safe radius; now the same adjacent enemy can hit
-      PL.x = 700; m.x = 718; G.hp = 300; const openBefore = G.hp;
+      PL.x = 700; PL.y = zGround; m.x = 718; m.y = zGround; G.hp = 300; const openBefore = G.hp;
       for (let i = 0; i < 20; i++) { PL.inv = 0; update(0.08); }
       const openDmg = openBefore - G.hp;
       return { safeDmg, openDmg };

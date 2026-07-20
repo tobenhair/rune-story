@@ -1861,12 +1861,35 @@ function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)r
 const GRAV=900,JUMP=-390,SPD=175;
 const G={name:'Hero',level:1,xp:0,xpNext:100,hp:100,maxHp:100,mp:80,maxMp:80,gold:0,skillPoints:0,zone:0,kills:{},questStates:{},questProg:{},equipment:{weapon:null,armor:null},inventory:[],spells:[true,false,false,true],shield:false,shieldT:0,bounty:null,lastSold:null,storage:[],storageMax:10,hotbar:[null,null,null],relicPity:{},treasures:{},attune:0,emberstorm:false,riftBest:0,riftShards:0,city:{sanctum:0,forge:0,apothecary:0,guild:0,vault:0},reduceMotion:false};
 function setReduceMotion(v){G.reduceMotion=!!v;const c=document.getElementById('rm-check');if(c)c.checked=!!v;saveGame();}
+// Build a tall, climbable combat zone. Eight platform tiers stack upward from a low ground line
+// (world-space ground at h-92); wooden ladders link each tier to the one below, placed in their
+// horizontal overlap. Monster types are distributed up the tiers (plus two ground dwellers). The
+// returned entry carries h/ground/ladders so the vertical camera + climbing systems engage; short
+// zones (hub, arenas) omit these fields and frame exactly as before. Deterministic → specs stable.
+function towerZone(o){
+  const gap=110,nT=8,bound=o.bound||1150,cols=o.cols;
+  const h=nT*gap+230,gy=h-92,pw=Math.round(bound*0.5),xL=64,xR=bound-64-pw;
+  const plats=[{x:-20,y:gy,w:bound+40,h:18,c:cols[0]}],ladders=[],mons=[];
+  let prevC=xL+pw/2,prevY=gy,mi=0;
+  for(let t=1;t<=nT;t++){
+    const y=gy-t*gap,left=(t%2===1),x=left?xL:xR,c=cols[t<=3?1:t<=6?2:3];
+    plats.push({x,y,w:pw,h:14,c});
+    const a=Math.max(x,prevC-pw/2),b=Math.min(x+pw,prevC+pw/2);
+    ladders.push({x:Math.round(b>a?(a+b)/2:x+pw/2),y1:y,y2:prevY});
+    mons.push({t:o.mons[mi%o.mons.length],x:Math.round(x+pw/2),y});mi++;
+    prevC=x+pw/2;prevY=y;
+  }
+  mons.unshift({t:o.mons[1%o.mons.length],x:Math.round(bound*0.6),y:gy});
+  mons.unshift({t:o.mons[0],x:Math.round(bound*0.25),y:gy});
+  const portals=o.portals.map(p=>({toZone:p.toZone,x:p.dir==='left'?40:bound-40,y:gy,dir:p.dir}));
+  return {name:o.name,sky:o.sky,bound,req:o.req,h,ground:gy,plats,ladders,mons,npcs:[],portals};
+}
 const ZD=[
   {name:'Aethon City',sky:'#141228',bound:1150,req:1,plats:[{x:0,y:388,w:1150,h:18,c:'#2e2440'},{x:0,y:310,w:340,h:14,c:'#4a3a5e'},{x:400,y:310,w:340,h:14,c:'#4a3a5e'},{x:800,y:310,w:350,h:14,c:'#4a3a5e'},{x:120,y:236,w:200,h:14,c:'#5a4a6e'},{x:470,y:236,w:200,h:14,c:'#5a4a6e'},{x:820,y:236,w:200,h:14,c:'#5a4a6e'},{x:260,y:162,w:200,h:14,c:'#6a5a7e'},{x:640,y:162,w:200,h:14,c:'#6a5a7e'},{x:440,y:92,w:240,h:14,c:'#7a6a8e'}],mons:[],npcs:[{name:'Elder Mira',x:120,y:310,sheet:'elder',q:'q1'},{name:'Merchant Galen',x:250,y:310,sheet:'galen',shop:true,lore:'Trade has been grim since the roads turned dangerous. Stock up — the fields are not safe.'},{name:'Forgemaster Bren',x:560,y:310,sheet:'bren',forge:true},{name:'Storage Chest',x:700,y:310,sheet:'chest',storage:true},{name:'Bounty Board',x:950,y:310,sheet:'board',board:true},{name:'Guard Tomlin',x:210,y:236,sheet:'tomlin',q:'q2'},{name:'Ranger Sylva',x:560,y:236,sheet:'ranger',q:'q3'},{name:'Sage Oriax',x:910,y:236,sheet:'oriax',q:'q4'},{name:'Scholar Aldric',x:350,y:162,sheet:'aldric',q:'q5'},{name:'Envoy Sable',x:740,y:162,sheet:'sable',q:'q17'},{name:'Seer Vesper',x:560,y:92,sheet:'vesper',q:'q6'},{name:'Riftwarden Kael',x:430,y:388,sheet:'kael',rift:true},{name:'Master Builder Sora',x:660,y:388,sheet:'sora',town:true},{name:'Chronicler Ily',x:760,y:388,sheet:'ily',codex:true},{name:'Astralwright Nyx',x:920,y:388,sheet:'nyx',asc:true}],portals:[{toZone:7,x:40,y:388,dir:'left'},{toZone:1,x:1100,y:388,dir:'right'}]},
-  {name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,plats:[{x:0,y:310,w:280,h:14,c:'#1e4a7a'},{x:320,y:278,w:200,h:14,c:'#1e4a7a'},{x:560,y:244,w:160,h:14,c:'#1e4a7a'},{x:760,y:278,w:180,h:14,c:'#1e4a7a'},{x:980,y:244,w:220,h:14,c:'#1e4a7a'},{x:140,y:218,w:140,h:14,c:'#2a5a8a'},{x:420,y:174,w:120,h:14,c:'#2a5a8a'},{x:660,y:154,w:130,h:14,c:'#2a5a8a'},{x:870,y:170,w:110,h:14,c:'#2a5a8a'},{x:480,y:104,w:140,h:14,c:'#3a6a9a'},{x:700,y:90,w:150,h:14,c:'#3a6a9a'},{x:0,y:388,w:1400,h:18,c:'#163052'}],mons:[{t:'slime',x:140,y:310},{t:'goblin',x:420,y:278},{t:'slime',x:850,y:278},{t:'goblin',x:1080,y:244},{t:'slime',x:210,y:218},{t:'goblin',x:480,y:174},{t:'goblin',x:720,y:154},{t:'slime',x:550,y:104},{t:'goblin',x:770,y:90}],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'},{toZone:2,x:1250,y:388,dir:'right'}]},
-  {name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,plats:[{x:0,y:310,w:240,h:14,c:'#2a5a30'},{x:280,y:274,w:180,h:14,c:'#2a5a30'},{x:510,y:238,w:200,h:14,c:'#2a5a30'},{x:760,y:278,w:180,h:14,c:'#2a5a30'},{x:990,y:244,w:220,h:14,c:'#2a5a30'},{x:110,y:208,w:130,h:14,c:'#3a7040'},{x:400,y:164,w:110,h:14,c:'#3a7040'},{x:620,y:144,w:130,h:14,c:'#3a7040'},{x:850,y:154,w:110,h:14,c:'#3a7040'},{x:440,y:94,w:130,h:14,c:'#4a8050'},{x:640,y:84,w:150,h:14,c:'#4a8050'},{x:0,y:388,w:1500,h:18,c:'#1a4020'}],mons:[{t:'goblin',x:120,y:310},{t:'goblin',x:360,y:274},{t:'bat',x:850,y:278},{t:'bat',x:1100,y:244},{t:'goblin',x:170,y:208},{t:'goblin',x:455,y:164},{t:'bat',x:685,y:144},{t:'goblin',x:505,y:94},{t:'bat',x:715,y:84}],npcs:[],portals:[{toZone:1,x:40,y:388,dir:'left'},{toZone:3,x:1360,y:388,dir:'right'}]},
-  {name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,plats:[{x:0,y:310,w:200,h:14,c:'#3a2060'},{x:250,y:274,w:160,h:14,c:'#3a2060'},{x:460,y:238,w:180,h:14,c:'#3a2060'},{x:700,y:276,w:160,h:14,c:'#3a2060'},{x:920,y:238,w:200,h:14,c:'#3a2060'},{x:120,y:204,w:110,h:14,c:'#5a3090'},{x:370,y:158,w:120,h:14,c:'#5a3090'},{x:600,y:138,w:130,h:14,c:'#5a3090'},{x:820,y:154,w:110,h:14,c:'#5a3090'},{x:410,y:88,w:130,h:14,c:'#6a40a0'},{x:620,y:78,w:140,h:14,c:'#6a40a0'},{x:0,y:388,w:1300,h:18,c:'#1e0a3a'}],mons:[{t:'bat',x:100,y:310},{t:'golem',x:330,y:274},{t:'bat',x:780,y:276},{t:'golem',x:1010,y:238},{t:'bat',x:175,y:204},{t:'golem',x:430,y:158},{t:'bat',x:665,y:138},{t:'golem',x:475,y:88},{t:'bat',x:690,y:78}],npcs:[],portals:[{toZone:2,x:40,y:388,dir:'left'},{toZone:4,x:1250,y:388,dir:'right'}]},
-  {name:'Ancient Ruins',sky:'#0a0812',bound:1350,req:15,plats:[{x:0,y:310,w:210,h:14,c:'#2a2040'},{x:260,y:276,w:170,h:14,c:'#2a2040'},{x:480,y:244,w:180,h:14,c:'#2a2040'},{x:720,y:280,w:160,h:14,c:'#2a2040'},{x:940,y:244,w:210,h:14,c:'#2a2040'},{x:130,y:208,w:110,h:14,c:'#3a3060'},{x:380,y:162,w:120,h:14,c:'#3a3060'},{x:600,y:140,w:130,h:14,c:'#3a3060'},{x:820,y:158,w:110,h:14,c:'#3a3060'},{x:420,y:92,w:130,h:14,c:'#4a4070'},{x:620,y:82,w:140,h:14,c:'#4a4070'},{x:0,y:388,w:1400,h:18,c:'#1a1030'}],mons:[{t:'skeleton',x:105,y:310},{t:'skeleton',x:345,y:276},{t:'wraith',x:800,y:280},{t:'wraith',x:1040,y:244},{t:'skeleton',x:185,y:208},{t:'skeleton',x:440,y:162},{t:'wraith',x:665,y:140},{t:'skeleton',x:485,y:92},{t:'wraith',x:690,y:82}],npcs:[],portals:[{toZone:3,x:40,y:388,dir:'left'}]},
+  towerZone({name:'Village Outskirts',sky:'#0d1830',bound:1300,req:1,cols:['#163052','#1e4a7a','#2a5a8a','#3a6a9a'],mons:['slime','goblin'],portals:[{toZone:0,dir:'left'},{toZone:2,dir:'right'}]}),
+  towerZone({name:'Verdant Forest',sky:'#0a1a0e',bound:1400,req:5,cols:['#1a4020','#2a5a30','#3a7040','#4a8050'],mons:['goblin','bat'],portals:[{toZone:1,dir:'left'},{toZone:3,dir:'right'}]}),
+  towerZone({name:'Crystal Caverns',sky:'#0e0a1e',bound:1300,req:10,cols:['#1e0a3a','#3a2060','#5a3090','#6a40a0'],mons:['bat','golem'],portals:[{toZone:2,dir:'left'},{toZone:4,dir:'right'}]}),
+  towerZone({name:'Ancient Ruins',sky:'#0a0812',bound:1350,req:15,cols:['#1a1030','#2a2040','#3a3060','#4a4070'],mons:['skeleton','wraith'],portals:[{toZone:3,dir:'left'}]}),
   {name:'The Hollow Rift',sky:'#13060f',bound:1200,req:25,plats:[{x:0,y:388,w:1250,h:18,c:'#2a0a1e'},{x:120,y:300,w:200,h:14,c:'#4a1030'},{x:520,y:288,w:200,h:14,c:'#4a1030'},{x:900,y:300,w:200,h:14,c:'#4a1030'},{x:300,y:212,w:160,h:14,c:'#6a1840'},{x:660,y:200,w:160,h:14,c:'#6a1840'},{x:470,y:120,w:200,h:14,c:'#8a2050'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]},
   // The Endless Rift — endgame wave-survival arena (zone index 6). Never on the map; entered only via Riftwarden Kael's gate, left via the edge portal (extract).
   {name:'The Endless Rift',sky:'#10040c',bound:1400,req:1,plats:[{x:0,y:388,w:1400,h:18,c:'#2a0a1e'},{x:120,y:312,w:220,h:14,c:'#4a1030'},{x:430,y:300,w:200,h:14,c:'#4a1030'},{x:740,y:312,w:220,h:14,c:'#4a1030'},{x:1040,y:300,w:220,h:14,c:'#4a1030'},{x:280,y:226,w:180,h:14,c:'#6a1840'},{x:620,y:214,w:200,h:14,c:'#6a1840'},{x:960,y:226,w:180,h:14,c:'#6a1840'},{x:470,y:140,w:240,h:14,c:'#8a2050'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]},
@@ -1874,8 +1897,8 @@ const ZD=[
   // hidden arenas so the load-bearing indices 5 (Hollow Rift) and 6 (RIFT_ZONE) never shift.
   // Geography runs WEST of the hub: city ← Emberfall Wastes ← Frostveil Glacier, walkable
   // through edge portals once Act 2 is open (enterPortal/drawPortals gate on actTwoOpen()).
-  {name:'Emberfall Wastes',sky:'#1a0a06',bound:1400,req:20,plats:[{x:0,y:310,w:250,h:14,c:'#4a2414'},{x:300,y:276,w:190,h:14,c:'#4a2414'},{x:540,y:240,w:190,h:14,c:'#4a2414'},{x:780,y:278,w:180,h:14,c:'#4a2414'},{x:1010,y:244,w:220,h:14,c:'#4a2414'},{x:120,y:206,w:130,h:14,c:'#5a2e18'},{x:410,y:162,w:120,h:14,c:'#5a2e18'},{x:640,y:142,w:130,h:14,c:'#5a2e18'},{x:860,y:156,w:110,h:14,c:'#5a2e18'},{x:450,y:92,w:130,h:14,c:'#6a3820'},{x:650,y:82,w:150,h:14,c:'#6a3820'},{x:0,y:388,w:1500,h:18,c:'#30160c'}],mons:[{t:'magmite',x:130,y:310},{t:'magmite',x:380,y:276},{t:'ashwing',x:860,y:278},{t:'ashwing',x:1110,y:244},{t:'magmite',x:180,y:206},{t:'magmite',x:465,y:162},{t:'ashwing',x:700,y:142},{t:'magmite',x:510,y:92},{t:'ashwing',x:720,y:82}],npcs:[],portals:[{toZone:8,x:40,y:388,dir:'left'},{toZone:0,x:1360,y:388,dir:'right'}]},
-  {name:'Frostveil Glacier',sky:'#081018',bound:1400,req:24,plats:[{x:0,y:310,w:220,h:14,c:'#2a4a6e'},{x:270,y:274,w:170,h:14,c:'#2a4a6e'},{x:490,y:238,w:190,h:14,c:'#2a4a6e'},{x:730,y:278,w:170,h:14,c:'#2a4a6e'},{x:950,y:242,w:220,h:14,c:'#2a4a6e'},{x:130,y:206,w:120,h:14,c:'#3a5a82'},{x:390,y:160,w:120,h:14,c:'#3a5a82'},{x:610,y:140,w:130,h:14,c:'#3a5a82'},{x:830,y:156,w:110,h:14,c:'#3a5a82'},{x:430,y:90,w:130,h:14,c:'#4a6a96'},{x:630,y:80,w:150,h:14,c:'#4a6a96'},{x:0,y:388,w:1500,h:18,c:'#1c3450'}],mons:[{t:'frostmaw',x:110,y:310},{t:'frostmaw',x:350,y:274},{t:'sleetwisp',x:810,y:278},{t:'sleetwisp',x:1050,y:242},{t:'frostmaw',x:185,y:206},{t:'frostmaw',x:450,y:160},{t:'sleetwisp',x:675,y:140},{t:'frostmaw',x:495,y:90},{t:'sleetwisp',x:705,y:80}],npcs:[],portals:[{toZone:7,x:1360,y:388,dir:'right'}]},
+  towerZone({name:'Emberfall Wastes',sky:'#1a0a06',bound:1400,req:20,cols:['#30160c','#4a2414','#5a2e18','#6a3820'],mons:['magmite','ashwing'],portals:[{toZone:8,dir:'left'},{toZone:0,dir:'right'}]}),
+  towerZone({name:'Frostveil Glacier',sky:'#081018',bound:1400,req:24,cols:['#1c3450','#2a4a6e','#3a5a82','#4a6a96'],mons:['frostmaw','sleetwisp'],portals:[{toZone:7,dir:'right'}]}),
   // The Ashen Sanctum — Act 2 finale arena: teleport-only (q22 tp:9), never on the map; only exit is the edge portal home.
   {name:'The Ashen Sanctum',sky:'#140d04',bound:1250,req:28,plats:[{x:0,y:388,w:1250,h:18,c:'#2a1608'},{x:120,y:300,w:200,h:14,c:'#3a2210'},{x:520,y:288,w:200,h:14,c:'#3a2210'},{x:900,y:300,w:200,h:14,c:'#3a2210'},{x:300,y:212,w:160,h:14,c:'#4a2c14'},{x:660,y:200,w:160,h:14,c:'#4a2c14'},{x:470,y:120,w:200,h:14,c:'#5a3618'}],mons:[],npcs:[],portals:[{toZone:0,x:40,y:388,dir:'left'}]},
   // The Riftheart — the true-final raid arena (q23 tp:10): Zal'Guroth, the Hollow One, waits here. Teleport-only.
@@ -2556,14 +2579,14 @@ function renderCodex(){
 }
 
 const BOSS_DEFS=[
-  {zone:1,t:'slime_sov',n:'Slime Sovereign',sheet:'slimeSov',frames:30,hp:400,mn:18,mx:27,xp:150,gold:25,spd:45,pat:140,fly:false,bossColor:'#1d9e75',sx:640,sy:200},
-  {zone:2,t:'goblin_chief',n:'Goblin Warchief',sheet:'goblinChiefR',frames:20,hp:800,mn:26,mx:42,xp:300,gold:50,spd:55,pat:160,fly:false,bossColor:'#ef9f27',sx:600,sy:200},
-  {zone:3,t:'crystal_lich',n:'Crystal Lich',sheet:'crystalLich',frames:40,hp:1500,mn:42,mx:66,xp:600,gold:100,spd:38,pat:180,fly:true,bossColor:'#b050f0',sx:650,sy:180},
-  {zone:4,t:'fallen_oracle',n:'The Fallen Oracle',sheet:'fallenOracle',frames:40,hp:2000,mn:48,mx:78,xp:800,gold:150,spd:42,pat:200,fly:true,bossColor:'#9040d0',sx:680,sy:180},
+  {zone:1,t:'slime_sov',n:'Slime Sovereign',sheet:'slimeSov',frames:30,hp:400,mn:18,mx:27,xp:150,gold:25,spd:45,pat:140,fly:false,bossColor:'#1d9e75',sx:575,sy:955},
+  {zone:2,t:'goblin_chief',n:'Goblin Warchief',sheet:'goblinChiefR',frames:20,hp:800,mn:26,mx:42,xp:300,gold:50,spd:55,pat:160,fly:false,bossColor:'#ef9f27',sx:575,sy:955},
+  {zone:3,t:'crystal_lich',n:'Crystal Lich',sheet:'crystalLich',frames:40,hp:1500,mn:42,mx:66,xp:600,gold:100,spd:38,pat:180,fly:true,bossColor:'#b050f0',sx:575,sy:930},
+  {zone:4,t:'fallen_oracle',n:'The Fallen Oracle',sheet:'fallenOracle',frames:40,hp:2000,mn:48,mx:78,xp:800,gold:150,spd:42,pat:200,fly:true,bossColor:'#9040d0',sx:575,sy:930},
   {zone:5,t:'hollow_oracle',n:'Veyra, the Hollow Oracle',sheet:'fallenOracle',frames:40,hp:5000,mn:60,mx:95,xp:5000,gold:500,spd:50,pat:240,fly:true,bossColor:'#ff2d5d',sx:760,sy:170,scale:5.2},
   // ── Act 2 bosses — XP in the tens of thousands to match the flattened post-20 curve.
-  {zone:7,t:'ember_tyrant',n:'The Ember Tyrant',sheet:'emberTyrant',frames:40,hp:9000,mn:66,mx:100,xp:25000,gold:300,spd:44,pat:200,fly:false,bossColor:'#ff7a30',sx:650,sy:200},
-  {zone:8,t:'frost_matriarch',n:'Frost Matriarch Yssira',sheet:'frostMatriarch',frames:40,hp:12000,mn:78,mx:118,xp:40000,gold:450,spd:40,pat:210,fly:true,bossColor:'#7ad0ff',sx:660,sy:180},
+  {zone:7,t:'ember_tyrant',n:'The Ember Tyrant',sheet:'emberTyrant',frames:40,hp:9000,mn:66,mx:100,xp:25000,gold:300,spd:44,pat:200,fly:false,bossColor:'#ff7a30',sx:575,sy:955},
+  {zone:8,t:'frost_matriarch',n:'Frost Matriarch Yssira',sheet:'frostMatriarch',frames:40,hp:12000,mn:78,mx:118,xp:40000,gold:450,spd:40,pat:210,fly:true,bossColor:'#7ad0ff',sx:575,sy:930},
   {zone:9,t:'ash_sage',n:'Malachar, the Ash Sage',sheet:'ashSage',frames:40,hp:16000,mn:92,mx:140,xp:120000,gold:1500,spd:52,pat:240,fly:true,bossColor:'#ffb030',sx:740,sy:170,scale:5},
   // The true-final raid boss: a colossal anchored idol, immune while its six arms endure (see spawnIdolArms /
   // updateBossAbilities). noEcho keeps it out of the rift Echo rotation — an armless Echo would be unkillable.
@@ -2575,12 +2598,16 @@ const IDOL_ARM={t:'idol_arm',n:'Arm of the Hollow One',sheet:'idolArm',frames:30
 // once on entry by loadZone and must NOT auto-respawn after being slain — you clear it and walk out.
 function isFinaleArena(z){return z===5||z===9||z===10;}
 let bossTimers=[0,0,0,0,0,0,0,0,0,0,0],bossAlertT=0,bossAlertName='';
-let cv,ctx2,camX=0,mons=[],npcs2=[],projs=[];
-let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[],shHitT:0,shHitA:0,landT:0,hurtT:0};
+let cv,ctx2,camX=0,camY=0,zGround=388,zHeight=480,mons=[],npcs2=[],projs=[];
+let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[],shHitT:0,shHitA:0,landT:0,hurtT:0,climbing:false};
 // record a shield impact so the bubble ripples toward the incoming hit (cosmetic, runtime-only)
 function shieldPop(sx,sy){PL.shHitT=0.35;PL.shHitA=Math.atan2(sy-(PL.y-SH*SCALE/2),sx-PL.x);}
 // Dodge dash — short burst of movement + invulnerability frames (Shift / touch dash button)
 const DASH_SPD=580,DASH_TIME=0.18,DASH_CD=1.1,DASH_IFRAME=0.28;
+// Vertical world: maps can be taller than the 16:9 view; camY scrolls to follow the player and
+// ladders let you climb between tiers. CLIMB_SPD is the vertical climb rate; AIM_CONE limits how
+// far off horizontal a spell can be aimed (so you can't snipe the whole tower from the floor).
+const CLIMB_SPD=140,AIM_CONE=Math.PI/9;
 const ZONE_PORTAL_COLORS=['#e8d5b7','#6aa3ff','#5dcaa5','#b050f0','#9040d0','#ff2d5d','#ff2d5d','#ff7a30','#7ad0ff','#ffb030','#b050f0'];
 let cds=[0,0,0,0],keys={},jp={},dlgOpen=false,mapOpen=false,raf=null,lt=0,CZ=null,plats=[],nearNPC=null,nearPortal=null,portals2=[];
 let gTime=0,screenShake={t:0,amt:0},parts=[];
@@ -2745,14 +2772,24 @@ function enrageMul(m){if(!m||!m.boss||!m.fightT)return 1;const over=m.fightT-(m.
 function mkMon(t,x,y,forceElite){const d=MDEF[t],elite=forceElite||Math.random()<0.1,af=elite?AFFIXES[Math.floor(Math.random()*AFFIXES.length)]:null,hm=elite?3:1,dm=elite?1.5:1,sm=(af&&af.id==='frenzied')?1.5:1,em=ascEnemyMul(),rm=metaRewardMul();return{id:Math.random(),t,n:(elite?'★ '+(af?af.n+' ':''):'')+d.n,elite,affix:af?af.id:null,affixC:af?af.c:null,sheet:d.sheet,frames:d.frames,hp:Math.round(d.hp*hm*em),mhp:Math.round(d.hp*hm*em),mn:Math.round(d.mn*dm*em),mx:Math.round(d.mx*dm*em),xp:Math.round(d.xp*(elite?2.5:1)*rm),gold:Math.round((d.gold||0)*(elite?3:1)*rm),loot:d.loot,spd:d.spd*sm,pat:d.pat,fly:d.fly,beh:d.beh,auraR:d.auraR,auraC:d.auraC,lobProj:d.lobProj,lobC:d.lobC,x,y,bx:x,vx:d.spd*sm*(Math.random()>.5?1:-1),vy:0,at:0,st:0,frame:Math.random()*d.frames,right:true,hit:0};}
 // C3 — one hidden treasure cache per combat zone, perched on its hardest-to-reach top
 // platform (the platforming challenge); a guaranteed rare+ gear drop + gold, once ever.
-const ZONE_TREASURE={1:{x:775,y:88},2:{x:710,y:82},3:{x:685,y:76},4:{x:685,y:80},7:{x:720,y:80},8:{x:700,y:78}};
+// Each combat zone's hidden cache now sits on the top tier of its climbable tower (y=138), just
+// inside the top platform's left edge (xR+60) so it's a real climb to reach.
+const ZONE_TREASURE={1:{x:646,y:138},2:{x:696,y:138},3:{x:646,y:138},4:{x:671,y:138},7:{x:696,y:138},8:{x:696,y:138}};
 function openTreasure(z){if(G.treasures[z])return;G.treasures[z]=true;const g=rollGear(z,true);G.gold+=(60+z*40+G.level*6);sfxLoot();burst(PL.x,PL.y-30,'#ffd24a',24,160);if(!reducedMotion())rings.push({x:PL.x,y:PL.y-16,r0:6,r1:70,c:'#ffd24a',t:0,dur:0.32});log('🎁 Hidden cache! +'+(60+z*40+G.level*6)+' gold — '+g.n+'!','x');addGear(g);updateHUD();renderIP();saveGame();}
+// The camera's vertical range for the current zone: 0 keeps the top of the world at the screen top,
+// (zHeight-VIEW_H) puts the ground at the screen bottom. Short zones (zHeight<=VIEW_H) clamp to 0 so
+// they frame exactly as before the vertical camera existed.
+function camYMax(){return Math.max(0,zHeight-(cv&&cv.height||VIEW_H));}
+function ladderAt(x,y){const ls=CZ&&CZ.ladders;if(!ls)return null;for(const l of ls){if(x>l.x-15&&x<l.x+15&&y>=l.y1-6&&y<=l.y2+8)return l;}return null;}
 function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};triggerZoneCard(CZ.name);
+  // Vertical extent: a zone may declare a tall world (CZ.h) with its ground low in world-space
+  // (CZ.ground); short zones keep the classic 480-tall, ground-at-388 framing untouched.
+  zHeight=CZ.h||VIEW_H;zGround=CZ.ground!=null?CZ.ground:388;
   // B7 — clear any lingering boss/rift banner so it can't bleed into the next zone.
   bossAlertT=0;riftMsgT=0;
   // B8 — hide the top-left control hints while in the rift, where the depth HUD sits.
   {const sg=document.getElementById('sg');if(sg)sg.classList.toggle('in-rift',i===RIFT_ZONE);}
-  mons=[];npcs2=[];projs=[];dying=[];rings=[];arcs=[];parts=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];nearNPC=null;nearPortal=null;PL.inv=Math.max(PL.inv||0,1.0);combatStarted=false;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});
+  mons=[];npcs2=[];projs=[];dying=[];rings=[];arcs=[];parts=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];PL.climbing=false;camY=Math.max(0,Math.min(camYMax(),PL.y-(cv&&cv.height||VIEW_H)*0.6));nearNPC=null;nearPortal=null;PL.inv=Math.max(PL.inv||0,1.0);combatStarted=false;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});
   // C3 — a rare wandering elite sometimes prowls a combat zone (extra ★ foe, extra loot).
   if(((i>=1&&i<=4)||i===7||i===8)&&CZ.mons.length&&Math.random()<0.3){const t=CZ.mons[Math.floor(Math.random()*CZ.mons.length)].t,sp=zoneSpawnPoint();mons.push(mkMon(t,sp.x,sp.y,true));log('A powerful presence stalks these grounds…','q');}
   CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,rift:n.rift,asc:n.asc,town:n.town,codex:n.codex,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if(isFinaleArena(i)&&!mons.some(m=>m.boss))spawnBoss(i);}
@@ -2764,29 +2801,41 @@ function triggerZoneCard(name){if(!window.worldStarted)return;const el=document.
 function tick(ts){const dt=Math.min((ts-lt)/1000,0.08);lt=ts;gTime+=dt;if(portalFlashT>0)portalFlashT=Math.max(0,portalFlashT-dt);if(deathFlashT>0)deathFlashT=Math.max(0,deathFlashT-dt);if(enrageFlashT>0)enrageFlashT=Math.max(0,enrageFlashT-dt);if(auraT>0)auraT=Math.max(0,auraT-dt);if(zoneCardT>0){zoneCardT-=dt;if(zoneCardT<=0){const el=document.getElementById('ztrans');if(el)el.classList.remove('show');}}updateDying(dt);let udt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);udt=dt*0.12;}if(!dlgOpen&&!mapOpen&&!paused)update(udt);updateCombatMusic(dt);renderOrbs();jp={};saveT+=dt;if(saveT>=10){saveT=0;saveGame();saveMeta();checkAchv();}draw();raf=requestAnimationFrame(tick);}
 function update(dt){
   if(RIFT.ending){endRift(false);return;}
-  const L=keys['arrowleft'],R=keys['arrowright'],J=jp['arrowup']||jp[' '];
+  const L=keys['arrowleft'],R=keys['arrowright'],upH=keys['arrowup'],dnH=keys['arrowdown'];
+  // Climbing: grab an overlapping ladder by holding up/down; gravity is suspended while mounted, and
+  // up doubles as jump only when NOT on a ladder so the two never fight for the up-arrow.
+  const lad=ladderAt(PL.x,PL.y);
+  if(lad&&!PL.climbing&&(upH||dnH)){PL.climbing=true;PL.vy=0;PL.dashT=0;PL.trail=[];}
+  if(PL.climbing&&!lad)PL.climbing=false;
+  const J=jp[' ']||(jp['arrowup']&&!PL.climbing);
   if(L){PL.vx=Math.max(PL.vx-1200*dt,-SPD);PL.right=false;}
   if(R){PL.vx=Math.min(PL.vx+1200*dt,SPD);PL.right=true;}
   if(!L&&!R&&PL.dashT<=0)PL.vx*=Math.pow(0.01,dt);
-  if(J&&PL.gnd){PL.vy=JUMP;PL.gnd=false;sfxJump();}
+  if(J&&(PL.gnd||PL.climbing)){PL.vy=JUMP;PL.gnd=false;PL.climbing=false;sfxJump();}
   if(PL.dashCd>0)PL.dashCd-=dt;
   if((jp['shift']||jp['dash'])&&PL.dashCd<=0&&PL.dashT<=0){PL.dashT=DASH_TIME;PL.dashCd=DASH_CD;PL.dashDir=L?-1:R?1:(PL.right?1:-1);PL.right=PL.dashDir>0;PL.inv=Math.max(PL.inv,DASH_IFRAME);PL.trail=[];sfxDash();shake(0.1,2);}
   if(PL.dashT>0){PL.dashT-=dt;PL.vx=PL.dashDir*DASH_SPD;PL.vy*=Math.pow(0.04,dt);PL.trail.push({x:PL.x,y:PL.y,r:PL.right,c:PL.casting>0});if(PL.trail.length>7)PL.trail.shift();}
   else if(PL.trail.length)PL.trail.shift();
   if(!combatStarted&&(L||R||J||jp['shift']||jp['dash']||jp['q']||jp['w']||jp['e']||jp['r']))combatStarted=true;
   const wasGnd=PL.gnd;
-  PL.vy+=GRAV*dt;PL.x+=PL.vx*dt;PL.y+=PL.vy*dt;
+  if(PL.climbing){
+    if(upH)PL.y-=CLIMB_SPD*dt;if(dnH)PL.y+=CLIMB_SPD*dt;
+    PL.y=Math.max(lad.y1,Math.min(lad.y2+8,PL.y));PL.vy=0;PL.x+=PL.vx*dt;PL.gnd=false;
+  }else{
+    PL.vy+=GRAV*dt;PL.x+=PL.vx*dt;PL.y+=PL.vy*dt;
+  }
   const fallV=PL.vy;
   PL.gnd=false;
-  plats.forEach(p=>{if(PL.x+10>p.x&&PL.x-10<p.x+p.w&&PL.vy>=0&&PL.y>p.y-2&&PL.y<p.y+p.h+Math.abs(PL.vy)*dt+6){PL.y=p.y;PL.vy=0;PL.gnd=true;}});
+  if(!PL.climbing)plats.forEach(p=>{if(PL.x+10>p.x&&PL.x-10<p.x+p.w&&PL.vy>=0&&PL.y>p.y-2&&PL.y<p.y+p.h+Math.abs(PL.vy)*dt+6){PL.y=p.y;PL.vy=0;PL.gnd=true;}});
   if(!wasGnd&&PL.gnd&&fallV>150){PL.landT=0.14;if(!reducedMotion()){footRing(PL.x,PL.y);shake(0.05,1.4);}}
-  if(PL.y>440){PL.y=260;PL.vy=0;G.hp=Math.max(1,G.hp-15);log('Fell! -15 HP','d');updateHUD();}
+  if(PL.y>zGround+52){PL.y=zGround-128;PL.vy=0;PL.climbing=false;G.hp=Math.max(1,G.hp-15);log('Fell! -15 HP','d');updateHUD();}
   PL.x=Math.max(10,Math.min(CZ.bound-10,PL.x));
   {const t=ZONE_TREASURE[G.zone];if(t&&!G.treasures[G.zone]&&Math.abs(PL.x-t.x)<30&&Math.abs(PL.y-t.y)<34)openTreasure(G.zone);}
   if(PL.inv>0)PL.inv-=dt;if(PL.casting>0)PL.casting-=dt;if(PL.shHitT>0)PL.shHitT-=dt;if(PL.landT>0)PL.landT-=dt;if(PL.hurtT>0)PL.hurtT-=dt;
   if(Math.abs(PL.vx)>10||!PL.gnd)PL.frame+=0.12;else PL.frame+=0.03;
   if(PL.gnd&&Math.abs(PL.vx)>50&&!reducedMotion()&&Math.random()<0.22)footMote(PL.x-(PL.right?6:-6),PL.y);
   const look=(PL.right?1:-1)*24;camX+=((PL.x+look)-cv.width/2-camX)*7*dt;camX=Math.max(0,Math.min(CZ.bound-cv.width,camX));
+  const tcy=PL.y-cv.height*0.6;camY+=(tcy-camY)*7*dt;camY=Math.max(0,Math.min(camYMax(),camY));
   cds=cds.map(c=>Math.max(0,c-dt));cds.forEach((c,i)=>{const el=document.getElementById('cd'+i);if(el)el.textContent=c>0?c.toFixed(1):'';const sl=document.getElementById('hk'+i);if(sl){const wasCd=sl.classList.contains('cd'),full=(SPELLS[i]&&spellCd(SPELLS[i].cd))||1;sl.style.setProperty('--ca',(c>0?Math.min(360,c/full*360):0)+'deg');sl.classList.toggle('cd',c>0);if(wasCd&&c<=0){sl.classList.remove('rdy');void sl.offsetWidth;sl.classList.add('rdy');}}});
   if(screenShake.t>0)screenShake.t=Math.max(0,screenShake.t-dt);
   if(G.shield){G.shieldT-=dt;if(G.shieldT<=0)G.shield=false;}
@@ -2808,7 +2857,7 @@ function update(dt){
     }
     const busy=m.leaping>0||m.leapWind>0;
     if(adx<180&&!pSafe&&!busy){m.right=dx>0;m.vx=(dx>0?1:-1)*m.spd;if(m.fly){m.vy=(PL.y-m.y)*0.9;m.y+=m.vy*dt;}}else if(!busy){if(Math.abs(m.x-m.bx)>m.pat)m.vx*=-1;m.right=m.vx>0;}
-    m.x+=m.vx*dt;if(!m.fly){m.vy+=GRAV*0.4*dt;m.y+=m.vy*dt;let gnd=false;plats.forEach(p=>{if(m.x+10>p.x&&m.x-10<p.x+p.w&&m.vy>=0&&m.y>p.y-2&&m.y<p.y+p.h+8){m.y=p.y;m.vy=0;gnd=true;}});if(gnd&&m.leaping>0){m.leaping=0;m.leapCd=1.6+Math.random()*1.4;}if(m.y>430)m.y=230;}
+    m.x+=m.vx*dt;if(!m.fly){m.vy+=GRAV*0.4*dt;m.y+=m.vy*dt;let gnd=false;plats.forEach(p=>{if(m.x+10>p.x&&m.x-10<p.x+p.w&&m.vy>=0&&m.y>p.y-2&&m.y<p.y+p.h+8){m.y=p.y;m.vy=0;gnd=true;}});if(gnd&&m.leaping>0){m.leaping=0;m.leapCd=1.6+Math.random()*1.4;}if(m.y>zGround+42)m.y=zGround-158;}
     m.frame+=adx<180?0.18:0.1;if(m.hit>0)m.hit-=dt;
     // C1 aura — a damaging field the player must kite out of (DoT ticks every 0.5s inside auraR)
     if(m.beh==='aura'&&!pSafe&&PL.inv<=0){const ad=Math.hypot(PL.x-m.x,PL.y-m.y);if(ad<(m.auraR||80)){m.auraAcc=(m.auraAcc||0)+dt;if(m.auraAcc>=0.5){m.auraAcc-=0.5;let adm=Math.max(1,Math.round(m.mn*0.55)-Math.floor(eqDef()*0.5));if(G.shield)adm=Math.max(1,Math.floor(adm*shieldFac()));G.hp=Math.max(0,G.hp-adm);spawnDN(PL.x-camX,PL.y,adm,m.auraC||'#ff7a30','dot');if(G.hp<=0){respawn();return;}else updateHUD();}}else m.auraAcc=0;}
@@ -3439,7 +3488,7 @@ const ZGRADE={city:{tint:'rgba(80,55,150,0.16)',vig:'rgba(8,4,22,0.5)'},village:
 // World-space decorations sitting on the ground line (parallax 1.0, behind characters)
 // Phase 6 — one hero landmark per combat/arena zone (world-anchored, behind characters):
 // a memory anchor that speaks the story the quests tell.
-function drawLandmarks(){const th=platTheme(),gy=390,ctx=ctx2,W=cv.width,fl=0.6+Math.sin(gTime*4)*0.3;
+function drawLandmarks(){const th=platTheme(),gy=zGround+2,ctx=ctx2,W=cv.width,fl=0.6+Math.sin(gTime*4)*0.3;
   const at=wx=>wx-camX;
   if(th==='village'){const sx=at(940);if(sx<-160||sx>W+170)return;
     ctx.fillStyle='#241f33';ctx.fillRect(sx-22,gy-150,44,150);ctx.fillStyle='#1a1626';ctx.fillRect(sx-22,gy-150,10,150);
@@ -3493,13 +3542,21 @@ function drawLandmarks(){const th=platTheme(),gy=390,ctx=ctx2,W=cv.width,fl=0.6+
 }
 function drawProps(){
   drawLandmarks();
-  const z=G.zone,th=zoneTheme(z),bound=(ZD[z]&&ZD[z].bound)||1400,gy=388,step=th==='forest'?150:th==='cavern'?140:185;
+  const z=G.zone,th=zoneTheme(z),bound=(ZD[z]&&ZD[z].bound)||1400,gy=zGround,step=th==='forest'?150:th==='cavern'?140:185;
   for(let wx=60;wx<bound;wx+=step){
     const seed=Math.sin(wx*12.9898)*43758.545,r=seed-Math.floor(seed),x=wx+Math.round(r*40-20),sx=x-camX;
     if(sx<-90||sx>cv.width+90)continue;
     drawProp(th,sx,gy,r,wx);
   }
 }
+// Climbable ladders — wooden rails + rungs linking vertically-stacked tiers. Drawn in the world
+// layer (so camY scrolls them); a small "↕ Climb" hint shows when the player stands at one.
+function drawLadders(){const ls=CZ&&CZ.ladders;if(!ls)return;const ctx=ctx2,w=13;ls.forEach(l=>{const sx=l.x-camX;if(sx<-30||sx>cv.width+30)return;ctx.save();
+  ctx.fillStyle='#5a4326';ctx.fillRect(sx-w/2,l.y1,2,l.y2-l.y1);ctx.fillRect(sx+w/2-2,l.y1,2,l.y2-l.y1);
+  ctx.fillStyle='#7a5c33';for(let y=l.y1+6;y<l.y2;y+=11)ctx.fillRect(sx-w/2,y,w,2.5);
+  ctx.fillStyle='rgba(210,180,120,0.25)';ctx.fillRect(sx-w/2,l.y1,1,l.y2-l.y1);
+  ctx.restore();});
+  const lad=ladderAt(PL.x,PL.y);if(lad&&!PL.climbing)labelPill('↕ Climb',PL.x-camX,PL.y-SH*SCALE-6,{size:6,color:'#ffe6b0',alpha:0.92});}
 function drawProp(th,x,gy,r,wx){const ctx=ctx2;ctx.save();
   if(th==='forest'){const h=64+r*46;ctx.fillStyle='#16300f';ctx.fillRect(x-4,gy-h*0.45,8,h*0.45);ctx.fillStyle='#0f240a';ctx.fillRect(x-4,gy-h*0.45,3,h*0.45);
     ['#16401a','#1f5a20','#2c7028'].forEach((c,i)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x+(i-1)*3,gy-h*0.45-i*9,22-i*5,0,Math.PI*2);ctx.fill();});
@@ -3584,11 +3641,11 @@ function drawLighting(){
   ctx2.globalCompositeOperation='soft-light';ctx2.fillStyle=gr.tint;ctx2.fillRect(0,0,cv.width,cv.height);
   ctx2.globalCompositeOperation='lighter';
   // warm aura around the player — tints toward the last spell colour for 2s (identity feedback)
-  const px=PL.x-camX,py=PL.y-SH*SCALE/2;const lg=ctx2.createRadialGradient(px,py,8,px,py,150);
+  const px=PL.x-camX,py=PL.y-SH*SCALE/2-camY;const lg=ctx2.createRadialGradient(px,py,8,px,py,150);
   const ac=(auraT>0&&auraCol)?hexRGB(auraCol):[255,228,175],af=(auraT>0?0.16:0.12);
   lg.addColorStop(0,`rgba(${ac.join(',')},${af})`);lg.addColorStop(1,`rgba(${ac.join(',')},0)`);ctx2.fillStyle=lg;ctx2.fillRect(px-150,py-150,300,300);
   // each projectile casts its spell-coloured light
-  projs.forEach(p=>{const x=p.x-camX,y=p.y;ctx2.globalAlpha=0.4;glow(ctx2,x,y,(p.ph||8)*SCALE*1.8,p.c||'#9fd0ff');});
+  projs.forEach(p=>{const x=p.x-camX,y=p.y-camY;ctx2.globalAlpha=0.4;glow(ctx2,x,y,(p.ph||8)*SCALE*1.8,p.c||'#9fd0ff');});
   // boss presence — while a boss lives the room shifts 5% toward its colour
   const pboss=mons.find(m=>m.boss&&!m.part)||mons.find(m=>m.boss);
   if(pboss){ctx2.globalAlpha=0.06;glow(ctx2,cv.width/2,cv.height*0.4,cv.height*0.9,pboss.bossColor||'#ff5a5a');}
@@ -3730,9 +3787,13 @@ function draw(){
   ctx2.save();
   if(screenShake.t>0){const s=screenShake.t*screenShake.amt;ctx2.translate((Math.random()-0.5)*s*2,(Math.random()-0.5)*s*2);}
   drawZoneBG();
+  // World layer — everything anchored in world-space scrolls with the vertical camera (camY). The
+  // sky (above) and the ambient/lighting/HUD passes (below) stay screen-fixed, outside this translate.
+  ctx2.save();ctx2.translate(0,-Math.round(camY));
   plats.forEach(drawPlat);
   drawPortals();
   drawProps();
+  drawLadders();
   // C3 — the zone's hidden cache (faint glow always; name pill only up close so it stays a find).
   {const t=ZONE_TREASURE[G.zone];if(t&&!G.treasures[G.zone]){const sx=t.x-camX;if(sx>-40&&sx<cv.width+40){const sh=SHS['chest'];if(!reducedMotion()){ctx2.save();ctx2.globalCompositeOperation='lighter';ctx2.globalAlpha=0.22+Math.sin(gTime*3)*0.12;glow(ctx2,sx,t.y-14,18,'#ffd24a');ctx2.restore();}if(sh)ctx2.drawImage(sh,0,0,SD,SDH,sx-SW*SCALE/2,t.y-SH*SCALE,SW*SCALE,SH*SCALE);if(Math.abs(PL.x-t.x)<120)labelPill('✦ Cache',sx,t.y-SH*SCALE-4,{size:6,color:'#ffe9a0'});}}}
   npcs2.forEach(n=>{const sx=n.x-camX-SW*SCALE/2;if(sx+SW*SCALE<0||sx>cv.width)return;const sh=SHS[n.sheet],tf=sh.width/SD,f=Math.floor(n.frame)%tf;ctx2.drawImage(sh,f*SD,0,SD,SDH,sx,n.y-SH*SCALE,SW*SCALE,SH*SCALE);
@@ -3791,6 +3852,7 @@ function draw(){
     if(PL.hurtT>0){ctx2.globalCompositeOperation='source-atop';ctx2.globalAlpha=Math.min(0.5,PL.hurtT/0.3*0.55);ctx2.fillStyle='#ff5a5a';ctx2.fillRect(-W/2,-H,W,H);}
     ctx2.restore();
     ctx2.font='6px "Press Start 2P",monospace';ctx2.fillStyle='#9fc0ff';ctx2.textAlign='center';ctx2.fillText(G.name,PL.x-camX,PL.y+5);}
+  ctx2.restore();
   drawForeground();
   drawLighting();
   if(deathFlashT>0){ctx2.save();ctx2.globalCompositeOperation='lighter';ctx2.globalAlpha=Math.min(1,deathFlashT/0.15)*0.5;ctx2.fillStyle='#ffffff';ctx2.fillRect(0,0,cv.width,cv.height);ctx2.restore();}
@@ -3888,18 +3950,21 @@ function draw(){
   ctx2.restore();
 }
 
-function onCC(e){if(dlgOpen||mapOpen||paused)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(cv.width/r.width)+camX,my=(e.clientY-r.top)*(cv.height/r.height);let cn=null;npcs2.forEach(n=>{if(Math.abs(mx-n.x)<28&&Math.abs(my-n.y)<30)cn=n;});if(cn){openDlg(cn);return;}let cm=null,md=100;mons.forEach(m=>{const d=Math.sqrt((mx-m.x)**2+(my-m.y)**2);if(d<md){md=d;cm=m;}});if(cm)fireAt(cm,0);}
+function onCC(e){if(dlgOpen||mapOpen||paused)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(cv.width/r.width)+camX,my=(e.clientY-r.top)*(cv.height/r.height)+camY;let cn=null;npcs2.forEach(n=>{if(Math.abs(mx-n.x)<28&&Math.abs(my-n.y)<30)cn=n;});if(cn){openDlg(cn);return;}let cm=null,md=100;mons.forEach(m=>{const d=Math.sqrt((mx-m.x)**2+(my-m.y)**2);if(d<md){md=d;cm=m;}});if(cm)fireAt(cm,0);}
 function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true;if(!dlgOpen&&!mapOpen&&!paused){if(k==='q')castSpell(0);if(k==='w')castSpell(1);if(k==='e')castSpell(2);if(k==='r')castSpell(3);if(k==='t')hotbarUse(0);if(k==='y')hotbarUse(1);if(k==='u')hotbarUse(2);if(k==='f'&&nearNPC)openDlg(nearNPC);else if(k==='f'&&nearPortal)enterPortal(nearPortal);}if(k==='escape'){if(dlgOpen)closeDlg();else if(mapOpen)toggleMap();else togglePause();}if(k==='m'&&!dlgOpen&&!paused)toggleMap();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key))e.preventDefault();}
 function spellCd(b){return hasPow('haste')?+(b*0.7).toFixed(2):b;}
 function castSpell(i){if(!G.spells[i]){log('Learn this spell first!','d');return;}if(cds[i]>0)return;const sp=SPELLS[i];if(sp.shield){if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[i]=spellCd(sp.cd);G.shield=true;G.shieldT=USK.has('bw')?8:5;sp.sfx();log('Mana Shield active '+G.shieldT+'s!','h');updateHUD();return;}const tgt=closest(sp.r);if(!tgt){log('No enemy in range!','d');return;}fireAt(tgt,i);}
-function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}combatStarted=true;G.mp-=sp.mp;cds[si]=spellCd(sp.cd);PL.casting=0.4;PL.right=tgt.x>PL.x;const dx=tgt.x-PL.x,dy=tgt.y-PL.y,dist=Math.sqrt(dx*dx+dy*dy)||1;let dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn))+eqMag();if(si===1&&USK.has('py'))dmg=Math.floor(dmg*1.5);if(si===2&&USK.has('fr'))dmg=Math.floor(dmg*1.3);if(metaRank('might'))dmg=Math.floor(dmg*metaDmgMul());if(G.attune)dmg=Math.floor(dmg*attuneMul());projs.push({x:PL.x,y:PL.y-SH*SCALE*0.4,vx:(dx/dist)*440,vy:(dy/dist)*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});if(!reducedMotion()){const mx=PL.x+(PL.right?1:-1)*10,my=PL.y-SH*SCALE*0.4;rings.push({x:mx,y:my,r0:3,r1:16,c:sp.c||'#9fd0ff',t:0,dur:0.18});for(let i=0;i<4;i++)parts.push({x:mx,y:my,vx:(dx/dist)*120+Math.random()*40-20,vy:(dy/dist)*120+Math.random()*40-20,life:0.2,c:sp.c||'#9fd0ff',r:1+Math.random(),trail:1});}auraCol=sp.c||null;auraT=2;sp.sfx();updateHUD();}
-function closest(r){let c=null,md=r;mons.forEach(m=>{if(m.invuln)return;const d=Math.sqrt((m.x-PL.x)**2+(m.y-PL.y)**2);if(d<md){md=d;c=m;}});return c;}
+function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}combatStarted=true;G.mp-=sp.mp;cds[si]=spellCd(sp.cd);PL.casting=0.4;PL.right=tgt.x>PL.x;const oy=PL.y-SH*SCALE*0.4,dx=tgt.x-PL.x,dy=tgt.y-oy,sgn=dx>=0?1:-1;let va=Math.atan2(dy,Math.abs(dx)||1);if(!tgt.boss)va=Math.max(-AIM_CONE,Math.min(AIM_CONE,va));const fdx=sgn*Math.cos(va),fdy=Math.sin(va);let dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn))+eqMag();if(si===1&&USK.has('py'))dmg=Math.floor(dmg*1.5);if(si===2&&USK.has('fr'))dmg=Math.floor(dmg*1.3);if(metaRank('might'))dmg=Math.floor(dmg*metaDmgMul());if(G.attune)dmg=Math.floor(dmg*attuneMul());projs.push({x:PL.x,y:oy,vx:fdx*440,vy:fdy*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});if(!reducedMotion()){const mx=PL.x+(PL.right?1:-1)*10,my=PL.y-SH*SCALE*0.4;rings.push({x:mx,y:my,r0:3,r1:16,c:sp.c||'#9fd0ff',t:0,dur:0.18});for(let i=0;i<4;i++)parts.push({x:mx,y:my,vx:fdx*120+Math.random()*40-20,vy:fdy*120+Math.random()*40-20,life:0.2,c:sp.c||'#9fd0ff',r:1+Math.random(),trail:1});}auraCol=sp.c||null;auraT=2;sp.sfx();updateHUD();}
+// True while a foe sits within ±AIM_CONE of horizontal from the player's cast origin — non-boss
+// targets outside the cone can't be auto-acquired or hit, so height (and the ladders) matter.
+function inAimCone(m){const oy=PL.y-SH*SCALE*0.4;return Math.abs(Math.atan2(m.y-oy,Math.abs(m.x-PL.x)||1))<=AIM_CONE;}
+function closest(r){let c=null,md=r;mons.forEach(m=>{if(m.invuln)return;if(!m.boss&&!inAimCone(m))return;const d=Math.sqrt((m.x-PL.x)**2+(m.y-PL.y)**2);if(d<md){md=d;c=m;}});return c;}
 // C4 — a bomber's fuse burns out: an AoE detonation that hurts the player if too close, then it dies.
 function bombDetonate(m){burst(m.x,m.y-18,'#ffb030',28,200);shake(0.32,5);sfxFireball();if(!reducedMotion())rings.push({x:m.x,y:m.y-16,r0:12,r1:130,c:'#ffb030',t:0,dur:0.32});if(Math.abs(PL.x-m.x)<115&&Math.abs(PL.y-m.y)<82&&PL.inv<=0){let ed=Math.max(1,Math.round(m.mx*1.6)-eqDef());if(G.shield)ed=Math.max(1,Math.floor(ed*shieldFac()));G.hp=Math.max(0,G.hp-ed);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,ed,'#ffb030','pdmg');log('💥 '+m.n+' detonates for '+ed+'!','d');if(G.hp<=0){respawn();}else updateHUD();}m.hp=0;killM(m);}
 function killM(m){mons=mons.filter(x=>x.id!==m.id);spawnDeath(m);G.kills[m.t]=(G.kills[m.t]||0)+1;questCredit('kill',m.t);META.totalKills=(META.totalKills||0)+1;if(!META.codex[m.t]){META.codex[m.t]=true;sfxCodex();log('📖 New Codex entry: '+m.n.replace(/^★ (\w+ )?/,'')+'!','q');}if(m.elite)META.flags.elite=true;sfxDeath();if(G.bounty&&!m.boss&&m.t===G.bounty.t&&G.bounty.p<G.bounty.n){G.bounty.p++;if(G.bounty.p>=G.bounty.n)log('📋 Bounty complete! Return to the board in Aethon City.','q');}if(m.boss){const bg=USK.has('gs')?Math.floor(m.gold*1.4):m.gold;G.gold+=bg;sfxQuestComplete();burst(m.x,m.y-30,m.bossColor,32,180);shake(0.4,6);if(!reducedMotion()){hitStop=Math.max(hitStop,0.09);deathFlashT=0.15;}log(m.part?('💥 '+m.n+' SHATTERS! +'+m.xp+' XP +'+bg+' gold!'):('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+bg+' gold!'),'x');gainXP(m.xp);if(!m.part){addGear(rollGear(G.zone,true));if(m.t==='hollow_oracle'||m.t==='ash_sage'||m.t==='hollow_idol'||Math.random()<0.01){log('✦ The boss drops something of impossible power...','x');addGear(rollArtifact());}}if(!m.part&&!META.flags.hintArtifacts){META.flags.hintArtifacts=true;saveMeta();log('⚒ Forgemaster Bren: “A champion’s kill. The great beasts sometimes yield an Artifact — a relic of unique power no forge can replicate. Hunt them well.”','q');}updateHUD();renderQP();checkAchv();saveGame();return;}if(m.affix==='explosive'){burst(m.x,m.y-20,'#ffb030',26,180);shake(0.28,5);sfxFireball();if(Math.abs(PL.x-m.x)<92&&Math.abs(PL.y-m.y)<72&&PL.inv<=0){let edmg=Math.max(1,Math.round(m.mx*1.3)-eqDef());if(G.shield)edmg=Math.max(1,Math.floor(edmg*shieldFac()));G.hp=Math.max(0,G.hp-edmg);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,edmg,'#ffb030');log('💥 Explosive '+m.n+' detonates for '+edmg+'!','d');if(G.hp<=0)respawn();else updateHUD();}}log(m.n+' defeated! +'+m.xp+' XP','x');burst(m.x,m.y-20,m.elite?'#ffd24a':'#ffd27a',m.elite?24:14,m.elite?170:130);gainXP(Math.round(m.xp*runeFind()));if((m.gold||0)>0){let gd=m.gold+Math.floor(Math.random()*m.gold);if(USK.has('gs'))gd=Math.floor(gd*1.4);gd=Math.floor(gd*runeFind());G.gold+=gd;log('+'+gd+' gold','x');updateHUD();}if(Math.random()<0.01*metaDropMul())addGear(rollGear(G.zone,m.elite));m.loot.forEach(([item,ch])=>{let eff=ch;const relic=ITEMS[item]&&ITEMS[item].relic;if(relic){const n=G.relicPity[item]||0;if(n>=25)eff=Math.min(1,ch+(n-25)*0.02);}if(Math.random()<eff){if(relic)G.relicPity[item]=0;addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}else if(relic){G.relicPity[item]=(G.relicPity[item]||0)+1;const n=G.relicPity[item];if(n===25)log('You sense the '+ITEMS[item].n+' is near — the rift-song grows louder…','q');else if(n>25&&(n-25)%10===0)log('The rift-song swells — the '+ITEMS[item].n+' must surface soon…','q');}});renderQP();checkAchv();saveGame();const kz=G.zone,kt=m.t;setTimeout(()=>{if(G.zone!==kz||!CZ.mons.some(x=>x.t===kt))return;const sp=zoneSpawnPoint(),nm=mkMon(kt,sp.x,sp.y);nm.spawnT=0.4;mons.push(nm);if(!reducedMotion())for(let i=0;i<6;i++)parts.push({x:sp.x+(Math.random()*20-10),y:sp.y-Math.random()*10,vx:Math.random()*20-10,vy:-30-Math.random()*40,life:0.4+Math.random()*0.2,c:'#b096ec',r:1+Math.random()*1.5});},5000+Math.random()*2500);}
 function addItem(id){if(GEAR_FIXED[id]){addGear({...GEAR_FIXED[id]});return;}questCredit('col',id);const nm=ITEMS[id]?ITEMS[id].n:id;const s=G.inventory.findIndex(x=>x&&x.id===id);if(s>=0)G.inventory[s].qty++;else{let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){if(bagAdd(G.storage,{id,qty:1},G.storageMax)){log('🎒 Bag full — '+nm+' sent to your Storage Chest.','q');}else{log('Bag and storage full! '+nm+' was lost...','d');}renderIP();return;}G.inventory[i]={id,qty:1};}autofillHotbar(id);renderIP();}
 function gainXP(amt){G.xp+=amt;while(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.floor(G.xpNext*(G.level>=16?1.15:1.4));G.maxHp+=20;G.hp=G.maxHp;G.maxMp+=10;G.mp=G.maxMp;G.skillPoints++;document.getElementById('hlvl').textContent=lvlLabel();const t=document.getElementById('lvt');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);burst(PL.x,PL.y-40,'#ef9f27',24,160);sfxLevelUp();log('LEVEL UP! Now level '+G.level+'!','x');log('Gained 1 Skill Point!','q');renderSP();}checkAchv();updateHUD();}
-function respawn(){if(RIFT.active){RIFT.ending=true;G.hp=Math.floor(G.maxHp*0.5);PL.x=130;PL.y=260;PL.vx=0;PL.vy=0;PL.trail=[];updateHUD();return;}G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=260;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];camX=0;const lost=Math.floor(G.gold*0.1);if(lost>0){G.gold-=lost;log('You dropped '+lost+' gold as you fell...','d');}log('Defeated! Respawned...','d');updateHUD();saveGame();}
+function respawn(){if(RIFT.active){RIFT.ending=true;G.hp=Math.floor(G.maxHp*0.5);PL.x=130;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.trail=[];PL.climbing=false;updateHUD();return;}G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];PL.climbing=false;camX=0;camY=Math.max(0,Math.min(camYMax(),PL.y-(cv&&cv.height||VIEW_H)*0.6));const lost=Math.floor(G.gold*0.1);if(lost>0){G.gold-=lost;log('You dropped '+lost+' gold as you fell...','d');}log('Defeated! Respawned...','d');updateHUD();saveGame();}
 function spawnBoss(zi){const bd=BOSS_DEFS.find(b=>b.zone===zi);if(!bd)return;const em=ascEnemyMul(),rm=metaRewardMul();const b={id:Math.random(),boss:true,t:bd.t,n:bd.n,sheet:bd.sheet,frames:bd.frames,hp:Math.round(bd.hp*em),mhp:Math.round(bd.hp*em),mn:Math.round(bd.mn*em),mx:Math.round(bd.mx*em),xp:Math.round(bd.xp*rm),gold:Math.round(bd.gold*rm),loot:[],spd:bd.spd,pat:bd.pat,fly:bd.fly,x:bd.sx,y:bd.sy,bx:bd.sx,vx:bd.spd,vy:0,at:0,st:0,frame:0,right:true,hit:0,bossColor:bd.bossColor,bscale:bd.scale||4,a1T:0,a2T:0,splitDone:false,fightT:0,enraged:false};mons.push(b);if(bd.t==='hollow_idol'){b.invuln=true;b.anchored=true;b.ay=bd.sy;b.stage=1;b.enrageAfter=480;spawnIdolArms(6);log('🗿 The idol is IMPERVIOUS while its six arms endure — shatter them first!','d');}bossTimers[zi]=0;bossAlertT=3.5;bossAlertName=bd.n;shake(0.5,8);log('⚠ BOSS SPAWNED: '+bd.n+'!','d');sfxDeath();}
 // The Hollow One's limbs: anchored hovering part-bosses arranged around the idol. Roles cycle by index
 // (crusher lob / gazer bolt / render spread). Stage 3 regrows two via spawnIdolArms(2).
@@ -4007,7 +4072,7 @@ function orbFill(id,frac,cLite,cDark,val,low){const cv=document.getElementById(i
   x.fillStyle='#fff';x.font='7px "Press Start 2P",monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(''+Math.round(val),cx,cy+0.5);}
 // Phase 5 damage-number grammar: type ∈ crit|dot|heal|pdmg drives size/motion (shape+motion,
 // not hue alone, so it stays colourblind-legible). Heals show +N, everything else -N.
-function spawnDN(sx,sy,dmg,col,type){const el=document.createElement('div');el.className='dmgn'+(type?' '+type:'');el.style.color=col||'#fff';el.style.left=(sx+Math.random()*14-7)+'px';el.style.top=(sy-40)+'px';el.textContent=typeof dmg==='number'?((type==='heal'?'+':'-')+dmg):dmg;document.getElementById('cw').appendChild(el);setTimeout(()=>el.remove(),type==='crit'?900:850);}
+function spawnDN(sx,sy,dmg,col,type){const el=document.createElement('div');el.className='dmgn'+(type?' '+type:'');el.style.color=col||'#fff';el.style.left=(sx+Math.random()*14-7)+'px';el.style.top=(sy-camY-40)+'px';el.textContent=typeof dmg==='number'?((type==='heal'?'+':'-')+dmg):dmg;document.getElementById('cw').appendChild(el);setTimeout(()=>el.remove(),type==='crit'?900:850);}
 function qtxt(s){return (s||'').replace(/\{name\}/g,G.name);}
 // Resolve which quest a giver should offer right now (givers may hold several quests across the story): active > newly available > still-locked > last completed.
 function npcQuest(npc){const qs=QUESTS.filter(x=>x.giver===npc.name);if(!qs.length)return null;const active=qs.find(q=>G.questStates[q.id]==='active');if(active)return active;const avail=qs.find(q=>!G.questStates[q.id]&&G.level>=q.rlvl&&(!q.prev||G.questStates[q.prev]==='done'));if(avail)return avail;const pending=qs.find(q=>!G.questStates[q.id]);if(pending)return pending;return qs[qs.length-1];}
