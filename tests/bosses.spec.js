@@ -109,7 +109,7 @@ test.describe('Bosses & enrage', () => {
   test('the final boss drops a guaranteed Artifact', async ({ game }) => {
     const hasArtifact = await game.evaluate(() => {
       mons.length = 0; G.zone = 5; CZ = ZD[5]; G.equipment = { weapon: null, armor: null }; G.inventory = [];
-      spawnBoss(5); const b = mons.find(m => m.t === 'hollow_oracle'); killM(b);
+      spawnBoss(5); const b = mons.find(m => m.t === 'hollow_oracle'); killM(b); collectAllDrops();
       const all = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean);
       return all.some(g => g.rar === 5);
     });
@@ -119,7 +119,7 @@ test.describe('Bosses & enrage', () => {
   test('Malachar also drops a guaranteed Artifact', async ({ game }) => {
     const hasArtifact = await game.evaluate(() => {
       mons.length = 0; G.zone = 9; CZ = ZD[9]; G.equipment = { weapon: null, armor: null }; G.inventory = [];
-      spawnBoss(9); const b = mons.find(m => m.t === 'ash_sage'); killM(b);
+      spawnBoss(9); const b = mons.find(m => m.t === 'ash_sage'); killM(b); collectAllDrops();
       const all = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean);
       return all.some(g => g.rar === 5);
     });

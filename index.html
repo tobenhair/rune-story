@@ -198,6 +198,7 @@ canvas#gc{display:block;image-rendering:pixelated}
 #tb-jump{right:12px;bottom:12px;width:60px;height:60px;font-size:24px}
 #tb-talk{right:88px;bottom:18px;display:none;background:rgba(106,163,255,0.3);border-color:rgba(106,163,255,0.6)}
 #tb-dash{right:82px;bottom:74px;background:rgba(255,180,90,0.22);border-color:rgba(255,180,90,0.55)}
+#tb-loot{right:150px;bottom:74px;display:none;background:rgba(93,202,165,0.28);border-color:rgba(93,202,165,0.6)}
 </style>
 
 <div id="gr">
@@ -281,6 +282,7 @@ canvas#gc{display:block;image-rendering:pixelated}
         <div class="tbtn" id="tb-right">▶</div>
         <div class="tbtn" id="tb-talk">💬</div>
         <div class="tbtn" id="tb-dash">⤢</div>
+        <div class="tbtn" id="tb-loot">🎒</div>
         <div class="tbtn" id="tb-jump">⬆</div>
       </div>
     </div>
@@ -2703,7 +2705,7 @@ const IDOL_ARM={t:'idol_arm',n:'Arm of the Hollow One',sheet:'idolArm',frames:30
 // once on entry by loadZone and must NOT auto-respawn after being slain — you clear it and walk out.
 function isFinaleArena(z){return z===5||z===9||z===10;}
 let bossTimers=[0,0,0,0,0,0,0,0,0,0,0],bossAlertT=0,bossAlertName='';
-let cv,ctx2,camX=0,camY=0,zGround=388,zHeight=480,mons=[],npcs2=[],projs=[];
+let cv,ctx2,camX=0,camY=0,zGround=388,zHeight=480,mons=[],npcs2=[],projs=[],drops=[];
 let PL={x:80,y:260,vx:0,vy:0,gnd:false,right:true,inv:0,frame:0,casting:0,dashT:0,dashCd:0,dashDir:1,trail:[],shHitT:0,shHitA:0,landT:0,hurtT:0,climbing:false};
 // record a shield impact so the bubble ripples toward the incoming hit (cosmetic, runtime-only)
 function shieldPop(sx,sy){PL.shHitT=0.35;PL.shHitA=Math.atan2(sy-(PL.y-SH*SCALE/2),sx-PL.x);}
@@ -2713,6 +2715,10 @@ const DASH_SPD=580,DASH_TIME=0.18,DASH_CD=1.1,DASH_IFRAME=0.28;
 // ladders let you climb between tiers. CLIMB_SPD is the vertical climb rate; AIM_CONE limits how
 // far off horizontal a spell can be aimed (so you can't snipe the whole tower from the floor).
 const CLIMB_SPD=140,AIM_CONE=Math.PI/9;
+// Ground loot (MapleStory-style): kills scatter physical drops. Gold auto-collects within
+// GOLD_MAGNET (pulled in, grabbed at GOLD_PICK); items/gear are looted with Z while within LOOT_R.
+// Drops fade out after DROP_LIFE seconds (rare+ gear persists) and are auto-collected on zone exit.
+const LOOT_R=66,GOLD_MAGNET=74,GOLD_PICK=22,DROP_LIFE=42;
 const ZONE_PORTAL_COLORS=['#e8d5b7','#6aa3ff','#5dcaa5','#b050f0','#9040d0','#ff2d5d','#ff2d5d','#ff7a30','#7ad0ff','#ffb030','#b050f0'];
 let cds=[0,0,0,0],keys={},jp={},dlgOpen=false,mapOpen=false,raf=null,lt=0,CZ=null,plats=[],nearNPC=null,nearPortal=null,portals2=[];
 let gTime=0,screenShake={t:0,amt:0},parts=[];
@@ -2893,7 +2899,7 @@ function openTreasure(z){if(G.treasures[z])return;G.treasures[z]=true;const g=ro
 // they frame exactly as before the vertical camera existed.
 function camYMax(){return Math.max(0,zHeight-(cv&&cv.height||VIEW_H));}
 function ladderAt(x,y){const ls=CZ&&CZ.ladders;if(!ls)return null;for(const l of ls){if(x>l.x-15&&x<l.x+15&&y>=l.y1-6&&y<=l.y2+8)return l;}return null;}
-function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};triggerZoneCard(CZ.name);
+function loadZone(i,spawnX){collectAllDrops();G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};triggerZoneCard(CZ.name);
   // Vertical extent: a zone may declare a tall world (CZ.h) with its ground low in world-space
   // (CZ.ground); short zones keep the classic 480-tall, ground-at-388 framing untouched.
   zHeight=CZ.h||VIEW_H;zGround=CZ.ground!=null?CZ.ground:388;
@@ -2901,7 +2907,7 @@ function loadZone(i,spawnX){G.zone=i;CZ=ZD[i];plats=CZ.plats;platSkinCache={};tr
   bossAlertT=0;riftMsgT=0;
   // B8 — hide the top-left control hints while in the rift, where the depth HUD sits.
   {const sg=document.getElementById('sg');if(sg)sg.classList.toggle('in-rift',i===RIFT_ZONE);}
-  mons=[];npcs2=[];projs=[];dying=[];rings=[];arcs=[];parts=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];PL.climbing=false;camY=Math.max(0,Math.min(camYMax(),PL.y-(cv&&cv.height||VIEW_H)*0.6));nearNPC=null;nearPortal=null;PL.inv=Math.max(PL.inv||0,1.0);combatStarted=false;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});
+  mons=[];npcs2=[];projs=[];dying=[];rings=[];arcs=[];parts=[];drops=[];portals2=CZ.portals||[];const sx=spawnX!==undefined?spawnX:100;camX=Math.max(0,Math.min(CZ.bound-(cv&&cv.width||480),sx-(cv&&cv.width||480)/2));PL.x=sx;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];PL.climbing=false;camY=Math.max(0,Math.min(camYMax(),PL.y-(cv&&cv.height||VIEW_H)*0.6));nearNPC=null;nearPortal=null;PL.inv=Math.max(PL.inv||0,1.0);combatStarted=false;CZ.mons.forEach(m=>{mons.push(mkMon(m.t,m.x,m.y));});
   // C3 — a rare wandering elite sometimes prowls a combat zone (extra ★ foe, extra loot).
   if(((i>=1&&i<=4)||i===7||i===8)&&CZ.mons.length&&Math.random()<0.3){const t=CZ.mons[Math.floor(Math.random()*CZ.mons.length)].t,sp=zoneSpawnPoint();mons.push(mkMon(t,sp.x,sp.y,true));log('A powerful presence stalks these grounds…','q');}
   CZ.npcs.forEach(n=>{npcs2.push({name:n.name,x:n.x,y:n.y,sheet:n.sheet,q:n.q,shop:n.shop,lore:n.lore,board:n.board,forge:n.forge,storage:n.storage,rift:n.rift,asc:n.asc,town:n.town,codex:n.codex,frame:0});});document.getElementById('zlbl').textContent=CZ.name;playZoneMusic(i);buildMap();if(isFinaleArena(i)&&!mons.some(m=>m.boss))spawnBoss(i);}
@@ -2993,6 +2999,7 @@ function update(dt){
   else if((jp['f']||jp['e'])&&nearPortal)enterPortal(nearPortal);
   const tv=!!(nearNPC||nearPortal);
   if(touchMode&&tv!==talkVis){talkVis=tv;document.getElementById('tb-talk').style.display=tv?'flex':'none';}
+  updateDrops(dt);
   if(RIFT.active&&!RIFT.ending)updateRift(dt);
 }
 
@@ -3944,6 +3951,7 @@ function draw(){
     if(m.boss||m.elite||mnear)labelPill(mtxt,mcx,mtopY,{size:m.boss?8:7,color:mcol,border:m.elite?'rgba(255,210,74,0.4)':null,bg:'rgba(6,8,20,0.72)'});
     else{ctx2.save();ctx2.globalAlpha=Math.max(0.3,1-Math.abs(m.x-PL.x)/340);ctx2.font='6px "Press Start 2P",monospace';ctx2.fillStyle='#cfcfe0';ctx2.textAlign='center';ctx2.fillText(mtxt,mcx,mtopY);ctx2.restore();}});
   drawDying();
+  drawDrops();
   projs.forEach(p=>{const sh=SHS[p.proj];if(!sh)return;const tf=Math.max(1,Math.round(sh.width/p.pw)),fr=tf>1?Math.floor(gTime*14+p.x*0.05)%tf:0,W=p.pw*SCALE,H=p.ph*SCALE;ctx2.save();ctx2.translate(p.x-camX,p.y);if(p.proj==='fireball'||p.proj==='boneArrow')ctx2.rotate(Math.atan2(p.vy,p.vx));else if(p.proj==='axe')ctx2.rotate(gTime*14);ctx2.drawImage(sh,fr*p.pw,0,p.pw,p.ph,-W/2,-H/2,W,H);ctx2.restore();});
   ctx2.save();parts.forEach(p=>{ctx2.globalAlpha=Math.max(0,Math.min(1,p.life/0.85));ctx2.fillStyle=p.c;ctx2.beginPath();ctx2.arc(p.x-camX,p.y,p.r,0,Math.PI*2);ctx2.fill();});ctx2.restore();
   drawFX();
@@ -4063,7 +4071,7 @@ function draw(){
 }
 
 function onCC(e){if(dlgOpen||mapOpen||paused)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(cv.width/r.width)+camX,my=(e.clientY-r.top)*(cv.height/r.height)+camY;let cn=null;npcs2.forEach(n=>{if(Math.abs(mx-n.x)<28&&Math.abs(my-n.y)<30)cn=n;});if(cn){openDlg(cn);return;}let cm=null,md=100;mons.forEach(m=>{const d=Math.sqrt((mx-m.x)**2+(my-m.y)**2);if(d<md){md=d;cm=m;}});if(cm)fireAt(cm,0);}
-function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true;if(!dlgOpen&&!mapOpen&&!paused){if(k==='q')castSpell(0);if(k==='w')castSpell(1);if(k==='e')castSpell(2);if(k==='r')castSpell(3);if(k==='t')hotbarUse(0);if(k==='y')hotbarUse(1);if(k==='u')hotbarUse(2);if(k==='f'&&nearNPC)openDlg(nearNPC);else if(k==='f'&&nearPortal)enterPortal(nearPortal);}if(k==='escape'){if(dlgOpen)closeDlg();else if(mapOpen)toggleMap();else togglePause();}if(k==='m'&&!dlgOpen&&!paused)toggleMap();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key))e.preventDefault();}
+function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true;if(!dlgOpen&&!mapOpen&&!paused){if(k==='q')castSpell(0);if(k==='w')castSpell(1);if(k==='e')castSpell(2);if(k==='r')castSpell(3);if(k==='t')hotbarUse(0);if(k==='y')hotbarUse(1);if(k==='u')hotbarUse(2);if(k==='z')lootNearby();if(k==='f'&&nearNPC)openDlg(nearNPC);else if(k==='f'&&nearPortal)enterPortal(nearPortal);}if(k==='escape'){if(dlgOpen)closeDlg();else if(mapOpen)toggleMap();else togglePause();}if(k==='m'&&!dlgOpen&&!paused)toggleMap();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key))e.preventDefault();}
 function spellCd(b){return hasPow('haste')?+(b*0.7).toFixed(2):b;}
 function castSpell(i){if(!G.spells[i]){log('Learn this spell first!','d');return;}if(cds[i]>0)return;const sp=SPELLS[i];if(sp.shield){if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[i]=spellCd(sp.cd);G.shield=true;G.shieldT=USK.has('bw')?8:5;sp.sfx();log('Mana Shield active '+G.shieldT+'s!','h');updateHUD();return;}const tgt=closest(sp.r);if(!tgt){log('No enemy in range!','d');return;}fireAt(tgt,i);}
 function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}combatStarted=true;G.mp-=sp.mp;cds[si]=spellCd(sp.cd);PL.casting=0.4;PL.right=tgt.x>PL.x;const oy=PL.y-SH*SCALE*0.4,dx=tgt.x-PL.x,dy=tgt.y-oy,sgn=dx>=0?1:-1;let va=Math.atan2(dy,Math.abs(dx)||1);if(!tgt.boss)va=Math.max(-AIM_CONE,Math.min(AIM_CONE,va));const fdx=sgn*Math.cos(va),fdy=Math.sin(va);let dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn))+eqMag();if(si===1&&USK.has('py'))dmg=Math.floor(dmg*1.5);if(si===2&&USK.has('fr'))dmg=Math.floor(dmg*1.3);if(metaRank('might'))dmg=Math.floor(dmg*metaDmgMul());if(G.attune)dmg=Math.floor(dmg*attuneMul());projs.push({x:PL.x,y:oy,vx:fdx*440,vy:fdy*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});if(!reducedMotion()){const mx=PL.x+(PL.right?1:-1)*10,my=PL.y-SH*SCALE*0.4;rings.push({x:mx,y:my,r0:3,r1:16,c:sp.c||'#9fd0ff',t:0,dur:0.18});for(let i=0;i<4;i++)parts.push({x:mx,y:my,vx:fdx*120+Math.random()*40-20,vy:fdy*120+Math.random()*40-20,life:0.2,c:sp.c||'#9fd0ff',r:1+Math.random(),trail:1});}auraCol=sp.c||null;auraT=2;sp.sfx();updateHUD();}
@@ -4073,7 +4081,39 @@ function inAimCone(m){const oy=PL.y-SH*SCALE*0.4;return Math.abs(Math.atan2(m.y-
 function closest(r){let c=null,md=r;mons.forEach(m=>{if(m.invuln)return;if(!m.boss&&!inAimCone(m))return;const d=Math.sqrt((m.x-PL.x)**2+(m.y-PL.y)**2);if(d<md){md=d;c=m;}});return c;}
 // C4 — a bomber's fuse burns out: an AoE detonation that hurts the player if too close, then it dies.
 function bombDetonate(m){burst(m.x,m.y-18,'#ffb030',28,200);shake(0.32,5);sfxFireball();if(!reducedMotion())rings.push({x:m.x,y:m.y-16,r0:12,r1:130,c:'#ffb030',t:0,dur:0.32});if(Math.abs(PL.x-m.x)<115&&Math.abs(PL.y-m.y)<82&&PL.inv<=0){let ed=Math.max(1,Math.round(m.mx*1.6)-eqDef());if(G.shield)ed=Math.max(1,Math.floor(ed*shieldFac()));G.hp=Math.max(0,G.hp-ed);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,ed,'#ffb030','pdmg');log('💥 '+m.n+' detonates for '+ed+'!','d');if(G.hp<=0){respawn();}else updateHUD();}m.hp=0;killM(m);}
-function killM(m){mons=mons.filter(x=>x.id!==m.id);spawnDeath(m);G.kills[m.t]=(G.kills[m.t]||0)+1;questCredit('kill',m.t);META.totalKills=(META.totalKills||0)+1;if(!META.codex[m.t]){META.codex[m.t]=true;sfxCodex();log('📖 New Codex entry: '+m.n.replace(/^★ (\w+ )?/,'')+'!','q');}if(m.elite)META.flags.elite=true;sfxDeath();if(G.bounty&&!m.boss&&m.t===G.bounty.t&&G.bounty.p<G.bounty.n){G.bounty.p++;if(G.bounty.p>=G.bounty.n)log('📋 Bounty complete! Return to the board in Aethon City.','q');}if(m.boss){const bg=USK.has('gs')?Math.floor(m.gold*1.4):m.gold;G.gold+=bg;sfxQuestComplete();burst(m.x,m.y-30,m.bossColor,32,180);shake(0.4,6);if(!reducedMotion()){hitStop=Math.max(hitStop,0.09);deathFlashT=0.15;}log(m.part?('💥 '+m.n+' SHATTERS! +'+m.xp+' XP +'+bg+' gold!'):('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+bg+' gold!'),'x');gainXP(m.xp);if(!m.part){addGear(rollGear(G.zone,true));if(m.t==='hollow_oracle'||m.t==='ash_sage'||m.t==='hollow_idol'||Math.random()<0.01){log('✦ The boss drops something of impossible power...','x');addGear(rollArtifact());}}if(!m.part&&!META.flags.hintArtifacts){META.flags.hintArtifacts=true;saveMeta();log('⚒ Forgemaster Bren: “A champion’s kill. The great beasts sometimes yield an Artifact — a relic of unique power no forge can replicate. Hunt them well.”','q');}updateHUD();renderQP();checkAchv();saveGame();return;}if(m.affix==='explosive'){burst(m.x,m.y-20,'#ffb030',26,180);shake(0.28,5);sfxFireball();if(Math.abs(PL.x-m.x)<92&&Math.abs(PL.y-m.y)<72&&PL.inv<=0){let edmg=Math.max(1,Math.round(m.mx*1.3)-eqDef());if(G.shield)edmg=Math.max(1,Math.floor(edmg*shieldFac()));G.hp=Math.max(0,G.hp-edmg);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,edmg,'#ffb030');log('💥 Explosive '+m.n+' detonates for '+edmg+'!','d');if(G.hp<=0)respawn();else updateHUD();}}log(m.n+' defeated! +'+m.xp+' XP','x');burst(m.x,m.y-20,m.elite?'#ffd24a':'#ffd27a',m.elite?24:14,m.elite?170:130);gainXP(Math.round(m.xp*runeFind()));if((m.gold||0)>0){let gd=m.gold+Math.floor(Math.random()*m.gold);if(USK.has('gs'))gd=Math.floor(gd*1.4);gd=Math.floor(gd*runeFind());G.gold+=gd;log('+'+gd+' gold','x');updateHUD();}if(Math.random()<0.01*metaDropMul())addGear(rollGear(G.zone,m.elite));m.loot.forEach(([item,ch])=>{let eff=ch;const relic=ITEMS[item]&&ITEMS[item].relic;if(relic){const n=G.relicPity[item]||0;if(n>=25)eff=Math.min(1,ch+(n-25)*0.02);}if(Math.random()<eff){if(relic)G.relicPity[item]=0;addItem(item);sfxLoot();log('Looted: '+ITEMS[item].n+' '+ITEMS[item].e,'x');}else if(relic){G.relicPity[item]=(G.relicPity[item]||0)+1;const n=G.relicPity[item];if(n===25)log('You sense the '+ITEMS[item].n+' is near — the rift-song grows louder…','q');else if(n>25&&(n-25)%10===0)log('The rift-song swells — the '+ITEMS[item].n+' must surface soon…','q');}});renderQP();checkAchv();saveGame();const kz=G.zone,kt=m.t;setTimeout(()=>{if(G.zone!==kz||!CZ.mons.some(x=>x.t===kt))return;const sp=zoneSpawnPoint(),nm=mkMon(kt,sp.x,sp.y);nm.spawnT=0.4;mons.push(nm);if(!reducedMotion())for(let i=0;i<6;i++)parts.push({x:sp.x+(Math.random()*20-10),y:sp.y-Math.random()*10,vx:Math.random()*20-10,vy:-30-Math.random()*40,life:0.4+Math.random()*0.2,c:'#b096ec',r:1+Math.random()*1.5});},5000+Math.random()*2500);}
+// ── Ground loot ─────────────────────────────────────────────────────────────
+// A killed monster scatters physical drops that arc out, fall, and settle on a platform. Gold
+// magnets to the player and auto-collects; items/gear are grabbed with Z (or the touch Loot button)
+// while in proximity. Drops are transient (never saved) and auto-collected when you leave the zone.
+function spawnDrop(x,y,d){const a=(Math.random()-0.5)*1.5;d.x=x;d.y=y-18;d.vx=Math.sin(a)*130+(Math.random()*40-20);d.vy=-190-Math.random()*90;d.landed=false;d.born=gTime;d.life=d.keep?1e9:DROP_LIFE;drops.push(d);}
+function dropGold(x,y,amt){if(amt<=0)return;const n=amt>=60?3:amt>=20?2:1,per=Math.floor(amt/n);for(let i=0;i<n;i++)spawnDrop(x+(Math.random()*26-13),y,{kind:'gold',gold:i===n-1?amt-per*(n-1):per});}
+function dropItem(x,y,id){spawnDrop(x,y,{kind:'item',id});}
+function dropGear(x,y,g){spawnDrop(x,y,{kind:'gear',g,keep:g.rar>=2});} // rare+ never despawns
+function collectDrop(d,silent){
+  if(d.kind==='gold'){G.gold+=d.gold;if(!silent)log('+'+d.gold+' gold','x');updateHUD();}
+  else if(d.kind==='item'){if(!silent)log('Looted: '+(ITEMS[d.id]?ITEMS[d.id].n+' '+ITEMS[d.id].e:d.id),'x');addItem(d.id);}
+  else if(d.kind==='gear'){addGear(d.g);}
+}
+function updateDrops(dt){for(let i=drops.length-1;i>=0;i--){const d=drops[i];
+  d.life-=dt;if(d.life<=0){drops.splice(i,1);continue;}
+  if(d.kind==='gold'){const dx=PL.x-d.x,dy=(PL.y-16)-d.y,dist=Math.hypot(dx,dy)||1;if(dist<GOLD_PICK){collectDrop(d);sfxLoot();drops.splice(i,1);continue;}if(dist<GOLD_MAGNET){d.x+=dx/dist*300*dt;d.y+=dy/dist*300*dt;d.landed=true;d.vy=0;continue;}}
+  if(!d.landed){d.vy+=GRAV*0.5*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.vx*=Math.pow(0.4,dt);plats.forEach(p=>{if(d.x>p.x&&d.x<p.x+p.w&&d.vy>=0&&d.y>p.y-2&&d.y<p.y+p.h+10){d.y=p.y-2;d.vy=0;d.landed=true;}});if(d.y>zGround+60){d.y=zGround-2;d.landed=true;d.vy=0;}}
+}}
+// Z (or the touch Loot button): grab every item/gear drop within reach. Gold is not affected — it
+// vacuums on its own.
+function lootNearby(){let got=0;for(let i=drops.length-1;i>=0;i--){const d=drops[i];if(d.kind==='gold')continue;if(Math.hypot(PL.x-d.x,(PL.y-16)-d.y)<LOOT_R){collectDrop(d);drops.splice(i,1);got++;}}if(got)sfxLoot();}
+function collectAllDrops(){drops.forEach(d=>collectDrop(d,true));drops=[];}
+function drawDrops(){const c=ctx2;let lootNear=false;drops.forEach(d=>{const sx=d.x-camX;if(sx<-30||sx>cv.width+30)return;const fade=d.life<6?(0.35+0.65*Math.abs(Math.sin(d.life*8))):1,bob=d.landed?Math.sin(gTime*4+d.born*7)*2:0,y=d.y+bob;c.save();
+  c.globalAlpha=fade*0.3;c.fillStyle='#000';c.beginPath();c.ellipse(sx,d.y+6,8,3,0,0,Math.PI*2);c.fill();c.globalAlpha=fade;
+  if(d.kind==='gold'){const spin=Math.abs(Math.cos(gTime*6+d.born*5));c.save();c.translate(sx,y-6);c.scale(0.35+spin*0.65,1);c.fillStyle='#ffd24a';c.beginPath();c.arc(0,0,5,0,Math.PI*2);c.fill();c.strokeStyle='#a86f10';c.lineWidth=1;c.stroke();c.fillStyle='#fff2b0';c.fillRect(-1,-2,1,4);c.restore();c.globalCompositeOperation='lighter';c.globalAlpha=fade*0.4;glow(c,sx,y-6,9,'#ffd24a');}
+  else{const gear=d.kind==='gear',col=gear?RARS[d.g.rar].c:'#cfe0ff',em=gear?(d.g.e||'⚔'):((ITEMS[d.id]&&ITEMS[d.id].e)||'❓');
+    c.globalCompositeOperation='lighter';c.globalAlpha=fade*(gear&&d.g.rar>=2?0.5:0.26);glow(c,sx,y-8,gear&&d.g.rar>=3?15:10,col);c.globalCompositeOperation='source-over';c.globalAlpha=fade;
+    c.font='15px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(em,sx,y-8);
+    if(Math.hypot(PL.x-d.x,(PL.y-16)-d.y)<LOOT_R){lootNear=true;labelPill('[Z] '+(gear?d.g.n:(ITEMS[d.id]?ITEMS[d.id].n:d.id)),sx,y-20,{size:6,color:col});}}
+  c.restore();});
+  if(touchMode&&lootNear!==lootVis){lootVis=lootNear;const b=document.getElementById('tb-loot');if(b)b.style.display=lootNear?'flex':'none';}
+}
+function killM(m){mons=mons.filter(x=>x.id!==m.id);spawnDeath(m);G.kills[m.t]=(G.kills[m.t]||0)+1;questCredit('kill',m.t);META.totalKills=(META.totalKills||0)+1;if(!META.codex[m.t]){META.codex[m.t]=true;sfxCodex();log('📖 New Codex entry: '+m.n.replace(/^★ (\w+ )?/,'')+'!','q');}if(m.elite)META.flags.elite=true;sfxDeath();if(G.bounty&&!m.boss&&m.t===G.bounty.t&&G.bounty.p<G.bounty.n){G.bounty.p++;if(G.bounty.p>=G.bounty.n)log('📋 Bounty complete! Return to the board in Aethon City.','q');}if(m.boss){const bg=USK.has('gs')?Math.floor(m.gold*1.4):m.gold;dropGold(m.x,m.y,bg);sfxQuestComplete();burst(m.x,m.y-30,m.bossColor,32,180);shake(0.4,6);if(!reducedMotion()){hitStop=Math.max(hitStop,0.09);deathFlashT=0.15;}log(m.part?('💥 '+m.n+' SHATTERS! +'+m.xp+' XP +'+bg+' gold!'):('⚠ BOSS DEFEATED: '+m.n+'! +'+m.xp+' XP +'+bg+' gold!'),'x');gainXP(m.xp);if(!m.part){dropGear(m.x,m.y,rollGear(G.zone,true));if(m.t==='hollow_oracle'||m.t==='ash_sage'||m.t==='hollow_idol'||Math.random()<0.01){log('✦ The boss drops something of impossible power...','x');dropGear(m.x,m.y,rollArtifact());}}if(!m.part&&!META.flags.hintArtifacts){META.flags.hintArtifacts=true;saveMeta();log('⚒ Forgemaster Bren: “A champion’s kill. The great beasts sometimes yield an Artifact — a relic of unique power no forge can replicate. Hunt them well.”','q');}updateHUD();renderQP();checkAchv();saveGame();return;}if(m.affix==='explosive'){burst(m.x,m.y-20,'#ffb030',26,180);shake(0.28,5);sfxFireball();if(Math.abs(PL.x-m.x)<92&&Math.abs(PL.y-m.y)<72&&PL.inv<=0){let edmg=Math.max(1,Math.round(m.mx*1.3)-eqDef());if(G.shield)edmg=Math.max(1,Math.floor(edmg*shieldFac()));G.hp=Math.max(0,G.hp-edmg);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,edmg,'#ffb030');log('💥 Explosive '+m.n+' detonates for '+edmg+'!','d');if(G.hp<=0)respawn();else updateHUD();}}log(m.n+' defeated! +'+m.xp+' XP','x');burst(m.x,m.y-20,m.elite?'#ffd24a':'#ffd27a',m.elite?24:14,m.elite?170:130);gainXP(Math.round(m.xp*runeFind()));if((m.gold||0)>0){let gd=m.gold+Math.floor(Math.random()*m.gold);if(USK.has('gs'))gd=Math.floor(gd*1.4);gd=Math.floor(gd*runeFind());dropGold(m.x,m.y,gd);}if(Math.random()<0.01*metaDropMul())dropGear(m.x,m.y,rollGear(G.zone,m.elite));m.loot.forEach(([item,ch])=>{let eff=ch;const relic=ITEMS[item]&&ITEMS[item].relic;if(relic){const n=G.relicPity[item]||0;if(n>=25)eff=Math.min(1,ch+(n-25)*0.02);}if(Math.random()<eff){if(relic)G.relicPity[item]=0;dropItem(m.x,m.y,item);}else if(relic){G.relicPity[item]=(G.relicPity[item]||0)+1;const n=G.relicPity[item];if(n===25)log('You sense the '+ITEMS[item].n+' is near — the rift-song grows louder…','q');else if(n>25&&(n-25)%10===0)log('The rift-song swells — the '+ITEMS[item].n+' must surface soon…','q');}});renderQP();checkAchv();saveGame();const kz=G.zone,kt=m.t;setTimeout(()=>{if(G.zone!==kz||!CZ.mons.some(x=>x.t===kt))return;const sp=zoneSpawnPoint(),nm=mkMon(kt,sp.x,sp.y);nm.spawnT=0.4;mons.push(nm);if(!reducedMotion())for(let i=0;i<6;i++)parts.push({x:sp.x+(Math.random()*20-10),y:sp.y-Math.random()*10,vx:Math.random()*20-10,vy:-30-Math.random()*40,life:0.4+Math.random()*0.2,c:'#b096ec',r:1+Math.random()*1.5});},5000+Math.random()*2500);}
 function addItem(id){if(GEAR_FIXED[id]){addGear({...GEAR_FIXED[id]});return;}questCredit('col',id);const nm=ITEMS[id]?ITEMS[id].n:id;const s=G.inventory.findIndex(x=>x&&x.id===id);if(s>=0)G.inventory[s].qty++;else{let i=G.inventory.findIndex(x=>!x);if(i<0&&G.inventory.length<16)i=G.inventory.length;if(i<0||i>=16){if(bagAdd(G.storage,{id,qty:1},G.storageMax)){log('🎒 Bag full — '+nm+' sent to your Storage Chest.','q');}else{log('Bag and storage full! '+nm+' was lost...','d');}renderIP();return;}G.inventory[i]={id,qty:1};}autofillHotbar(id);renderIP();}
 function gainXP(amt){G.xp+=amt;while(G.xp>=G.xpNext){G.xp-=G.xpNext;G.level++;G.xpNext=Math.floor(G.xpNext*(G.level>=16?1.15:1.4));G.maxHp+=20;G.hp=G.maxHp;G.maxMp+=10;G.mp=G.maxMp;G.skillPoints++;document.getElementById('hlvl').textContent=lvlLabel();const t=document.getElementById('lvt');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);burst(PL.x,PL.y-40,'#ef9f27',24,160);sfxLevelUp();log('LEVEL UP! Now level '+G.level+'!','x');log('Gained 1 Skill Point!','q');renderSP();}checkAchv();updateHUD();}
 function respawn(){if(RIFT.active){RIFT.ending=true;G.hp=Math.floor(G.maxHp*0.5);PL.x=130;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.trail=[];PL.climbing=false;updateHUD();return;}G.hp=Math.floor(G.maxHp*0.5);PL.x=80;PL.y=zGround-128;PL.vx=0;PL.vy=0;PL.dashT=0;PL.dashCd=0;PL.trail=[];PL.climbing=false;camX=0;camY=Math.max(0,Math.min(camYMax(),PL.y-(cv&&cv.height||VIEW_H)*0.6));const lost=Math.floor(G.gold*0.1);if(lost>0){G.gold-=lost;log('You dropped '+lost+' gold as you fell...','d');}log('Defeated! Respawned...','d');updateHUD();saveGame();}
@@ -4305,7 +4345,7 @@ function togglePauseHelp(){const h=document.getElementById('pause-help');h.style
 function quitToTitle(){try{saveGame();saveMeta();}catch(e){}location.reload();}
   
 // ── Touch controls ──
-let touchMode=false,talkVis=false;
+let touchMode=false,talkVis=false,lootVis=false;
 function enableTouch(){if(touchMode)return;touchMode=true;document.getElementById('tc').style.display='';const ch=document.querySelector('.ch');if(ch)ch.style.display='none';}
 function bindHold(id,down,up){
   const el=document.getElementById(id);
@@ -4320,6 +4360,7 @@ function initTouch(){
   bindHold('tb-right',()=>{keys['arrowright']=true;},()=>{keys['arrowright']=false;});
   bindHold('tb-jump',()=>{jp['arrowup']=true;},()=>{});
   bindHold('tb-dash',()=>{if(dlgOpen||mapOpen)return;jp['dash']=true;},()=>{});
+  bindHold('tb-loot',()=>{if(dlgOpen||mapOpen)return;lootNearby();},()=>{});
   bindHold('tb-talk',()=>{if(dlgOpen||mapOpen)return;if(nearNPC)openDlg(nearNPC);else if(nearPortal)enterPortal(nearPortal);},()=>{});
   if(window.matchMedia&&matchMedia('(pointer:coarse)').matches)enableTouch();
   window.addEventListener('touchstart',enableTouch,{passive:true,once:true});

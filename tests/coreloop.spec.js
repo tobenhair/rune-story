@@ -157,6 +157,7 @@ test.describe('C5 — relic-hunt pity rework', () => {
       G.inventory = []; G.relicPity = { rift_seed: 60 }; // past 25 → ramped; under old rules (75) still cold
       const m = mkMon('slime', 300, 260);
       const o = Math.random; Math.random = () => 0.5; try { killM(m); } finally { Math.random = o; }
+      collectAllDrops();
       const has = (G.inventory || []).some(x => x && x.id === 'rift_seed');
       return { has, pity: G.relicPity.rift_seed || 0 };
     });
