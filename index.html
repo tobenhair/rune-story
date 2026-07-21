@@ -355,6 +355,9 @@ function setMusicVol(v){if(musicGain)musicGain.gain.value=v/100;}
 function setSfxVol(v){if(sfxGain)sfxGain.gain.value=v/100;}
 function osc(f,type,t,dur,g0,g1,dst){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(g0,t);g.gain.exponentialRampToValueAtTime(Math.max(0.001,g1),t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+0.01);return o;}
 function noise(t,dur,g0,g1,lp,dst){const buf=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();f.type='lowpass';f.frequency.value=lp;g.gain.setValueAtTime(g0,t);g.gain.exponentialRampToValueAtTime(Math.max(0.001,g1),t+dur);src.buffer=buf;src.connect(f);f.connect(g);g.connect(dst);src.start(t);src.stop(t+dur+0.01);return src;}
+// A pitch-gliding oscillator (f0→f1) — gives spells real element flare: a zapping arcane fall,
+// a roaring fireball rise, a crystalline ice shimmer sweeping up.
+function oscTo(f0,f1,type,t,dur,g0,g1,dst){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(Math.max(1,f0),t);o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);g.gain.setValueAtTime(g0,t);g.gain.exponentialRampToValueAtTime(Math.max(0.001,g1),t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+0.01);return o;}
 
 // ── Intro music — slow, tense, suspenseful ──────────────────────
 // Built on a sustained dark drone + low ostinato + ominous bell hits.
@@ -430,10 +433,30 @@ function playIntroMusic(){
 
 function stopIntroMusic(){introMusicActive=false;stopMusic();}
 
-function sfxBolt(){if(!AC)return;const t=AC.currentTime;osc(880,'sine',t,0.05,0.28,0.001,sfxGain);osc(1200,'sine',t+0.02,0.1,0.18,0.001,sfxGain);osc(600,'triangle',t,0.08,0.12,0.001,sfxGain);}
-function sfxFireball(){if(!AC)return;const t=AC.currentTime;noise(t,0.08,0.38,0.01,800,sfxGain);osc(180,'sawtooth',t,0.12,0.28,0.001,sfxGain);osc(240,'sawtooth',t+0.03,0.15,0.22,0.001,sfxGain);noise(t+0.06,0.1,0.18,0.001,400,sfxGain);}
-function sfxIce(){if(!AC)return;const t=AC.currentTime;osc(1400,'sine',t,0.03,0.18,0.001,sfxGain);osc(1800,'sine',t+0.01,0.04,0.14,0.001,sfxGain);osc(2200,'sine',t+0.02,0.04,0.1,0.001,sfxGain);noise(t,0.06,0.07,0.001,3000,sfxGain);}
-function sfxShield(){if(!AC)return;const t=AC.currentTime;[300,450,600,900].forEach((f,i)=>osc(f,'sine',t+i*0.06,0.28,0.22-i*0.03,0.001,sfxGain));}
+// Arcane Bolt — a crisp electric zap: a downward glissando core with random sparkle harmonics
+// and a crackle, so every bolt shimmers a little differently.
+function sfxBolt(){if(!AC)return;const t=AC.currentTime,r=0.9+Math.random()*0.22;
+  oscTo(1600*r,540*r,'triangle',t,0.13,0.26,0.001,sfxGain);
+  oscTo(2400*r,980*r,'sine',t,0.09,0.13,0.001,sfxGain);
+  for(let i=0;i<3;i++)osc(1700+Math.random()*1500,'sine',t+0.015+i*0.02,0.05,0.07,0.001,sfxGain); // sparkle
+  noise(t,0.045,0.09,0.001,5200,sfxGain);}                                                        // crackle
+// Fireball — an airy whoosh over a rising roaring body with randomized ignition crackle pops.
+function sfxFireball(){if(!AC)return;const t=AC.currentTime,r=0.88+Math.random()*0.24;
+  noise(t,0.17,0.32,0.02,900,sfxGain);                        // whoosh
+  oscTo(120*r,270*r,'sawtooth',t,0.22,0.3,0.001,sfxGain);     // roaring body rises
+  oscTo(78*r,150*r,'square',t+0.02,0.2,0.19,0.001,sfxGain);   // sub growl
+  for(let i=0;i<4;i++)noise(t+0.04+Math.random()*0.14,0.03,0.11,0.001,1000+Math.random()*2400,sfxGain);}
+// Ice Shard — a brittle, crystalline chime cluster (slightly detuned bells) with a rising shimmer
+// and a cold high hiss.
+function sfxIce(){if(!AC)return;const t=AC.currentTime,r=0.92+Math.random()*0.16;
+  [2600,3150,3900].forEach((f,i)=>osc(f*r*(1+Math.random()*0.02),'sine',t+i*0.016,0.15,0.14-i*0.035,0.001,sfxGain));
+  oscTo(1500*r,2700*r,'triangle',t,0.12,0.1,0.001,sfxGain);   // crystalline shimmer sweeps up
+  noise(t,0.08,0.07,0.001,6200,sfxGain);}                     // frost hiss
+// Mana Shield — a warm barrier welling up: an arpeggiated rising chord with a soft airy swell.
+function sfxShield(){if(!AC)return;const t=AC.currentTime,r=0.97+Math.random()*0.06;
+  [330,415,523,660,784].forEach((f,i)=>{osc(f*r,'sine',t+i*0.05,0.42-i*0.03,0.15-i*0.02,0.001,sfxGain);osc(f*r*2,'sine',t+i*0.05,0.22,0.035,0.001,sfxGain);});
+  oscTo(220*r,440*r,'triangle',t,0.4,0.11,0.001,sfxGain);     // dome swell
+  noise(t,0.3,0.04,0.02,1400,sfxGain);}
 function sfxHit(){if(!AC)return;const t=AC.currentTime;noise(t,0.04,0.28,0.01,600,sfxGain);osc(150,'square',t,0.05,0.18,0.001,sfxGain);}
 function sfxPlayerHit(){if(!AC)return;const t=AC.currentTime;osc(200,'sawtooth',t,0.06,0.32,0.001,sfxGain);noise(t,0.06,0.22,0.001,400,sfxGain);}
 function sfxDeath(){if(!AC)return;const t=AC.currentTime;[300,220,160,110].forEach((f,i)=>osc(f,'sawtooth',t+i*0.06,0.08,0.22,0.001,sfxGain));noise(t,0.25,0.28,0.001,300,sfxGain);}

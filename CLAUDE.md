@@ -136,7 +136,7 @@ Everything is procedural Canvas 2D. Backgrounds use multi-layer parallax (depths
 
 ### Audio
 
-All sound is synthesized via Web Audio API oscillators and noise. Zone music is generated algorithmically per-zone. SFX (spells, hits, levelup, death, crits) are short procedural bursts. No audio files exist.
+All sound is synthesized via Web Audio API oscillators and noise. Zone music is generated algorithmically per-zone. SFX (spells, hits, levelup, death, crits) are short procedural bursts. No audio files exist. The **spell-cast** cues are element-flavoured and varied per cast (`oscTo()` pitch-glide helper): `sfxBolt` is a crisp downward arcane zap with random sparkle harmonics, `sfxFireball` an airy whoosh over a rising roar with randomized ignition pops, `sfxIce` a brittle detuned chime cluster with a rising shimmer, and `sfxShield` a warm arpeggiated barrier swell. Their per-cast `Math.random()` runs *after* the damage roll in `fireAt`, so deterministic combat specs are unaffected.
 
 ## Key Constants
 
