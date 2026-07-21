@@ -156,6 +156,7 @@ test.describe('Relic bad-luck protection', () => {
       const pityAfterMiss = G.relicPity.ember_heart;
       G.relicPity.ember_heart = 175;        // deep dry streak → eff = 1% + 100×0.2% = 21%
       killWith(0.15);                       // 15% < 21% → relic drops
+      collectAllDrops();                    // loot lands on the ground now → pick it up
       const dropped = G.inventory.some(x => x && x.id === 'ember_heart');
       return { pityAfterMiss, dropped, pityAfterDrop: G.relicPity.ember_heart };
     });

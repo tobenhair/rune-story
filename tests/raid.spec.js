@@ -155,7 +155,7 @@ test.describe('The Riftheart raid — Zal\'Guroth', () => {
     const r = await game.evaluate(() => {
       loadZone(10); T.resetPlayer(); G.equipment = { weapon: null, armor: null }; G.inventory = []; META.achievements = {};
       const body = mons.find(m => m.t === 'hollow_idol');
-      killM(body);
+      killM(body); collectAllDrops(); // boss loot drops on the ground now → collect it
       const all = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean);
       return { artifact: all.some(g => g.rar === 5), kills: G.kills.hollow_idol, achv: achvDone('hollowone') };
     });

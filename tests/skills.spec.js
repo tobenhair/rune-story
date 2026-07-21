@@ -40,6 +40,7 @@ test.describe('Skill tree', () => {
       // Force every RNG call to 0 so the gold roll is m.gold + floor(0*gold) = 10, then ×1.4
       const o = Math.random; Math.random = () => 0;
       try { killM(m); } finally { Math.random = o; }
+      collectAllDrops(); // gold drops on the ground now → sweep it up
       return G.gold;
     });
     expect(r).toBe(14); // floor(10 * 1.4)

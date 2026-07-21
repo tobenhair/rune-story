@@ -75,6 +75,7 @@ test.describe('Monsters, loot & elite affixes', () => {
         const m = elite ? T.mon('goblin', PL.x + 400, 260, 'frenzied') : mkMon('goblin', PL.x + 400, 260);
         const o = Math.random; Math.random = () => rnd;
         try { killM(m); } finally { Math.random = o; }
+        collectAllDrops(); // loot now lands on the ground → pick it up before asserting
         return hasGear();
       };
       return { eliteNo: run(true, 0.5), normalNo: run(false, 0.5), eliteYes: run(true, 0), normalYes: run(false, 0) };

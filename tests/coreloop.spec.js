@@ -61,7 +61,7 @@ test.describe('C3 — exploration content', () => {
     const r = await game.evaluate(() => {
       loadZone(1); G.treasures = {}; G.gold = 0; G.inventory = []; G.equipment = { weapon: null, armor: null };
       const t = ZONE_TREASURE[1]; PL.x = t.x; PL.y = t.y; PL.vx = 0; PL.vy = 0;
-      update(0.02); // walking onto the cache opens it
+      update(0.02); collectAllDrops(); // walking onto the cache opens it → its loot drops, then pick it up
       const gearCount = () => [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean).length;
       const gold1 = G.gold, gc = gearCount(), collected = !!G.treasures[1];
       PL.x = t.x; PL.y = t.y; update(0.02);        // re-touch → no second reward
@@ -157,6 +157,7 @@ test.describe('C5 — relic-hunt pity rework', () => {
       G.inventory = []; G.relicPity = { rift_seed: 60 }; // past 25 → ramped; under old rules (75) still cold
       const m = mkMon('slime', 300, 260);
       const o = Math.random; Math.random = () => 0.5; try { killM(m); } finally { Math.random = o; }
+      collectAllDrops();
       const has = (G.inventory || []).some(x => x && x.id === 'rift_seed');
       return { has, pity: G.relicPity.rift_seed || 0 };
     });
