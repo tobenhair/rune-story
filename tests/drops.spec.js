@@ -23,47 +23,47 @@ test('a kill scatters gold/items on the ground instead of auto-looting', async (
   expect(r.gearDrops).toBeGreaterThan(0);
 });
 
-test('gold auto-collects on proximity; items wait for Z', async ({ game: page }) => {
+test('nothing auto-collects — gold and items alike wait for Z', async ({ game: page }) => {
   const r = await page.evaluate(() => {
     loadZone(1); T.clear(); T.resetPlayer(); drops = []; G.gold = 0; G.inventory = [];
     PL.x = 500; PL.y = zGround; PL.vx = 0; PL.vy = 0;
-    dropGold(500, zGround, 40);
-    for (let i = 0; i < 40; i++) update(0.05);       // coins fall, magnet in, auto-collect
-    const goldGot = G.gold, goldLeft = drops.filter(d => d.kind === 'gold').length;
-    drops = []; G.inventory = [];
-    dropItem(506, zGround, 'slime_goo');
-    for (let i = 0; i < 25; i++) update(0.05);        // an item does NOT auto-collect
-    const autoItem = G.inventory.some(x => x && x.id === 'slime_goo');
-    const onGround = drops.some(d => d.kind === 'item');
-    lootNearby();                                     // Z → grabs it (in proximity)
-    const afterZ = G.inventory.some(x => x && x.id === 'slime_goo');
-    return { goldGot, goldLeft, autoItem, onGround, afterZ };
+    dropGold(500, zGround, 40); dropItem(500, zGround, 'slime_goo');
+    drops.forEach(d => { d.x = 500; d.y = zGround - 2; d.landed = true; d.vy = 0; }); // settle by the player
+    for (let i = 0; i < 20; i++) update(0.05);        // time passes — nothing auto-collects
+    const autoGold = G.gold, autoItem = G.inventory.some(x => x && x.id === 'slime_goo');
+    const onGround = drops.length;
+    lootNearby();                                     // Z → grabs gold AND item in proximity
+    const goldGot = G.gold, gotItem = G.inventory.some(x => x && x.id === 'slime_goo');
+    return { autoGold, autoItem, onGround, goldGot, gotItem, cleared: drops.length };
   });
-  expect(r.goldGot).toBe(40);      // both coins vacuumed up
-  expect(r.goldLeft).toBe(0);
-  expect(r.autoItem).toBe(false);  // items never auto-collect
-  expect(r.onGround).toBe(true);   // it sat on the floor
-  expect(r.afterZ).toBe(true);     // Z looted it while nearby
+  expect(r.autoGold).toBe(0);      // gold no longer vacuums on its own
+  expect(r.autoItem).toBe(false);  // nor items
+  expect(r.onGround).toBeGreaterThan(0);
+  expect(r.goldGot).toBe(40);      // Z swept up the coins
+  expect(r.gotItem).toBe(true);    // …and the item
+  expect(r.cleared).toBe(0);
 });
 
-test('Z only loots items within reach, and gold is left for the magnet', async ({ game: page }) => {
+test('Z only loots within reach; far drops are left behind', async ({ game: page }) => {
   const r = await page.evaluate(() => {
-    loadZone(1); T.clear(); T.resetPlayer(); drops = []; G.inventory = [];
+    loadZone(1); T.clear(); T.resetPlayer(); drops = []; G.inventory = []; G.gold = 0;
     PL.x = 500; PL.y = zGround;
     dropItem(510, zGround, 'slime_goo');   // in reach
-    dropItem(900, zGround, 'goblin_ear');  // far away
-    dropGold(505, zGround, 10);            // gold ignored by Z
+    dropGold(505, zGround, 10);            // gold in reach → Z grabs it too
+    dropItem(900, zGround, 'goblin_ear');  // far away → stays
     drops.forEach(d => { d.landed = true; d.vy = 0; }); // settle them in place
     lootNearby();
     return {
       near: G.inventory.some(x => x && x.id === 'slime_goo'),
+      gold: G.gold,
       far: G.inventory.some(x => x && x.id === 'goblin_ear'),
-      goldLeft: drops.some(d => d.kind === 'gold'),
+      farLeft: drops.some(d => d.kind === 'item'),
     };
   });
   expect(r.near).toBe(true);      // nearby item looted
-  expect(r.far).toBe(false);      // out-of-range item left on the floor
-  expect(r.goldLeft).toBe(true);  // Z doesn't touch gold
+  expect(r.gold).toBe(10);        // nearby gold looted by Z as well
+  expect(r.far).toBe(false);      // out-of-range item not looted
+  expect(r.farLeft).toBe(true);   // …it stays on the floor
 });
 
 test('rare+ gear persists; common drops despawn; zone exit auto-collects everything', async ({ game: page }) => {

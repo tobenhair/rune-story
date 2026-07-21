@@ -61,7 +61,7 @@ test.describe('C3 — exploration content', () => {
     const r = await game.evaluate(() => {
       loadZone(1); G.treasures = {}; G.gold = 0; G.inventory = []; G.equipment = { weapon: null, armor: null };
       const t = ZONE_TREASURE[1]; PL.x = t.x; PL.y = t.y; PL.vx = 0; PL.vy = 0;
-      update(0.02); // walking onto the cache opens it
+      update(0.02); collectAllDrops(); // walking onto the cache opens it → its loot drops, then pick it up
       const gearCount = () => [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean).length;
       const gold1 = G.gold, gc = gearCount(), collected = !!G.treasures[1];
       PL.x = t.x; PL.y = t.y; update(0.02);        // re-touch → no second reward

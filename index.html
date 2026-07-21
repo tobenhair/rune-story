@@ -2715,10 +2715,10 @@ const DASH_SPD=580,DASH_TIME=0.18,DASH_CD=1.1,DASH_IFRAME=0.28;
 // ladders let you climb between tiers. CLIMB_SPD is the vertical climb rate; AIM_CONE limits how
 // far off horizontal a spell can be aimed (so you can't snipe the whole tower from the floor).
 const CLIMB_SPD=140,AIM_CONE=Math.PI/9;
-// Ground loot (MapleStory-style): kills scatter physical drops. Gold auto-collects within
-// GOLD_MAGNET (pulled in, grabbed at GOLD_PICK); items/gear are looted with Z while within LOOT_R.
+// Ground loot (MapleStory-style): kills scatter physical drops. Gold and items/gear alike are
+// looted with Z while within LOOT_R (nothing auto-vacuums — gold is grabbed like everything else).
 // Drops fade out after DROP_LIFE seconds (rare+ gear persists) and are auto-collected on zone exit.
-const LOOT_R=66,GOLD_MAGNET=74,GOLD_PICK=22,DROP_LIFE=42;
+const LOOT_R=70,DROP_LIFE=42;
 const ZONE_PORTAL_COLORS=['#e8d5b7','#6aa3ff','#5dcaa5','#b050f0','#9040d0','#ff2d5d','#ff2d5d','#ff7a30','#7ad0ff','#ffb030','#b050f0'];
 let cds=[0,0,0,0],keys={},jp={},dlgOpen=false,mapOpen=false,raf=null,lt=0,CZ=null,plats=[],nearNPC=null,nearPortal=null,portals2=[];
 let gTime=0,screenShake={t:0,amt:0},parts=[];
@@ -2893,7 +2893,7 @@ function mkMon(t,x,y,forceElite){const d=MDEF[t],elite=forceElite||Math.random()
 // Each combat zone's hidden cache now sits on the top tier of its climbable tower (y=138), just
 // inside the top platform's left edge (xR+60) so it's a real climb to reach.
 const ZONE_TREASURE={1:{x:646,y:138},2:{x:696,y:138},3:{x:646,y:138},4:{x:671,y:138},7:{x:696,y:138},8:{x:696,y:138}};
-function openTreasure(z){if(G.treasures[z])return;G.treasures[z]=true;const g=rollGear(z,true);G.gold+=(60+z*40+G.level*6);sfxLoot();burst(PL.x,PL.y-30,'#ffd24a',24,160);if(!reducedMotion())rings.push({x:PL.x,y:PL.y-16,r0:6,r1:70,c:'#ffd24a',t:0,dur:0.32});log('🎁 Hidden cache! +'+(60+z*40+G.level*6)+' gold — '+g.n+'!','x');addGear(g);updateHUD();renderIP();saveGame();}
+function openTreasure(z){if(G.treasures[z])return;G.treasures[z]=true;const g=rollGear(z,true),gold=(60+z*40+G.level*6);sfxLoot();burst(PL.x,PL.y-30,'#ffd24a',24,160);if(!reducedMotion())rings.push({x:PL.x,y:PL.y-16,r0:6,r1:70,c:'#ffd24a',t:0,dur:0.32});log('🎁 Hidden cache! +'+gold+' gold and '+g.n+' spill out — press Z to loot!','x');dropGold(PL.x,PL.y,gold);dropGear(PL.x,PL.y,g);saveGame();}
 // The camera's vertical range for the current zone: 0 keeps the top of the world at the screen top,
 // (zHeight-VIEW_H) puts the ground at the screen bottom. Short zones (zHeight<=VIEW_H) clamp to 0 so
 // they frame exactly as before the vertical camera existed.
@@ -4096,20 +4096,20 @@ function collectDrop(d,silent){
 }
 function updateDrops(dt){for(let i=drops.length-1;i>=0;i--){const d=drops[i];
   d.life-=dt;if(d.life<=0){drops.splice(i,1);continue;}
-  if(d.kind==='gold'){const dx=PL.x-d.x,dy=(PL.y-16)-d.y,dist=Math.hypot(dx,dy)||1;if(dist<GOLD_PICK){collectDrop(d);sfxLoot();drops.splice(i,1);continue;}if(dist<GOLD_MAGNET){d.x+=dx/dist*300*dt;d.y+=dy/dist*300*dt;d.landed=true;d.vy=0;continue;}}
   if(!d.landed){d.vy+=GRAV*0.5*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.vx*=Math.pow(0.4,dt);plats.forEach(p=>{if(d.x>p.x&&d.x<p.x+p.w&&d.vy>=0&&d.y>p.y-2&&d.y<p.y+p.h+10){d.y=p.y-2;d.vy=0;d.landed=true;}});if(d.y>zGround+60){d.y=zGround-2;d.landed=true;d.vy=0;}}
 }}
 // Z (or the touch Loot button): grab every item/gear drop within reach. Gold is not affected — it
 // vacuums on its own.
-function lootNearby(){let got=0;for(let i=drops.length-1;i>=0;i--){const d=drops[i];if(d.kind==='gold')continue;if(Math.hypot(PL.x-d.x,(PL.y-16)-d.y)<LOOT_R){collectDrop(d);drops.splice(i,1);got++;}}if(got)sfxLoot();}
+function lootNearby(){let got=0;for(let i=drops.length-1;i>=0;i--){const d=drops[i];if(Math.hypot(PL.x-d.x,(PL.y-16)-d.y)<LOOT_R){collectDrop(d);drops.splice(i,1);got++;}}if(got)sfxLoot();}
 function collectAllDrops(){drops.forEach(d=>collectDrop(d,true));drops=[];}
 function drawDrops(){const c=ctx2;let lootNear=false;drops.forEach(d=>{const sx=d.x-camX;if(sx<-30||sx>cv.width+30)return;const fade=d.life<6?(0.35+0.65*Math.abs(Math.sin(d.life*8))):1,bob=d.landed?Math.sin(gTime*4+d.born*7)*2:0,y=d.y+bob;c.save();
   c.globalAlpha=fade*0.3;c.fillStyle='#000';c.beginPath();c.ellipse(sx,d.y+6,8,3,0,0,Math.PI*2);c.fill();c.globalAlpha=fade;
-  if(d.kind==='gold'){const spin=Math.abs(Math.cos(gTime*6+d.born*5));c.save();c.translate(sx,y-6);c.scale(0.35+spin*0.65,1);c.fillStyle='#ffd24a';c.beginPath();c.arc(0,0,5,0,Math.PI*2);c.fill();c.strokeStyle='#a86f10';c.lineWidth=1;c.stroke();c.fillStyle='#fff2b0';c.fillRect(-1,-2,1,4);c.restore();c.globalCompositeOperation='lighter';c.globalAlpha=fade*0.4;glow(c,sx,y-6,9,'#ffd24a');}
+  const near=Math.hypot(PL.x-d.x,(PL.y-16)-d.y)<LOOT_R;if(near)lootNear=true;
+  if(d.kind==='gold'){const spin=Math.abs(Math.cos(gTime*6+d.born*5));c.save();c.translate(sx,y-6);c.scale(0.35+spin*0.65,1);c.fillStyle='#ffd24a';c.beginPath();c.arc(0,0,5,0,Math.PI*2);c.fill();c.strokeStyle='#a86f10';c.lineWidth=1;c.stroke();c.fillStyle='#fff2b0';c.fillRect(-1,-2,1,4);c.restore();c.globalCompositeOperation='lighter';c.globalAlpha=fade*0.4;glow(c,sx,y-6,9,'#ffd24a');if(near){c.globalCompositeOperation='source-over';c.globalAlpha=fade;labelPill('[Z] '+d.gold+'g',sx,y-14,{size:6,color:'#ffd24a'});}}
   else{const gear=d.kind==='gear',col=gear?RARS[d.g.rar].c:'#cfe0ff',em=gear?(d.g.e||'⚔'):((ITEMS[d.id]&&ITEMS[d.id].e)||'❓');
     c.globalCompositeOperation='lighter';c.globalAlpha=fade*(gear&&d.g.rar>=2?0.5:0.26);glow(c,sx,y-8,gear&&d.g.rar>=3?15:10,col);c.globalCompositeOperation='source-over';c.globalAlpha=fade;
     c.font='15px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(em,sx,y-8);
-    if(Math.hypot(PL.x-d.x,(PL.y-16)-d.y)<LOOT_R){lootNear=true;labelPill('[Z] '+(gear?d.g.n:(ITEMS[d.id]?ITEMS[d.id].n:d.id)),sx,y-20,{size:6,color:col});}}
+    if(near)labelPill('[Z] '+(gear?d.g.n:(ITEMS[d.id]?ITEMS[d.id].n:d.id)),sx,y-20,{size:6,color:col});}
   c.restore();});
   if(touchMode&&lootNear!==lootVis){lootVis=lootNear;const b=document.getElementById('tb-loot');if(b)b.style.display=lootNear?'flex':'none';}
 }
