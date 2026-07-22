@@ -102,3 +102,23 @@ test('fireAt clamps a non-boss shot into the cone but lets a boss shot aim freel
   expect(r.trashAng).toBeLessThanOrEqual(r.cone + 1e-6);  // clamped to the cone
   expect(r.bossAng).toBeGreaterThan(r.cone);              // boss shot keeps its steep angle
 });
+
+test('a point-blank foe is always targetable/aimable despite the cone', async ({ game: page }) => {
+  const r = await page.evaluate(() => {
+    T.clear(); T.resetPlayer(); PL.x = 500; PL.y = 500;
+    // A foe pressed right against the player reads as ~90° off horizontal (chest origin vs. its
+    // feet), so without the point-blank exemption the cone would reject it entirely.
+    const pointBlank = mkMon('slime', 502, 500);
+    mons.push(pointBlank);
+    const inCone = inAimCone(pointBlank);
+    const picked = closest(400) === pointBlank;
+    G.mp = 999; projs.length = 0; cds[0] = 0;
+    fireAt(pointBlank, 0);            // steeply-offset but close → aims straight at it, no clamp
+    const p = projs[0];
+    const ang = Math.abs(Math.atan2(p.vy, Math.abs(p.vx)));
+    return { inCone, picked, ang, cone: AIM_CONE };
+  });
+  expect(r.inCone).toBe(true);           // exempt from the cone
+  expect(r.picked).toBe(true);           // auto-target acquires it
+  expect(r.ang).toBeGreaterThan(r.cone); // and the shot aims straight up at it, unclamped
+});

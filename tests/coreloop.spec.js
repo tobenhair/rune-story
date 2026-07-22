@@ -54,6 +54,30 @@ test.describe('C1 — movement-demanding enemy behaviors', () => {
     expect(r.leaped).toBe(true);
     expect(r.minVy).toBeLessThan(0); // launched upward
   });
+
+  // Regression: a leaper must land between springs — the leap timer is shorter than the arc, so
+  // once it lofts off a platform (e.g. onto the Endless Rift's stacked tiers) it must not re-arm a
+  // new leap mid-air. Without the grounded gate goblins chain-leap forever and appear to "fly".
+  test('a leaper only re-arms a spring after touching down (no mid-air chain leaps)', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      loadZone(1); T.clear(); keys = {}; jp = {}; PL.inv = 0; G.hp = 9999; G.maxHp = 9999;
+      PL.x = 400; PL.y = 388; PL.vx = 0; PL.vy = 0;
+      // Stationary goblin held in leap range (adx 100, same tier) so it springs straight up and back.
+      const gob = mkMon('goblin', 500, 388); gob.spd = 0; gob.vx = 0; mons.push(gob);
+      combatStarted = true;
+      let leaps = 0, prevLeaping = 0, groundedSinceLeap = true, chainLeaps = 0, groundedFrames = 0;
+      for (let i = 0; i < 400; i++) {
+        update(0.033);
+        if (gob.grounded) { groundedSinceLeap = true; groundedFrames++; }
+        if (gob.leaping > 0 && prevLeaping <= 0) { leaps++; if (!groundedSinceLeap) chainLeaps++; groundedSinceLeap = false; }
+        prevLeaping = gob.leaping;
+      }
+      return { leaps, chainLeaps, groundedFrames };
+    });
+    expect(r.leaps).toBeGreaterThan(0);        // it does leap
+    expect(r.chainLeaps).toBe(0);              // but never re-leaps without landing first
+    expect(r.groundedFrames).toBeGreaterThan(0); // and spends real time on the ground
+  });
 });
 
 test.describe('C3 — exploration content', () => {

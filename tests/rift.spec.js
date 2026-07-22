@@ -241,7 +241,9 @@ test.describe('The Endless Rift', () => {
     const r = await game.evaluate(() => {
       G.equipment = { weapon: null, armor: null }; G.inventory = [];
       G.riftShards = 50;
-      buyRift('cache');
+      // Force a Rare (non-legendary/artifact) roll so no achievement pays out bonus shards and
+      // the spend stays exactly the cache cost (a legendary/artifact roll would unlock a shard achv).
+      T.withRandom([0.1], () => buyRift('cache'));
       const shards = G.riftShards; // 50 - 15, captured before the affordability check below mutates it
       const gearCount = [G.equipment.weapon, G.equipment.armor, ...G.inventory.map(x => x && x.g)].filter(Boolean).length;
       G.riftShards = 5; const before = G.riftShards; buyRift('artifact'); // 140 cost → can't afford

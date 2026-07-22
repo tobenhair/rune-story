@@ -2714,7 +2714,9 @@ const DASH_SPD=580,DASH_TIME=0.18,DASH_CD=1.1,DASH_IFRAME=0.28;
 // Vertical world: maps can be taller than the 16:9 view; camY scrolls to follow the player and
 // ladders let you climb between tiers. CLIMB_SPD is the vertical climb rate; AIM_CONE limits how
 // far off horizontal a spell can be aimed (so you can't snipe the whole tower from the floor).
-const CLIMB_SPD=140,AIM_CONE=Math.PI/9;
+// AIM_NEAR: point-blank foes are always targetable/aimable regardless of the cone — otherwise an
+// enemy pressed against you reads as ~90° off horizontal (chest origin vs. its feet) and can't be hit.
+const CLIMB_SPD=140,AIM_CONE=Math.PI/6,AIM_NEAR=100;
 // Ground loot (MapleStory-style): kills scatter physical drops. Gold and items/gear alike are
 // looted with Z while within LOOT_R (nothing auto-vacuums — gold is grabbed like everything else).
 // Drops fade out after DROP_LIFE seconds (rare+ gear persists) and are auto-collected on zone exit.
@@ -2971,11 +2973,11 @@ function update(dt){
     if(m.beh==='leap'&&!m.fly){
       if(m.leaping>0)m.leaping-=dt;
       else if(m.leapWind>0){m.leapWind-=dt;m.vx*=Math.pow(0.02,dt);if(m.leapWind<=0){const dir=dx>0?1:-1;m.right=dir>0;m.vx=dir*Math.min(300,m.spd*4.8);m.vy=-300;m.leaping=1.1;}}
-      else{m.leapCd=(m.leapCd==null?1.2+Math.random()*1.2:m.leapCd)-dt;if(m.leapCd<=0&&!pSafe&&adx>46&&adx<300&&Math.abs(PL.y-m.y)<90)m.leapWind=0.42;}
+      else{m.leapCd=(m.leapCd==null?1.2+Math.random()*1.2:m.leapCd)-dt;if(m.leapCd<=0&&m.grounded!==false&&!pSafe&&adx>46&&adx<300&&Math.abs(PL.y-m.y)<90)m.leapWind=0.42;}
     }
     const busy=m.leaping>0||m.leapWind>0;
     if(adx<180&&!pSafe&&!busy){m.right=dx>0;m.vx=(dx>0?1:-1)*m.spd;if(m.fly){m.vy=(PL.y-m.y)*0.9;m.y+=m.vy*dt;}}else if(!busy){if(Math.abs(m.x-m.bx)>m.pat)m.vx*=-1;m.right=m.vx>0;}
-    m.x+=m.vx*dt;if(!m.fly){m.vy+=GRAV*0.4*dt;m.y+=m.vy*dt;let gnd=false;plats.forEach(p=>{if(m.x+10>p.x&&m.x-10<p.x+p.w&&m.vy>=0&&m.y>p.y-2&&m.y<p.y+p.h+8){m.y=p.y;m.vy=0;gnd=true;}});if(gnd&&m.leaping>0){m.leaping=0;m.leapCd=1.6+Math.random()*1.4;}if(m.y>zGround+42)m.y=zGround-158;}
+    m.x+=m.vx*dt;if(!m.fly){m.vy+=GRAV*0.4*dt;m.y+=m.vy*dt;let gnd=false;plats.forEach(p=>{if(m.x+10>p.x&&m.x-10<p.x+p.w&&m.vy>=0&&m.y>p.y-2&&m.y<p.y+p.h+8){m.y=p.y;m.vy=0;gnd=true;}});m.grounded=gnd;if(gnd&&m.leaping>0){m.leaping=0;m.leapCd=1.6+Math.random()*1.4;}if(m.y>zGround+42){m.y=zGround-158;m.vy=0;}}
     m.frame+=adx<180?0.18:0.1;if(m.hit>0)m.hit-=dt;
     // C1 aura — a damaging field the player must kite out of (DoT ticks every 0.5s inside auraR)
     if(m.beh==='aura'&&!pSafe&&PL.inv<=0){const ad=Math.hypot(PL.x-m.x,PL.y-m.y);if(ad<(m.auraR||80)){m.auraAcc=(m.auraAcc||0)+dt;if(m.auraAcc>=0.5){m.auraAcc-=0.5;let adm=Math.max(1,Math.round(m.mn*0.55)-Math.floor(eqDef()*0.5));if(G.shield)adm=Math.max(1,Math.floor(adm*shieldFac()));G.hp=Math.max(0,G.hp-adm);spawnDN(PL.x-camX,PL.y,adm,m.auraC||'#ff7a30','dot');if(G.hp<=0){respawn();return;}else updateHUD();}}else m.auraAcc=0;}
@@ -2995,8 +2997,8 @@ function update(dt){
   if(BOSS_DEFS.some(b=>b.zone===G.zone)&&!isFinaleArena(G.zone)){bossTimers[G.zone]+=dt;if(!mons.some(m=>m.boss)&&bossTimers[G.zone]>=300)spawnBoss(G.zone);}if(bossAlertT>0)bossAlertT-=dt;
   nearNPC=null;npcs2.forEach(n=>{if(Math.abs(PL.x-n.x)<48&&Math.abs(PL.y-n.y)<60)nearNPC=n;n.frame+=0.03;});
   nearPortal=null;portals2.forEach(p=>{if(Math.abs(PL.x-p.x)<38&&Math.abs(PL.y-p.y)<55)nearPortal=p;});
-  if((jp['f']||jp['e'])&&nearNPC)openDlg(nearNPC);
-  else if((jp['f']||jp['e'])&&nearPortal)enterPortal(nearPortal);
+  if(jp['f']&&nearNPC)openDlg(nearNPC);
+  else if(jp['f']&&nearPortal)enterPortal(nearPortal);
   const tv=!!(nearNPC||nearPortal);
   if(touchMode&&tv!==talkVis){talkVis=tv;document.getElementById('tb-talk').style.display=tv?'flex':'none';}
   updateDrops(dt);
@@ -3897,7 +3899,7 @@ function drawFX(){
 }
 // B1 — a readable world-space label: a dark rounded backing pill under centred text so
 // names stay legible over the busy parallax layers. baseY is the text baseline.
-function labelPill(text,cx,baseY,o){o=o||{};const c=ctx2,sz=o.size||8;c.save();c.font=sz+'px "Press Start 2P",monospace';c.textAlign='center';c.textBaseline='alphabetic';const w=c.measureText(text).width,padX=5,padY=4,h=sz+padY*2;c.globalAlpha=o.alpha==null?1:o.alpha;c.fillStyle=o.bg||'rgba(6,8,20,0.8)';c.beginPath();c.roundRect(cx-w/2-padX,baseY-sz-padY,w+padX*2,h,4);c.fill();if(o.border){c.strokeStyle=o.border;c.lineWidth=1;c.stroke();}c.fillStyle=o.color||'#e8e8f0';c.fillText(text,cx,baseY);c.restore();}
+function labelPill(text,cx,baseY,o){o=o||{};cx=Math.round(cx);baseY=Math.round(baseY);const c=ctx2,sz=o.size||8;c.save();c.font=sz+'px "Press Start 2P",monospace';c.textAlign='center';c.textBaseline='alphabetic';const w=c.measureText(text).width,padX=5,padY=4,h=sz+padY*2;c.globalAlpha=o.alpha==null?1:o.alpha;c.fillStyle=o.bg||'rgba(6,8,20,0.8)';c.beginPath();c.roundRect(cx-w/2-padX,baseY-sz-padY,w+padX*2,h,4);c.fill();if(o.border){c.strokeStyle=o.border;c.lineWidth=1;c.stroke();}c.fillStyle=o.color||'#e8e8f0';c.fillText(text,cx,baseY);c.restore();}
 // Role glyph shown above each hub service NPC so its function reads at a glance.
 const NPC_ROLE_ICON=[['forge','⚒️'],['shop','🛍️'],['storage','📦'],['board','📋'],['codex','📖'],['rift','🌀'],['asc','✨'],['town','🏛️']];
 function npcRoleIcon(n){for(const[k,ic]of NPC_ROLE_ICON)if(n[k])return ic;return null;}
@@ -4074,10 +4076,10 @@ function onCC(e){if(dlgOpen||mapOpen||paused)return;const r=cv.getBoundingClient
 function onKD(e){const k=e.key.toLowerCase();if(!keys[k])jp[k]=true;keys[k]=true;if(!dlgOpen&&!mapOpen&&!paused){if(k==='q')castSpell(0);if(k==='w')castSpell(1);if(k==='e')castSpell(2);if(k==='r')castSpell(3);if(k==='t')hotbarUse(0);if(k==='y')hotbarUse(1);if(k==='u')hotbarUse(2);if(k==='z')lootNearby();if(k==='f'&&nearNPC)openDlg(nearNPC);else if(k==='f'&&nearPortal)enterPortal(nearPortal);}if(k==='escape'){if(dlgOpen)closeDlg();else if(mapOpen)toggleMap();else togglePause();}if(k==='m'&&!dlgOpen&&!paused)toggleMap();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key))e.preventDefault();}
 function spellCd(b){return hasPow('haste')?+(b*0.7).toFixed(2):b;}
 function castSpell(i){if(!G.spells[i]){log('Learn this spell first!','d');return;}if(cds[i]>0)return;const sp=SPELLS[i];if(sp.shield){if(G.mp<sp.mp){log('Not enough MP!','d');return;}G.mp-=sp.mp;cds[i]=spellCd(sp.cd);G.shield=true;G.shieldT=USK.has('bw')?8:5;sp.sfx();log('Mana Shield active '+G.shieldT+'s!','h');updateHUD();return;}const tgt=closest(sp.r);if(!tgt){log('No enemy in range!','d');return;}fireAt(tgt,i);}
-function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}combatStarted=true;G.mp-=sp.mp;cds[si]=spellCd(sp.cd);PL.casting=0.4;PL.right=tgt.x>PL.x;const oy=PL.y-SH*SCALE*0.4,dx=tgt.x-PL.x,dy=tgt.y-oy,sgn=dx>=0?1:-1;let va=Math.atan2(dy,Math.abs(dx)||1);if(!tgt.boss)va=Math.max(-AIM_CONE,Math.min(AIM_CONE,va));const fdx=sgn*Math.cos(va),fdy=Math.sin(va);let dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn))+eqMag();if(si===1&&USK.has('py'))dmg=Math.floor(dmg*1.5);if(si===2&&USK.has('fr'))dmg=Math.floor(dmg*1.3);if(metaRank('might'))dmg=Math.floor(dmg*metaDmgMul());if(G.attune)dmg=Math.floor(dmg*attuneMul());projs.push({x:PL.x,y:oy,vx:fdx*440,vy:fdy*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});if(!reducedMotion()){const mx=PL.x+(PL.right?1:-1)*10,my=PL.y-SH*SCALE*0.4;rings.push({x:mx,y:my,r0:3,r1:16,c:sp.c||'#9fd0ff',t:0,dur:0.18});for(let i=0;i<4;i++)parts.push({x:mx,y:my,vx:fdx*120+Math.random()*40-20,vy:fdy*120+Math.random()*40-20,life:0.2,c:sp.c||'#9fd0ff',r:1+Math.random(),trail:1});}auraCol=sp.c||null;auraT=2;sp.sfx();updateHUD();}
+function fireAt(tgt,si){const sp=SPELLS[si];if(!G.spells[si]||cds[si]>0)return;if(G.mp<sp.mp){log('Not enough MP!','d');return;}combatStarted=true;G.mp-=sp.mp;cds[si]=spellCd(sp.cd);PL.casting=0.4;PL.right=tgt.x>PL.x;const oy=PL.y-SH*SCALE*0.4,dx=tgt.x-PL.x,dy=tgt.y-oy,sgn=dx>=0?1:-1;let va=Math.atan2(dy,Math.abs(dx)||1);if(!tgt.boss&&(dx*dx+dy*dy)>AIM_NEAR*AIM_NEAR)va=Math.max(-AIM_CONE,Math.min(AIM_CONE,va));const fdx=sgn*Math.cos(va),fdy=Math.sin(va);let dmg=sp.mn+Math.floor(Math.random()*(sp.mx-sp.mn))+eqMag();if(si===1&&USK.has('py'))dmg=Math.floor(dmg*1.5);if(si===2&&USK.has('fr'))dmg=Math.floor(dmg*1.3);if(metaRank('might'))dmg=Math.floor(dmg*metaDmgMul());if(G.attune)dmg=Math.floor(dmg*attuneMul());projs.push({x:PL.x,y:oy,vx:fdx*440,vy:fdy*440,dmg,proj:sp.proj||'bolt',c:sp.c,slow:sp.slow||false,life:1.5,pw:sp.pw||8,ph:sp.ph||8});if(!reducedMotion()){const mx=PL.x+(PL.right?1:-1)*10,my=PL.y-SH*SCALE*0.4;rings.push({x:mx,y:my,r0:3,r1:16,c:sp.c||'#9fd0ff',t:0,dur:0.18});for(let i=0;i<4;i++)parts.push({x:mx,y:my,vx:fdx*120+Math.random()*40-20,vy:fdy*120+Math.random()*40-20,life:0.2,c:sp.c||'#9fd0ff',r:1+Math.random(),trail:1});}auraCol=sp.c||null;auraT=2;sp.sfx();updateHUD();}
 // True while a foe sits within ±AIM_CONE of horizontal from the player's cast origin — non-boss
 // targets outside the cone can't be auto-acquired or hit, so height (and the ladders) matter.
-function inAimCone(m){const oy=PL.y-SH*SCALE*0.4;return Math.abs(Math.atan2(m.y-oy,Math.abs(m.x-PL.x)||1))<=AIM_CONE;}
+function inAimCone(m){const oy=PL.y-SH*SCALE*0.4,dx=m.x-PL.x,dy=m.y-oy;if(dx*dx+dy*dy<=AIM_NEAR*AIM_NEAR)return true;return Math.abs(Math.atan2(dy,Math.abs(dx)||1))<=AIM_CONE;}
 function closest(r){let c=null,md=r;mons.forEach(m=>{if(m.invuln)return;if(!m.boss&&!inAimCone(m))return;const d=Math.sqrt((m.x-PL.x)**2+(m.y-PL.y)**2);if(d<md){md=d;c=m;}});return c;}
 // C4 — a bomber's fuse burns out: an AoE detonation that hurts the player if too close, then it dies.
 function bombDetonate(m){burst(m.x,m.y-18,'#ffb030',28,200);shake(0.32,5);sfxFireball();if(!reducedMotion())rings.push({x:m.x,y:m.y-16,r0:12,r1:130,c:'#ffb030',t:0,dur:0.32});if(Math.abs(PL.x-m.x)<115&&Math.abs(PL.y-m.y)<82&&PL.inv<=0){let ed=Math.max(1,Math.round(m.mx*1.6)-eqDef());if(G.shield)ed=Math.max(1,Math.floor(ed*shieldFac()));G.hp=Math.max(0,G.hp-ed);PL.inv=0.5;spawnDN(PL.x-camX,PL.y,ed,'#ffb030','pdmg');log('💥 '+m.n+' detonates for '+ed+'!','d');if(G.hp<=0){respawn();}else updateHUD();}m.hp=0;killM(m);}

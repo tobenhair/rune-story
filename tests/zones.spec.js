@@ -71,6 +71,25 @@ test.describe('Zones & travel', () => {
     expect(allowed).toBe(2);
   });
 
+  // Regression: E casts Ice Shard. It must NOT double as a portal-interact key, or casting near a
+  // portal would teleport you away mid-fight. Only F (or the touch Talk button) enters a portal.
+  test('casting near a portal (E) does not teleport; only F enters', async ({ game }) => {
+    const r = await game.evaluate(() => {
+      G.level = 30; loadZone(1); T.clear(); keys = {}; jp = {};
+      const p = portals2.find(pp => pp.toZone === 0); // Village Outskirts → back to the hub
+      PL.x = p.x; PL.y = p.y; PL.vx = 0; PL.vy = 0;
+      jp = { 'e': true };                 // press E right on the portal
+      update(0.02);
+      const afterE = G.zone;              // should still be zone 1
+      PL.x = p.x; PL.y = p.y; jp = { 'f': true };
+      update(0.02);
+      const afterF = G.zone;              // F walks the portal to the hub
+      return { afterE, afterF };
+    });
+    expect(r.afterE).toBe(1);   // E only cast — no teleport
+    expect(r.afterF).toBe(0);   // F enters the portal
+  });
+
   test('loading the rift spawns the ultimate boss', async ({ game }) => {
     const r = await game.evaluate(() => {
       loadZone(5);
