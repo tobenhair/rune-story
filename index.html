@@ -56,27 +56,27 @@ html,body{background:#000;min-height:100%;height:100%}
 @keyframes scLeave{0%{opacity:1}100%{opacity:0;transform:scale(1.04)}}
 
 #sg{flex-direction:column;min-height:580px}
-.hud{display:flex;align-items:center;gap:10px;padding:7px 12px;background:linear-gradient(180deg,#0e1122,#0a0c18);border-bottom:1px solid rgba(199,154,58,0.35);box-shadow:inset 0 -1px 0 rgba(0,0,0,0.6);flex-shrink:0;flex-wrap:wrap}
-.hav{width:32px;height:32px;border-radius:6px;background:#151a30;border:1px solid var(--gold);box-shadow:0 0 8px rgba(199,154,58,0.25);overflow:hidden;flex-shrink:0}
-.hnm{font-family:var(--font-pix);font-size:9px;font-weight:400;color:#e8d5b7;letter-spacing:0.5px}.hlv{font-size:10px;color:var(--gold-lite)}
-.bg{display:flex;flex-direction:column;gap:2px;min-width:96px}
-.bl{font-size:8px;color:#9a9ab0;display:flex;justify-content:space-between;letter-spacing:0.5px}
-.bl span:last-child{font-family:var(--font-pix);font-size:7px;color:#cfcfe0}
-.orbwrap{display:flex;align-items:center;gap:8px}
-.orb{width:34px;height:34px;image-rendering:pixelated}
-.br{height:7px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden}
+.hud{display:flex;align-items:center;gap:13px;padding:10px 16px;background:linear-gradient(180deg,#0e1122,#0a0c18);border-bottom:1px solid rgba(199,154,58,0.35);box-shadow:inset 0 -1px 0 rgba(0,0,0,0.6);flex-shrink:0;flex-wrap:wrap}
+.hav{width:44px;height:44px;border-radius:7px;background:#151a30;border:1px solid var(--gold);box-shadow:0 0 8px rgba(199,154,58,0.25);overflow:hidden;flex-shrink:0}
+.hnm{font-family:var(--font-pix);font-size:11px;font-weight:400;color:#e8d5b7;letter-spacing:0.5px}.hlv{font-size:12px;color:var(--gold-lite)}
+.bg{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.bl{font-size:9px;color:#9a9ab0;display:flex;justify-content:space-between;letter-spacing:0.5px}
+.bl span:last-child{font-family:var(--font-pix);font-size:8px;color:#cfcfe0}
+.orbwrap{display:flex;align-items:center;gap:10px}
+.orb{width:48px;height:48px;image-rendering:pixelated}
+.br{height:9px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden}
 .bf{height:100%;border-radius:4px;transition:width 0.2s}
 .bhp{background:#e24b4a}.bmp{background:#378add}.bxp{background:#639922}
-.hbtns{margin-left:auto;display:flex;gap:6px}
-.hbtn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#ccc;font-size:10px;padding:4px 8px;cursor:pointer}
+.hbtns{margin-left:auto;display:flex;gap:8px}
+.hbtn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:7px;color:#ddd;font-size:13px;padding:7px 12px;cursor:pointer;line-height:1}
 .hbtn:hover{background:rgba(255,255,255,0.14)}
-.zlbl{font-family:var(--font-pix);font-size:7px;color:var(--gold-lite);letter-spacing:0.5px;text-transform:uppercase}
+.zlbl{font-family:var(--font-pix);font-size:9px;color:var(--gold-lite);letter-spacing:0.5px;text-transform:uppercase}
 .xptrack{position:relative}
 .xptrack::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),rgba(0,0,0,0.5) calc(10% - 1px),rgba(0,0,0,0.5) 10%)}
 .vol-row{display:flex;align-items:center;gap:5px}
-.vol-lbl{font-size:9px;color:#8a8aa0}
-.vol-sl{width:55px;accent-color:var(--gold)}
-.rm-tog{font-size:9px;color:#8a8aa0;display:flex;align-items:center;gap:3px;cursor:pointer;user-select:none}
+.vol-lbl{font-size:10px;color:#8a8aa0}
+.vol-sl{width:66px;accent-color:var(--gold)}
+.rm-tog{font-size:10px;color:#8a8aa0;display:flex;align-items:center;gap:3px;cursor:pointer;user-select:none}
 .rm-tog input{accent-color:var(--gold)}
 .ga{display:flex;flex:1;overflow:hidden;position:relative}
 .cw{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#05060c}
@@ -245,11 +245,11 @@ canvas#gc{display:block;image-rendering:pixelated}
 
 <div id="sg" class="screen">
   <div class="hud">
-    <div class="hav"><canvas id="hud-sprite" width="30" height="30" style="image-rendering:pixelated;width:30px;height:30px"></canvas></div>
+    <div class="hav"><canvas id="hud-sprite" width="40" height="40" style="image-rendering:pixelated;width:40px;height:40px"></canvas></div>
     <div><div class="hnm" id="hname">—</div><div class="hlv" id="hlvl">Lv.1 Mage</div></div>
     <div class="orbwrap">
-      <canvas class="orb" id="hp-orb" width="34" height="34" title="Health"></canvas>
-      <canvas class="orb" id="mp-orb" width="34" height="34" title="Mana"></canvas>
+      <canvas class="orb" id="hp-orb" width="48" height="48" title="Health"></canvas>
+      <canvas class="orb" id="mp-orb" width="48" height="48" title="Mana"></canvas>
     </div>
     <div class="bg">
       <div class="bl"><span>XP</span><span id="xptx">0/100</span></div>
@@ -1963,7 +1963,7 @@ function previewAnim(){
 }
 // Live-echo the typed name into the character card so naming feels like it shapes the world.
 function onNameInput(){const v=document.getElementById('cin').value.trim();const nm=document.getElementById('cname2');if(nm)nm.textContent=v||'Mage';const d=document.getElementById('cdesc');if(d)d.textContent=v?('The arcane answers to a new name — Aethoria awaits its champion, '+v+'.'):'Master of the arcane. You will shape your path through the skill tree — fire, frost or pure arcane — as you grow.';}
-function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)return;const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,30,30);ctx.drawImage(SHS.mR,0,0,SD,SDH,1,0,18,27);}
+function drawHudSprite(){const cv=document.getElementById('hud-sprite');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,W,H);const dh=Math.round(H*0.9),dw=Math.round(dh*SW/SH),dx=Math.round((W-dw)/2),dy=Math.round(H-dh);ctx.drawImage(SHS.mR,0,0,SD,SDH,dx,dy,dw,dh);}
 
 // ═══════════════════════════════════════════════════════
 // GAME ENGINE
@@ -4232,7 +4232,7 @@ function orbFill(id,frac,cLite,cDark,val,low){const cv=document.getElementById(i
   x.beginPath();x.moveTo(0,level);for(let px=0;px<=W;px+=2)x.lineTo(px,level+Math.sin(px*0.45+gTime*4)*1.2);x.lineTo(W,H);x.lineTo(0,H);x.closePath();x.fill();
   x.fillStyle='rgba(255,255,255,0.14)';x.beginPath();x.ellipse(cx-R*0.3,cy-R*0.4,R*0.42,R*0.24,0,0,Math.PI*2);x.fill();x.restore();
   const lp=low?(Math.sin(gTime*7)*0.3+0.7):1;x.strokeStyle=low?`rgba(240,90,90,${lp})`:'rgba(199,154,58,0.85)';x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.stroke();
-  x.fillStyle='#fff';x.font='7px "Press Start 2P",monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(''+Math.round(val),cx,cy+0.5);}
+  x.fillStyle='#fff';x.font=Math.max(7,Math.round(W*0.2))+'px "Press Start 2P",monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(''+Math.round(val),cx,cy+0.5);}
 // Phase 5 damage-number grammar: type ∈ crit|dot|heal|pdmg drives size/motion (shape+motion,
 // not hue alone, so it stays colourblind-legible). Heals show +N, everything else -N.
 function spawnDN(sx,sy,dmg,col,type){const el=document.createElement('div');el.className='dmgn'+(type?' '+type:'');el.style.color=col||'#fff';el.style.left=(sx+Math.random()*14-7)+'px';el.style.top=(sy-camY-40)+'px';el.textContent=typeof dmg==='number'?((type==='heal'?'+':'-')+dmg):dmg;document.getElementById('cw').appendChild(el);setTimeout(()=>el.remove(),type==='crit'?900:850);}
