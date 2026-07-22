@@ -66,6 +66,26 @@ test('Z only loots within reach; far drops are left behind', async ({ game: page
   expect(r.farLeft).toBe(true);   // …it stays on the floor
 });
 
+test('Z-looting plays a rewarding "pling" — one per drop grabbed, ascending', async ({ game: page }) => {
+  const r = await page.evaluate(() => {
+    loadZone(1); T.clear(); T.resetPlayer(); drops = []; G.inventory = []; G.gold = 0;
+    PL.x = 500; PL.y = zGround;
+    const idx = [];
+    const orig = window.sfxPling; window.sfxPling = (i) => idx.push(i);
+    try {
+      dropItem(505, zGround, 'slime_goo');
+      dropItem(510, zGround, 'goblin_ear');
+      dropGold(508, zGround, 5);
+      drops.forEach(d => { d.landed = true; d.vy = 0; });
+      const n = drops.length;
+      lootNearby();
+      return { n, calls: idx.length, ascending: idx.join(',') };
+    } finally { window.sfxPling = orig; }
+  });
+  expect(r.calls).toBe(r.n);              // one pling per drop grabbed
+  expect(r.ascending).toBe('0,1,2');     // ascending index → arpeggiated pitch
+});
+
 test('rare+ gear persists; common drops despawn; zone exit auto-collects everything', async ({ game: page }) => {
   const r = await page.evaluate(() => {
     loadZone(1); drops = [];
