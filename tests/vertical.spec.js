@@ -47,7 +47,7 @@ test('the vertical camera follows in a tall zone and stays pinned in a short one
 
 test('a ladder lets the player climb up against gravity, and dismounting stops the climb', async ({ game: page }) => {
   const r = await page.evaluate(() => {
-    loadZone(1);
+    loadZone(1); T.clear();   // isolate the climb from stray monsters (a hit would knock you off)
     const lad = CZ.ladders[0];
     // stand on the ladder, mid-span
     PL.x = lad.x; PL.y = (lad.y1 + lad.y2) / 2; PL.vx = 0; PL.vy = 0; PL.climbing = false;
@@ -65,6 +65,42 @@ test('a ladder lets the player climb up against gravity, and dismounting stops t
   expect(r.climbing).toBe(true);          // grabbed the ladder
   expect(r.climbedY).toBeLessThan(r.y0);  // moved upward (smaller y) despite gravity
   expect(r.afterOff).toBe(false);         // walking off dismounts
+});
+
+test('mid-ladder is vertically locked: horizontal input cannot slip you off into a fall', async ({ game: page }) => {
+  const r = await page.evaluate(() => {
+    loadZone(1); T.clear();   // isolate the climb from stray monsters (a hit would knock you off)
+    const lad = CZ.ladders[0];
+    PL.x = lad.x; PL.y = (lad.y1 + lad.y2) / 2; PL.vx = 0; PL.vy = 0; PL.climbing = false;
+    keys = { arrowup: true }; jp = {};
+    update(0.05);                            // mount, still mid-span (away from either tier)
+    const mounted = PL.climbing, midY = PL.y;
+    keys = { arrowright: true };
+    for (let i = 0; i < 12; i++) update(0.05); // shove sideways for a while
+    return { mounted, midY, y1: lad.y1, y2: lad.y2, ladX: lad.x, x: PL.x, climbing: PL.climbing };
+  });
+  expect(r.mounted).toBe(true);
+  // confirm we were genuinely mid-ladder (not near a tier where step-off is allowed)
+  expect(r.midY).toBeGreaterThan(r.y1 + 12);
+  expect(r.midY).toBeLessThan(r.y2 - 12);
+  expect(Math.abs(r.x - r.ladX)).toBeLessThan(2); // held to the ladder centre — no drift
+  expect(r.climbing).toBe(true);                  // still on the ladder — never fell off
+});
+
+test('taking a hit knocks you off the ladder', async ({ game: page }) => {
+  const r = await page.evaluate(() => {
+    loadZone(1); T.clear();
+    const lad = CZ.ladders[0];
+    PL.x = lad.x; PL.y = (lad.y1 + lad.y2) / 2; PL.vx = 0; PL.vy = 0; PL.climbing = true; PL.inv = 0;
+    keys = {}; jp = {};
+    // a hostile projectile sitting on the player → the projectile-hit path damages and unmounts you
+    projs.push({ x: PL.x, y: PL.y, vx: 0, vy: 0, hostile: true, dmg: 5, life: 1, proj: 'boneArrow', c: '#fff', pw: 6, ph: 6 });
+    const before = PL.climbing;
+    update(0.02);
+    return { before, after: PL.climbing };
+  });
+  expect(r.before).toBe(true);
+  expect(r.after).toBe(false); // the hit knocked the player off the ladder
 });
 
 test('spells only auto-target foes within the horizontal aim cone (bosses excepted)', async ({ game: page }) => {
@@ -101,4 +137,24 @@ test('fireAt clamps a non-boss shot into the cone but lets a boss shot aim freel
   });
   expect(r.trashAng).toBeLessThanOrEqual(r.cone + 1e-6);  // clamped to the cone
   expect(r.bossAng).toBeGreaterThan(r.cone);              // boss shot keeps its steep angle
+});
+
+test('a point-blank foe is always targetable/aimable despite the cone', async ({ game: page }) => {
+  const r = await page.evaluate(() => {
+    T.clear(); T.resetPlayer(); PL.x = 500; PL.y = 500;
+    // A foe pressed right against the player reads as ~90° off horizontal (chest origin vs. its
+    // feet), so without the point-blank exemption the cone would reject it entirely.
+    const pointBlank = mkMon('slime', 502, 500);
+    mons.push(pointBlank);
+    const inCone = inAimCone(pointBlank);
+    const picked = closest(400) === pointBlank;
+    G.mp = 999; projs.length = 0; cds[0] = 0;
+    fireAt(pointBlank, 0);            // steeply-offset but close → aims straight at it, no clamp
+    const p = projs[0];
+    const ang = Math.abs(Math.atan2(p.vy, Math.abs(p.vx)));
+    return { inCone, picked, ang, cone: AIM_CONE };
+  });
+  expect(r.inCone).toBe(true);           // exempt from the cone
+  expect(r.picked).toBe(true);           // auto-target acquires it
+  expect(r.ang).toBeGreaterThan(r.cone); // and the shot aims straight up at it, unclamped
 });
